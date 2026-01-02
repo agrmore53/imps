@@ -1,0 +1,624 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import { createClient } from '@/lib/supabase/client'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { toast } from 'sonner'
+import { Loader2, Building2, MapPin, FileText, Save, Search } from 'lucide-react'
+import { validarCNPJ, formatarCNPJ, formatarTelefone, formatarCEP } from '@/lib/utils/validators'
+
+interface Empresa {
+  id: string
+  razao_social: string
+  nome_fantasia: string | null
+  cnpj: string
+  ie: string | null
+  im: string | null
+  telefone: string | null
+  email: string | null
+  endereco: {
+    cep: string
+    logradouro: string
+    numero: string
+    complemento: string
+    bairro: string
+    cidade: string
+    uf: string
+  } | null
+  config_fiscal: {
+    regime_tributario: string
+    ambiente: string
+    serie_nfce: string
+    numero_nfce: number
+    serie_nfe: string
+    numero_nfe: number
+  } | null
+}
+
+export default function ConfiguracoesPage() {
+  const supabase = createClient()
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [buscandoCep, setBuscandoCep] = useState(false)
+  const [empresa, setEmpresa] = useState<Empresa | null>(null)
+
+  const [formData, setFormData] = useState({
+    razao_social: '',
+    nome_fantasia: '',
+    cnpj: '',
+    ie: '',
+    im: '',
+    telefone: '',
+    email: '',
+    // Endereço
+    cep: '',
+    logradouro: '',
+    numero: '',
+    complemento: '',
+    bairro: '',
+    cidade: '',
+    uf: '',
+    // Fiscal
+    regime_tributario: '1',
+    ambiente: '2', // 1 = Produção, 2 = Homologação
+    serie_nfce: '1',
+    numero_nfce: '1',
+    serie_nfe: '1',
+    numero_nfe: '1',
+  })
+
+  useEffect(() => {
+    carregarEmpresa()
+  }, [])
+
+  async function carregarEmpresa() {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const { data: userData } = await supabase
+        .from('usuarios')
+        .select('empresa_id')
+        .eq('auth_id', user.id)
+        .single()
+
+      if (!userData?.empresa_id) return
+
+      const { data: empresaData, error } = await supabase
+        .from('empresas')
+        .select('*')
+        .eq('id', userData.empresa_id)
+        .single()
+
+      if (error) throw error
+
+      if (empresaData) {
+        setEmpresa(empresaData)
+        setFormData({
+          razao_social: empresaData.razao_social || '',
+          nome_fantasia: empresaData.nome_fantasia || '',
+          cnpj: formatarCNPJ(empresaData.cnpj || ''),
+          ie: empresaData.ie || '',
+          im: empresaData.im || '',
+          telefone: formatarTelefone(empresaData.telefone || ''),
+          email: empresaData.email || '',
+          // Endereço
+          cep: formatarCEP(empresaData.endereco?.cep || ''),
+          logradouro: empresaData.endereco?.logradouro || '',
+          numero: empresaData.endereco?.numero || '',
+          complemento: empresaData.endereco?.complemento || '',
+          bairro: empresaData.endereco?.bairro || '',
+          cidade: empresaData.endereco?.cidade || '',
+          uf: empresaData.endereco?.uf || '',
+          // Fiscal
+          regime_tributario: empresaData.config_fiscal?.regime_tributario || '1',
+          ambiente: empresaData.config_fiscal?.ambiente || '2',
+          serie_nfce: empresaData.config_fiscal?.serie_nfce || '1',
+          numero_nfce: empresaData.config_fiscal?.numero_nfce?.toString() || '1',
+          serie_nfe: empresaData.config_fiscal?.serie_nfe || '1',
+          numero_nfe: empresaData.config_fiscal?.numero_nfe?.toString() || '1',
+        })
+      }
+    } catch (error) {
+      toast.error('Erro ao carregar dados da empresa')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
+    const { name, value } = e.target
+
+    if (name === 'cnpj') {
+      setFormData(prev => ({ ...prev, [name]: formatarCNPJ(value) }))
+    } else if (name === 'telefone') {
+      setFormData(prev => ({ ...prev, [name]: formatarTelefone(value) }))
+    } else if (name === 'cep') {
+      setFormData(prev => ({ ...prev, [name]: formatarCEP(value) }))
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }))
+    }
+  }
+
+  async function buscarCEP() {
+    const cep = formData.cep.replace(/\D/g, '')
+    if (cep.length !== 8) {
+      toast.error('CEP inválido')
+      return
+    }
+
+    setBuscandoCep(true)
+    try {
+      const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`)
+      const data = await response.json()
+
+      if (data.erro) {
+        toast.error('CEP não encontrado')
+        return
+      }
+
+      setFormData(prev => ({
+        ...prev,
+        logradouro: data.logradouro || '',
+        bairro: data.bairro || '',
+        cidade: data.localidade || '',
+        uf: data.uf || '',
+      }))
+      toast.success('Endereço encontrado!')
+    } catch (error) {
+      toast.error('Erro ao buscar CEP')
+    } finally {
+      setBuscandoCep(false)
+    }
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+
+    if (!empresa) {
+      toast.error('Empresa não encontrada')
+      return
+    }
+
+    const cnpjLimpo = formData.cnpj.replace(/\D/g, '')
+    if (cnpjLimpo && !validarCNPJ(cnpjLimpo)) {
+      toast.error('CNPJ inválido')
+      return
+    }
+
+    setSaving(true)
+
+    try {
+      const endereco = {
+        cep: formData.cep.replace(/\D/g, ''),
+        logradouro: formData.logradouro,
+        numero: formData.numero,
+        complemento: formData.complemento,
+        bairro: formData.bairro,
+        cidade: formData.cidade,
+        uf: formData.uf,
+      }
+
+      const config_fiscal = {
+        regime_tributario: formData.regime_tributario,
+        ambiente: formData.ambiente,
+        serie_nfce: formData.serie_nfce,
+        numero_nfce: parseInt(formData.numero_nfce) || 1,
+        serie_nfe: formData.serie_nfe,
+        numero_nfe: parseInt(formData.numero_nfe) || 1,
+      }
+
+      const { error } = await supabase
+        .from('empresas')
+        .update({
+          razao_social: formData.razao_social,
+          nome_fantasia: formData.nome_fantasia || null,
+          cnpj: cnpjLimpo,
+          ie: formData.ie || null,
+          im: formData.im || null,
+          telefone: formData.telefone.replace(/\D/g, '') || null,
+          email: formData.email || null,
+          endereco,
+          config_fiscal,
+        })
+        .eq('id', empresa.id)
+
+      if (error) throw error
+
+      toast.success('Configurações salvas com sucesso!')
+    } catch (error: any) {
+      toast.error('Erro ao salvar configurações', {
+        description: error.message,
+      })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Configurações</h1>
+        <p className="text-muted-foreground">
+          Configure os dados da empresa e preferências do sistema
+        </p>
+      </div>
+
+      <form onSubmit={handleSubmit}>
+        <Tabs defaultValue="empresa" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="empresa">
+              <Building2 className="mr-2 h-4 w-4" />
+              Empresa
+            </TabsTrigger>
+            <TabsTrigger value="endereco">
+              <MapPin className="mr-2 h-4 w-4" />
+              Endereço
+            </TabsTrigger>
+            <TabsTrigger value="fiscal">
+              <FileText className="mr-2 h-4 w-4" />
+              Fiscal
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Dados da Empresa */}
+          <TabsContent value="empresa">
+            <Card>
+              <CardHeader>
+                <CardTitle>Dados Cadastrais</CardTitle>
+                <CardDescription>
+                  Informações básicas da empresa
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="cnpj">CNPJ *</Label>
+                    <Input
+                      id="cnpj"
+                      name="cnpj"
+                      placeholder="00.000.000/0001-00"
+                      value={formData.cnpj}
+                      onChange={handleChange}
+                      maxLength={18}
+                      required
+                      disabled={saving}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="ie">Inscrição Estadual</Label>
+                    <Input
+                      id="ie"
+                      name="ie"
+                      placeholder="Inscrição estadual"
+                      value={formData.ie}
+                      onChange={handleChange}
+                      disabled={saving}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="razao_social">Razão Social *</Label>
+                  <Input
+                    id="razao_social"
+                    name="razao_social"
+                    placeholder="Razão social da empresa"
+                    value={formData.razao_social}
+                    onChange={handleChange}
+                    required
+                    disabled={saving}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="nome_fantasia">Nome Fantasia</Label>
+                  <Input
+                    id="nome_fantasia"
+                    name="nome_fantasia"
+                    placeholder="Nome fantasia"
+                    value={formData.nome_fantasia}
+                    onChange={handleChange}
+                    disabled={saving}
+                  />
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="im">Inscrição Municipal</Label>
+                    <Input
+                      id="im"
+                      name="im"
+                      placeholder="Inscrição municipal"
+                      value={formData.im}
+                      onChange={handleChange}
+                      disabled={saving}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="telefone">Telefone</Label>
+                    <Input
+                      id="telefone"
+                      name="telefone"
+                      placeholder="(00) 00000-0000"
+                      value={formData.telefone}
+                      onChange={handleChange}
+                      maxLength={15}
+                      disabled={saving}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    placeholder="email@empresa.com"
+                    value={formData.email}
+                    onChange={handleChange}
+                    disabled={saving}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Endereço */}
+          <TabsContent value="endereco">
+            <Card>
+              <CardHeader>
+                <CardTitle>Endereço</CardTitle>
+                <CardDescription>
+                  Endereço fiscal da empresa
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid gap-4 md:grid-cols-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="cep">CEP</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="cep"
+                        name="cep"
+                        placeholder="00000-000"
+                        value={formData.cep}
+                        onChange={handleChange}
+                        maxLength={9}
+                        disabled={saving}
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={buscarCEP}
+                        disabled={saving || buscandoCep}
+                      >
+                        {buscandoCep ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Search className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <Label htmlFor="logradouro">Logradouro</Label>
+                    <Input
+                      id="logradouro"
+                      name="logradouro"
+                      placeholder="Rua, Avenida..."
+                      value={formData.logradouro}
+                      onChange={handleChange}
+                      disabled={saving}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="numero">Número</Label>
+                    <Input
+                      id="numero"
+                      name="numero"
+                      placeholder="123"
+                      value={formData.numero}
+                      onChange={handleChange}
+                      disabled={saving}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="complemento">Complemento</Label>
+                    <Input
+                      id="complemento"
+                      name="complemento"
+                      placeholder="Sala, Loja..."
+                      value={formData.complemento}
+                      onChange={handleChange}
+                      disabled={saving}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="bairro">Bairro</Label>
+                    <Input
+                      id="bairro"
+                      name="bairro"
+                      placeholder="Bairro"
+                      value={formData.bairro}
+                      onChange={handleChange}
+                      disabled={saving}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="cidade">Cidade</Label>
+                    <Input
+                      id="cidade"
+                      name="cidade"
+                      placeholder="Cidade"
+                      value={formData.cidade}
+                      onChange={handleChange}
+                      disabled={saving}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="uf">UF</Label>
+                    <Input
+                      id="uf"
+                      name="uf"
+                      placeholder="SC"
+                      value={formData.uf}
+                      onChange={handleChange}
+                      maxLength={2}
+                      disabled={saving}
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Configurações Fiscais */}
+          <TabsContent value="fiscal">
+            <Card>
+              <CardHeader>
+                <CardTitle>Configurações Fiscais</CardTitle>
+                <CardDescription>
+                  Configurações para emissão de notas fiscais (NFC-e e NF-e)
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="regime_tributario">Regime Tributário</Label>
+                    <select
+                      id="regime_tributario"
+                      name="regime_tributario"
+                      value={formData.regime_tributario}
+                      onChange={handleChange}
+                      disabled={saving}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    >
+                      <option value="1">Simples Nacional</option>
+                      <option value="2">Simples Nacional - Excesso de sublimite</option>
+                      <option value="3">Regime Normal</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="ambiente">Ambiente</Label>
+                    <select
+                      id="ambiente"
+                      name="ambiente"
+                      value={formData.ambiente}
+                      onChange={handleChange}
+                      disabled={saving}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    >
+                      <option value="2">Homologação (Testes)</option>
+                      <option value="1">Produção</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="border-t pt-4 mt-4">
+                  <h4 className="font-medium mb-4">NFC-e (Nota Fiscal ao Consumidor)</h4>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="serie_nfce">Série NFC-e</Label>
+                      <Input
+                        id="serie_nfce"
+                        name="serie_nfce"
+                        placeholder="1"
+                        value={formData.serie_nfce}
+                        onChange={handleChange}
+                        disabled={saving}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="numero_nfce">Próximo Número NFC-e</Label>
+                      <Input
+                        id="numero_nfce"
+                        name="numero_nfce"
+                        type="number"
+                        min="1"
+                        placeholder="1"
+                        value={formData.numero_nfce}
+                        onChange={handleChange}
+                        disabled={saving}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border-t pt-4 mt-4">
+                  <h4 className="font-medium mb-4">NF-e (Nota Fiscal Eletrônica)</h4>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="serie_nfe">Série NF-e</Label>
+                      <Input
+                        id="serie_nfe"
+                        name="serie_nfe"
+                        placeholder="1"
+                        value={formData.serie_nfe}
+                        onChange={handleChange}
+                        disabled={saving}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="numero_nfe">Próximo Número NF-e</Label>
+                      <Input
+                        id="numero_nfe"
+                        name="numero_nfe"
+                        type="number"
+                        min="1"
+                        placeholder="1"
+                        value={formData.numero_nfe}
+                        onChange={handleChange}
+                        disabled={saving}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-md border border-yellow-200 dark:border-yellow-800 mt-4">
+                  <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                    <strong>Importante:</strong> Para emissão fiscal em produção, é necessário ter um certificado digital A1 válido.
+                    A configuração do certificado será feita na fase de implementação fiscal.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+
+        <div className="flex justify-end mt-6">
+          <Button type="submit" disabled={saving}>
+            {saving ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Salvando...
+              </>
+            ) : (
+              <>
+                <Save className="mr-2 h-4 w-4" />
+                Salvar Configurações
+              </>
+            )}
+          </Button>
+        </div>
+      </form>
+    </div>
+  )
+}
