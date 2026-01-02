@@ -40,14 +40,14 @@ export default async function DashboardPage() {
   const { data: vendasHoje } = await supabase
     .from('vendas')
     .select('id, total')
-    .eq('status', 'concluida')
+    .eq('status', 'finalizada')
     .gte('data_hora', hojeStr)
 
   // Buscar vendas de ontem
   const { data: vendasOntem } = await supabase
     .from('vendas')
     .select('id, total')
-    .eq('status', 'concluida')
+    .eq('status', 'finalizada')
     .gte('data_hora', ontemStr)
     .lt('data_hora', hojeStr)
 
@@ -55,7 +55,7 @@ export default async function DashboardPage() {
   const { data: vendasSemana } = await supabase
     .from('vendas')
     .select('id, total, data_hora')
-    .eq('status', 'concluida')
+    .eq('status', 'finalizada')
     .gte('data_hora', seteDiasAtras.toISOString())
     .order('data_hora')
 
