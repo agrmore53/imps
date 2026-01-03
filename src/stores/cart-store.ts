@@ -6,12 +6,13 @@ export interface CartItem {
   nome: string
   preco: number
   quantidade: number
+  unidade?: string // UN, KG, L, etc.
 }
 
 interface CartStore {
   items: CartItem[]
   desconto: number
-  addItem: (item: Omit<CartItem, 'quantidade'>) => void
+  addItem: (item: Omit<CartItem, 'quantidade'> & { quantidade?: number }) => void
   removeItem: (id: string) => void
   updateQuantity: (id: string, quantidade: number) => void
   setDesconto: (desconto: number) => void
@@ -26,17 +27,29 @@ export const useCartStore = create<CartStore>((set, get) => ({
   desconto: 0,
 
   addItem: (item) => {
+    const quantidade = item.quantidade ?? 1
     set((state) => {
       const existing = state.items.find((i) => i.id === item.id)
       if (existing) {
+        // Para produtos pesáveis, não soma - adiciona como item separado ou atualiza
+        // Para produtos unitários, soma a quantidade
+        const isPesavel = item.unidade && ['KG', 'G', 'L', 'ML', 'M', 'CM', 'M2', 'M3'].includes(item.unidade.toUpperCase())
+        if (isPesavel) {
+          // Produtos pesáveis: atualiza a quantidade (substitui)
+          return {
+            items: state.items.map((i) =>
+              i.id === item.id ? { ...i, quantidade: i.quantidade + quantidade } : i
+            ),
+          }
+        }
         return {
           items: state.items.map((i) =>
-            i.id === item.id ? { ...i, quantidade: i.quantidade + 1 } : i
+            i.id === item.id ? { ...i, quantidade: i.quantidade + quantidade } : i
           ),
         }
       }
       return {
-        items: [...state.items, { ...item, quantidade: 1 }],
+        items: [...state.items, { ...item, quantidade }],
       }
     })
   },

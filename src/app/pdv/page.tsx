@@ -48,6 +48,7 @@ import {
   Star,
   Keyboard,
   Scan,
+  Scale,
 } from 'lucide-react'
 import { printReceipt, type DadosRecibo } from '@/components/pdv/receipt'
 import { PixQRCode } from '@/components/pdv/pix-qrcode'
@@ -130,6 +131,11 @@ export default function PDVPage() {
   const [pontosGanhos, setPontosGanhos] = useState<number | null>(null)
   const [showAjuda, setShowAjuda] = useState(false)
   const [showPixModal, setShowPixModal] = useState(false)
+  // Estados para produto pesável
+  const [showWeightModal, setShowWeightModal] = useState(false)
+  const [pendingWeightProduct, setPendingWeightProduct] = useState<Produto | null>(null)
+  const [weightValue, setWeightValue] = useState('')
+  const weightInputRef = useRef<HTMLInputElement>(null)
   const [vendaFinalizada, setVendaFinalizada] = useState<{
     numero?: number
     itens: { codigo: string; nome: string; quantidade: number; preco: number; total: number }[]
@@ -301,6 +307,66 @@ export default function PDVPage() {
     }).format(value)
   }
 
+  // Verifica se o produto é vendido por peso/volume
+  function isProdutoPesavel(unidade: string): boolean {
+    const unidadesPesaveis = ['KG', 'G', 'L', 'ML', 'M', 'CM', 'M2', 'M3']
+    return unidadesPesaveis.includes(unidade.toUpperCase())
+  }
+
+  // Formata a unidade para exibição
+  function formatUnidade(unidade: string): string {
+    const unidadesFormatadas: Record<string, string> = {
+      'KG': 'kg',
+      'G': 'g',
+      'L': 'L',
+      'ML': 'ml',
+      'M': 'm',
+      'CM': 'cm',
+      'M2': 'm²',
+      'M3': 'm³',
+    }
+    return unidadesFormatadas[unidade.toUpperCase()] || unidade
+  }
+
+  // Adiciona produto pesável com a quantidade informada
+  function confirmarPesagem() {
+    if (!pendingWeightProduct) return
+
+    const peso = parseFloat(weightValue.replace(',', '.'))
+    if (isNaN(peso) || peso <= 0) {
+      toast.error('Digite um peso válido')
+      return
+    }
+
+    if (peso > pendingWeightProduct.estoque_atual) {
+      toast.error(`Estoque insuficiente. Disponível: ${pendingWeightProduct.estoque_atual} ${pendingWeightProduct.unidade}`)
+      return
+    }
+
+    addItem({
+      id: pendingWeightProduct.id,
+      codigo: pendingWeightProduct.codigo,
+      nome: pendingWeightProduct.nome,
+      preco: pendingWeightProduct.preco_venda,
+      quantidade: peso,
+      unidade: pendingWeightProduct.unidade,
+    })
+
+    const valorTotal = pendingWeightProduct.preco_venda * peso
+    playBeep(true)
+    toast.success(`${pendingWeightProduct.nome}`, {
+      description: `${peso} ${formatUnidade(pendingWeightProduct.unidade)} = ${formatCurrency(valorTotal)}`,
+    })
+
+    // Limpar e fechar modal
+    setShowWeightModal(false)
+    setPendingWeightProduct(null)
+    setWeightValue('')
+    setSearch('')
+    setProdutos([])
+    searchRef.current?.focus()
+  }
+
   // Função para tocar beep de confirmação
   const playBeep = useCallback((success: boolean = true) => {
     try {
@@ -371,12 +437,19 @@ export default function PDVPage() {
           toast.error('Produto sem estoque', {
             description: produto.nome,
           })
+        } else if (isProdutoPesavel(produto.unidade)) {
+          // Produto pesável - abre modal para digitar peso
+          setPendingWeightProduct(produto)
+          setWeightValue('')
+          setShowWeightModal(true)
+          setTimeout(() => weightInputRef.current?.focus(), 100)
         } else {
           addItem({
             id: produto.id,
             codigo: produto.codigo,
             nome: produto.nome,
             preco: produto.preco_venda,
+            unidade: produto.unidade,
           })
           playBeep(true)
           toast.success(produto.nome, {
@@ -555,11 +628,22 @@ export default function PDVPage() {
       return
     }
 
+    // Se for produto pesável, abre modal para digitar o peso
+    if (isProdutoPesavel(produto.unidade)) {
+      setPendingWeightProduct(produto)
+      setWeightValue('')
+      setShowWeightModal(true)
+      // Foca no input de peso após abrir o modal
+      setTimeout(() => weightInputRef.current?.focus(), 100)
+      return
+    }
+
     addItem({
       id: produto.id,
       codigo: produto.codigo,
       nome: produto.nome,
       preco: produto.preco_venda,
+      unidade: produto.unidade,
     })
 
     playBeep(true)
@@ -1285,27 +1369,41 @@ export default function PDVPage() {
           <Card className="mb-4">
             <CardContent className="p-2">
               <ScrollArea className="max-h-64">
-                {produtos.map((produto) => (
-                  <button
-                    key={produto.id}
-                    className="w-full flex items-center justify-between p-3 hover:bg-muted rounded-lg transition-colors text-left"
-                    onClick={() => adicionarProduto(produto)}
-                  >
-                    <div>
-                      <p className="font-medium">{produto.nome}</p>
-                      <p className="text-sm text-muted-foreground">
-                        Código: {produto.codigo}
-                        {produto.codigo_barras && ` | EAN: ${produto.codigo_barras}`}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-bold text-lg">{formatCurrency(produto.preco_venda)}</p>
-                      <p className="text-sm text-muted-foreground">
-                        Estoque: {produto.estoque_atual} {produto.unidade}
-                      </p>
-                    </div>
-                  </button>
-                ))}
+                {produtos.map((produto) => {
+                  const pesavel = isProdutoPesavel(produto.unidade)
+                  return (
+                    <button
+                      key={produto.id}
+                      className="w-full flex items-center justify-between p-3 hover:bg-muted rounded-lg transition-colors text-left"
+                      onClick={() => adicionarProduto(produto)}
+                    >
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium">{produto.nome}</p>
+                          {pesavel && (
+                            <Badge variant="outline" className="text-orange-600 border-orange-300 bg-orange-50">
+                              <Scale className="h-3 w-3 mr-1" />
+                              Pesável
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          Código: {produto.codigo}
+                          {produto.codigo_barras && ` | EAN: ${produto.codigo_barras}`}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-bold text-lg">
+                          {formatCurrency(produto.preco_venda)}
+                          {pesavel && <span className="text-sm font-normal text-muted-foreground">/{formatUnidade(produto.unidade)}</span>}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          Estoque: {produto.estoque_atual} {formatUnidade(produto.unidade)}
+                        </p>
+                      </div>
+                    </button>
+                  )
+                })}
               </ScrollArea>
             </CardContent>
           </Card>
@@ -1323,54 +1421,72 @@ export default function PDVPage() {
             ) : (
               <ScrollArea className="flex-1">
                 <div className="divide-y">
-                  {items.map((item, index) => (
-                    <div
-                      key={item.id}
-                      className="flex items-center gap-4 p-4 hover:bg-muted/50"
-                    >
-                      <span className="text-2xl font-bold text-muted-foreground w-8">
-                        {index + 1}
-                      </span>
-                      <div className="flex-1">
-                        <p className="font-medium">{item.nome}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {formatCurrency(item.preco)} x {item.quantidade}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() => updateQuantity(item.id, item.quantidade - 1)}
-                        >
-                          <Minus className="h-4 w-4" />
-                        </Button>
-                        <span className="w-12 text-center font-medium">
-                          {item.quantidade}
-                        </span>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() => updateQuantity(item.id, item.quantidade + 1)}
-                        >
-                          <Plus className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      <p className="font-bold text-lg w-28 text-right">
-                        {formatCurrency(item.preco * item.quantidade)}
-                      </p>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-destructive h-8 w-8"
-                        onClick={() => removeItem(item.id)}
+                  {items.map((item, index) => {
+                    const isPesavel = item.unidade && ['KG', 'G', 'L', 'ML', 'M', 'CM', 'M2', 'M3'].includes(item.unidade.toUpperCase())
+                    return (
+                      <div
+                        key={item.id}
+                        className="flex items-center gap-4 p-4 hover:bg-muted/50"
                       >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
+                        <span className="text-2xl font-bold text-muted-foreground w-8">
+                          {index + 1}
+                        </span>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <p className="font-medium">{item.nome}</p>
+                            {isPesavel && (
+                              <Scale className="h-4 w-4 text-orange-500" />
+                            )}
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            {formatCurrency(item.preco)}{isPesavel ? `/${formatUnidade(item.unidade!)}` : ''} x {isPesavel ? item.quantidade.toFixed(3).replace('.', ',') : item.quantidade} {isPesavel ? formatUnidade(item.unidade!) : ''}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {isPesavel ? (
+                            // Para produtos pesáveis, mostra o peso formatado
+                            <span className="w-24 text-center font-medium text-orange-600">
+                              {item.quantidade.toFixed(3).replace('.', ',')} {formatUnidade(item.unidade!)}
+                            </span>
+                          ) : (
+                            // Para produtos unitários, mostra controles de quantidade
+                            <>
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                className="h-8 w-8"
+                                onClick={() => updateQuantity(item.id, item.quantidade - 1)}
+                              >
+                                <Minus className="h-4 w-4" />
+                              </Button>
+                              <span className="w-12 text-center font-medium">
+                                {item.quantidade}
+                              </span>
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                className="h-8 w-8"
+                                onClick={() => updateQuantity(item.id, item.quantidade + 1)}
+                              >
+                                <Plus className="h-4 w-4" />
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                        <p className="font-bold text-lg w-28 text-right">
+                          {formatCurrency(item.preco * item.quantidade)}
+                        </p>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-destructive h-8 w-8"
+                          onClick={() => removeItem(item.id)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    )
+                  })}
                 </div>
               </ScrollArea>
             )}
@@ -1689,6 +1805,132 @@ export default function PDVPage() {
         </div>
       </div>
 
+
+      {/* Modal de Pesagem - Produto por Peso */}
+      <Dialog open={showWeightModal} onOpenChange={(open) => {
+        if (!open) {
+          setShowWeightModal(false)
+          setPendingWeightProduct(null)
+          setWeightValue('')
+          searchRef.current?.focus()
+        }
+      }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Scale className="h-5 w-5 text-orange-500" />
+              Produto por Peso
+            </DialogTitle>
+            <DialogDescription>
+              Digite o peso do produto na balança
+            </DialogDescription>
+          </DialogHeader>
+
+          {pendingWeightProduct && (
+            <div className="space-y-4">
+              {/* Info do produto */}
+              <div className="bg-muted/50 rounded-lg p-4">
+                <p className="font-semibold text-lg">{pendingWeightProduct.nome}</p>
+                <p className="text-sm text-muted-foreground">Código: {pendingWeightProduct.codigo}</p>
+                <div className="flex justify-between items-center mt-2">
+                  <span className="text-2xl font-bold text-primary">
+                    {formatCurrency(pendingWeightProduct.preco_venda)}/{formatUnidade(pendingWeightProduct.unidade)}
+                  </span>
+                  <span className="text-sm text-muted-foreground">
+                    Estoque: {pendingWeightProduct.estoque_atual} {formatUnidade(pendingWeightProduct.unidade)}
+                  </span>
+                </div>
+              </div>
+
+              {/* Input de peso */}
+              <div className="space-y-2">
+                <Label htmlFor="peso">Peso / Quantidade</Label>
+                <div className="relative">
+                  <Input
+                    ref={weightInputRef}
+                    id="peso"
+                    type="text"
+                    inputMode="decimal"
+                    placeholder="0,000"
+                    value={weightValue}
+                    onChange={(e) => {
+                      // Permitir apenas números, vírgula e ponto
+                      const value = e.target.value.replace(/[^0-9.,]/g, '')
+                      setWeightValue(value)
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault()
+                        confirmarPesagem()
+                      } else if (e.key === 'Escape') {
+                        e.preventDefault()
+                        setShowWeightModal(false)
+                        setPendingWeightProduct(null)
+                        setWeightValue('')
+                        searchRef.current?.focus()
+                      }
+                    }}
+                    className="text-3xl h-16 text-center font-bold pr-16"
+                    autoFocus
+                  />
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xl text-muted-foreground font-medium">
+                    {formatUnidade(pendingWeightProduct.unidade)}
+                  </span>
+                </div>
+              </div>
+
+              {/* Atalhos rápidos de peso */}
+              <div className="grid grid-cols-4 gap-2">
+                {['0.5', '1', '1.5', '2'].map((peso) => (
+                  <Button
+                    key={peso}
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setWeightValue(peso.replace('.', ','))}
+                    className="h-10"
+                  >
+                    {peso.replace('.', ',')} {formatUnidade(pendingWeightProduct.unidade)}
+                  </Button>
+                ))}
+              </div>
+
+              {/* Preview do valor */}
+              {weightValue && parseFloat(weightValue.replace(',', '.')) > 0 && (
+                <div className="bg-green-100 dark:bg-green-900/30 rounded-lg p-4 text-center">
+                  <p className="text-sm text-green-600">Valor Total</p>
+                  <p className="text-3xl font-bold text-green-700">
+                    {formatCurrency(pendingWeightProduct.preco_venda * parseFloat(weightValue.replace(',', '.')))}
+                  </p>
+                </div>
+              )}
+
+              {/* Botões */}
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => {
+                    setShowWeightModal(false)
+                    setPendingWeightProduct(null)
+                    setWeightValue('')
+                    searchRef.current?.focus()
+                  }}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  className="flex-1 bg-orange-500 hover:bg-orange-600"
+                  onClick={confirmarPesagem}
+                  disabled={!weightValue || parseFloat(weightValue.replace(',', '.')) <= 0}
+                >
+                  <Scale className="h-4 w-4 mr-2" />
+                  Confirmar Peso
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Modal Exclusivo PIX */}
       <Dialog open={showPixModal} onOpenChange={setShowPixModal}>
