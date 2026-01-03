@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Plus, Boxes, ArrowUpCircle, ArrowDownCircle, AlertTriangle, FileUp } from 'lucide-react'
+import { Plus, Boxes, ArrowUpCircle, ArrowDownCircle, AlertTriangle, FileUp, ClipboardList } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 
@@ -75,6 +75,12 @@ export default async function EstoquePage() {
           </p>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" asChild>
+            <Link href="/dashboard/estoque/inventario">
+              <ClipboardList className="mr-2 h-4 w-4" />
+              Inventário
+            </Link>
+          </Button>
           <Button variant="outline" asChild>
             <Link href="/dashboard/estoque/importar-xml">
               <FileUp className="mr-2 h-4 w-4" />
