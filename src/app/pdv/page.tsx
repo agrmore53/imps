@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { useCartStore } from '@/stores/cart-store'
@@ -52,6 +52,8 @@ import {
   Gift,
   Keyboard,
   HelpCircle,
+  Scan,
+  Volume2,
 } from 'lucide-react'
 import { printReceipt, type DadosRecibo } from '@/components/pdv/receipt'
 import { PixQRCode } from '@/components/pdv/pix-qrcode'
@@ -99,6 +101,14 @@ export default function PDVPage() {
   const supabase = createClient()
   const searchRef = useRef<HTMLInputElement>(null)
   const [search, setSearch] = useState('')
+
+  // Scanner de código de barras
+  const lastKeystrokeTime = useRef<number>(0)
+  const keystrokeBuffer = useRef<string>('')
+  const scannerTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const [isScannerInput, setIsScannerInput] = useState(false)
+  const [scannerEnabled, setScannerEnabled] = useState(true)
+  const audioContextRef = useRef<AudioContext | null>(null)
   const [produtos, setProdutos] = useState<Produto[]>([])
   const [loading, setLoading] = useState(false)
   const [showPayment, setShowPayment] = useState(false)
@@ -297,6 +307,174 @@ export default function PDVPage() {
     }).format(value)
   }
 
+  // Função para tocar beep de confirmação
+  const playBeep = useCallback((success: boolean = true) => {
+    try {
+      if (!audioContextRef.current) {
+        audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)()
+      }
+      const ctx = audioContextRef.current
+      const oscillator = ctx.createOscillator()
+      const gainNode = ctx.createGain()
+
+      oscillator.connect(gainNode)
+      gainNode.connect(ctx.destination)
+
+      // Frequência: sucesso = agudo, erro = grave
+      oscillator.frequency.value = success ? 1200 : 400
+      oscillator.type = 'sine'
+
+      gainNode.gain.setValueAtTime(0.3, ctx.currentTime)
+      gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + (success ? 0.1 : 0.3))
+
+      oscillator.start(ctx.currentTime)
+      oscillator.stop(ctx.currentTime + (success ? 0.1 : 0.3))
+    } catch (error) {
+      console.error('Erro ao tocar beep:', error)
+    }
+  }, [])
+
+  // Busca rápida para scanner (sem debounce)
+  const buscarProdutoScanner = useCallback(async (codigoBarras: string) => {
+    if (!codigoBarras.trim()) return
+
+    setLoading(true)
+    try {
+      let produto: Produto | null = null
+
+      if (isOnline) {
+        // Busca exata por código de barras
+        const { data, error } = await supabase
+          .from('produtos')
+          .select('id, codigo, codigo_barras, nome, preco_venda, estoque_atual, unidade')
+          .eq('ativo', true)
+          .eq('codigo_barras', codigoBarras)
+          .single()
+
+        if (!error && data) {
+          produto = data
+        }
+      } else {
+        // Busca offline
+        const produtosCache = await buscarProdutoOffline(codigoBarras)
+        const encontrado = produtosCache.find(p => p.codigo_barras === codigoBarras)
+        if (encontrado) {
+          produto = {
+            id: encontrado.id,
+            codigo: encontrado.codigo,
+            codigo_barras: encontrado.codigo_barras,
+            nome: encontrado.nome,
+            preco_venda: encontrado.preco_venda,
+            estoque_atual: encontrado.estoque_atual,
+            unidade: encontrado.unidade,
+          }
+        }
+      }
+
+      if (produto) {
+        if (produto.estoque_atual <= 0) {
+          playBeep(false)
+          toast.error('Produto sem estoque', {
+            description: produto.nome,
+          })
+        } else {
+          addItem({
+            id: produto.id,
+            codigo: produto.codigo,
+            nome: produto.nome,
+            preco: produto.preco_venda,
+          })
+          playBeep(true)
+          toast.success(produto.nome, {
+            description: `${formatCurrency(produto.preco_venda)} adicionado`,
+          })
+        }
+      } else {
+        playBeep(false)
+        toast.error('Produto não encontrado', {
+          description: `Código: ${codigoBarras}`,
+        })
+      }
+    } catch (error) {
+      console.error('Erro ao buscar produto:', error)
+      playBeep(false)
+      toast.error('Erro ao buscar produto')
+    } finally {
+      setLoading(false)
+      setSearch('')
+      setProdutos([])
+      setIsScannerInput(false)
+      searchRef.current?.focus()
+    }
+  }, [isOnline, supabase, buscarProdutoOffline, addItem, playBeep])
+
+  // Handler para detectar entrada de scanner
+  const handleSearchKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!scannerEnabled) return
+
+    const now = Date.now()
+    const timeSinceLastKey = now - lastKeystrokeTime.current
+
+    // Scanner digita muito rápido (< 50ms entre teclas)
+    // Humano digita devagar (> 50ms entre teclas)
+    if (timeSinceLastKey < 50 && lastKeystrokeTime.current > 0) {
+      setIsScannerInput(true)
+    }
+
+    lastKeystrokeTime.current = now
+
+    // Se pressionar Enter e detectou entrada de scanner
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      const value = (e.target as HTMLInputElement).value.trim()
+
+      if (value) {
+        if (isScannerInput || value.length >= 8) {
+          // Provavelmente um código de barras (EAN-8, EAN-13, etc)
+          buscarProdutoScanner(value)
+        } else if (produtos.length === 1) {
+          // Se só tem um produto na lista, adiciona
+          adicionarProduto(produtos[0])
+        } else if (produtos.length > 1) {
+          // Se tem mais de um, não faz nada (usuário deve selecionar)
+          toast.info('Selecione um produto da lista')
+        }
+      }
+
+      // Reset do detector de scanner
+      setIsScannerInput(false)
+      keystrokeBuffer.current = ''
+    }
+  }, [scannerEnabled, isScannerInput, produtos, buscarProdutoScanner])
+
+  // Auto-focus no campo de busca
+  useEffect(() => {
+    // Foca no campo quando modais fecham
+    if (!showPayment && !showClienteModal && !showAjuda) {
+      const timer = setTimeout(() => {
+        searchRef.current?.focus()
+      }, 100)
+      return () => clearTimeout(timer)
+    }
+  }, [showPayment, showClienteModal, showAjuda])
+
+  // Manter foco no campo de busca (a cada 5 segundos verifica)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (!showPayment && !showClienteModal && !showAjuda) {
+        const activeElement = document.activeElement
+        const isInputFocused = activeElement?.tagName === 'INPUT' || activeElement?.tagName === 'TEXTAREA'
+
+        // Se nenhum input está focado, foca no campo de busca
+        if (!isInputFocused) {
+          searchRef.current?.focus()
+        }
+      }
+    }, 5000)
+
+    return () => clearInterval(interval)
+  }, [showPayment, showClienteModal, showAjuda])
+
   // Buscar produtos (online ou offline)
   async function buscarProdutos(termo: string) {
     if (!termo.trim()) {
@@ -378,6 +556,7 @@ export default function PDVPage() {
 
   function adicionarProduto(produto: Produto) {
     if (produto.estoque_atual <= 0) {
+      playBeep(false)
       toast.error('Produto sem estoque')
       return
     }
@@ -389,6 +568,7 @@ export default function PDVPage() {
       preco: produto.preco_venda,
     })
 
+    playBeep(true)
     toast.success(`${produto.nome} adicionado`)
     setSearch('')
     setProdutos([])
@@ -1074,15 +1254,33 @@ export default function PDVPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
           <Input
             ref={searchRef}
-            placeholder="Digite o código de barras ou nome do produto..."
-            className="pl-12 h-14 text-lg"
+            placeholder={scannerEnabled ? "Escaneie ou digite o código do produto..." : "Digite o código ou nome do produto..."}
+            className={`pl-12 pr-24 h-14 text-lg ${isScannerInput ? 'border-green-500 ring-2 ring-green-500/20' : ''}`}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
+            onKeyDown={handleSearchKeyDown}
             autoFocus
           />
-          {loading && (
-            <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 animate-spin text-muted-foreground" />
-          )}
+          <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+            {loading && (
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            )}
+            {isScannerInput && (
+              <Badge variant="default" className="bg-green-500 animate-pulse">
+                <Scan className="h-3 w-3 mr-1" />
+                Scanner
+              </Badge>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              className={`h-8 px-2 ${scannerEnabled ? 'text-green-600' : 'text-muted-foreground'}`}
+              onClick={() => setScannerEnabled(!scannerEnabled)}
+              title={scannerEnabled ? 'Scanner ativo' : 'Scanner desativado'}
+            >
+              <Scan className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
 
         {/* Lista de produtos encontrados */}
@@ -1745,18 +1943,35 @@ export default function PDVPage() {
 
       {/* Modal de Atalhos de Teclado */}
       <Dialog open={showAjuda} onOpenChange={setShowAjuda}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="sm:max-w-xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Keyboard className="h-5 w-5" />
-              Atalhos de Teclado
+              Atalhos e Scanner
             </DialogTitle>
             <DialogDescription>
-              Use os atalhos abaixo para agilizar suas vendas
+              Use os atalhos e o scanner para agilizar suas vendas
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
+            {/* Scanner info */}
+            <div className="p-3 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200">
+              <div className="flex items-center gap-2 mb-2">
+                <Scan className="h-4 w-4 text-green-600" />
+                <span className="font-medium text-green-700">Leitor de Código de Barras</span>
+                <Badge variant={scannerEnabled ? 'default' : 'secondary'} className={scannerEnabled ? 'bg-green-500' : ''}>
+                  {scannerEnabled ? 'Ativo' : 'Desativado'}
+                </Badge>
+              </div>
+              <ul className="text-xs text-muted-foreground space-y-1">
+                <li>• Scanner USB funciona automaticamente</li>
+                <li>• Produto é adicionado ao escanear</li>
+                <li>• Beep sonoro confirma a leitura</li>
+                <li>• Borda verde indica detecção do scanner</li>
+              </ul>
+            </div>
+
             <div className="grid grid-cols-2 gap-2 text-sm">
               <div className="flex items-center gap-2 p-2 rounded bg-muted">
                 <kbd className="px-2 py-1 bg-background border rounded text-xs font-mono">F1</kbd>
