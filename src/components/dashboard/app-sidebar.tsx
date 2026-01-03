@@ -28,6 +28,7 @@ import {
   ShoppingCart,
   LogOut,
   Building2,
+  HandCoins,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
@@ -58,6 +59,7 @@ const menuItems = [
   {
     title: 'Financeiro',
     items: [
+      { title: 'Crediário / Fiado', href: '/dashboard/financeiro/crediario', icon: HandCoins },
       { title: 'Contas a Pagar', href: '/dashboard/financeiro/contas-pagar', icon: Wallet },
       { title: 'Contas a Receber', href: '/dashboard/financeiro/contas-receber', icon: Receipt },
       { title: 'Fluxo de Caixa', href: '/dashboard/financeiro/fluxo-caixa', icon: BarChart3 },

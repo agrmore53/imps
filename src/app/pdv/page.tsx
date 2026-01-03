@@ -46,6 +46,8 @@ import {
   Wallet,
   LockOpen,
   Receipt,
+  UserCheck,
+  Users,
 } from 'lucide-react'
 import { printReceipt, type DadosRecibo } from '@/components/pdv/receipt'
 import { PixQRCode } from '@/components/pdv/pix-qrcode'
@@ -58,6 +60,15 @@ interface Produto {
   preco_venda: number
   estoque_atual: number
   unidade: string
+}
+
+interface Cliente {
+  id: string
+  nome: string
+  cpf_cnpj: string
+  telefone?: string
+  limite_credito: number
+  saldo_devedor: number
 }
 
 interface NFCeResult {
@@ -85,6 +96,12 @@ export default function PDVPage() {
   const [caixaAberto, setCaixaAberto] = useState<{ id: string; valor_abertura: number } | null>(null)
   const [loadingCaixa, setLoadingCaixa] = useState(true)
   const [empresa, setEmpresa] = useState<{ nome: string; cnpj: string; endereco?: string; chavePix?: string; cidade?: string } | null>(null)
+  // Estados para crediário
+  const [showClienteModal, setShowClienteModal] = useState(false)
+  const [clienteSearch, setClienteSearch] = useState('')
+  const [clientes, setClientes] = useState<Cliente[]>([])
+  const [clienteSelecionado, setClienteSelecionado] = useState<Cliente | null>(null)
+  const [loadingClientes, setLoadingClientes] = useState(false)
   const [vendaFinalizada, setVendaFinalizada] = useState<{
     numero?: number
     itens: { codigo: string; nome: string; quantidade: number; preco: number; total: number }[]
@@ -320,6 +337,58 @@ export default function PDVPage() {
     searchRef.current?.focus()
   }
 
+  // Buscar clientes para crediário
+  async function buscarClientes(termo: string) {
+    if (!termo.trim()) {
+      setClientes([])
+      return
+    }
+
+    setLoadingClientes(true)
+    try {
+      const { data, error } = await supabase
+        .from('clientes')
+        .select('id, nome, cpf_cnpj, telefone, limite_credito, saldo_devedor')
+        .eq('ativo', true)
+        .or(`nome.ilike.%${termo}%,cpf_cnpj.ilike.%${termo}%`)
+        .order('nome')
+        .limit(10)
+
+      if (error) throw error
+      setClientes(data || [])
+    } catch (error) {
+      console.error('Erro ao buscar clientes:', error)
+      toast.error('Erro ao buscar clientes')
+    } finally {
+      setLoadingClientes(false)
+    }
+  }
+
+  // Selecionar cliente para crediário
+  function selecionarCliente(cliente: Cliente) {
+    const creditoDisponivel = cliente.limite_credito - cliente.saldo_devedor
+
+    if (creditoDisponivel < total) {
+      toast.error(`Crédito insuficiente. Disponível: ${formatCurrency(creditoDisponivel)}`)
+      return
+    }
+
+    setClienteSelecionado(cliente)
+    setShowClienteModal(false)
+    setClienteSearch('')
+    setClientes([])
+    toast.success(`Cliente ${cliente.nome} selecionado`)
+  }
+
+  // Debounce na busca de clientes
+  useEffect(() => {
+    if (!showClienteModal) return
+    const timer = setTimeout(() => {
+      buscarClientes(clienteSearch)
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [clienteSearch, showClienteModal])
+
   // Finalizar venda (online ou offline)
   async function finalizarVenda() {
     if (!selectedPayment) {
@@ -330,6 +399,21 @@ export default function PDVPage() {
     if (selectedPayment === 'dinheiro' && troco < 0) {
       toast.error('Valor recebido insuficiente')
       return
+    }
+
+    // Validação para crediário
+    if (selectedPayment === 'crediario') {
+      if (!clienteSelecionado) {
+        toast.error('Selecione um cliente para venda no crediário')
+        setShowClienteModal(true)
+        return
+      }
+
+      const creditoDisponivel = clienteSelecionado.limite_credito - clienteSelecionado.saldo_devedor
+      if (creditoDisponivel < total) {
+        toast.error(`Crédito insuficiente. Disponível: ${formatCurrency(creditoDisponivel)}`)
+        return
+      }
     }
 
     setPaymentLoading(true)
@@ -361,11 +445,13 @@ export default function PDVPage() {
         'cartao_credito': '03',
         'cartao_debito': '04',
         'pix': '17',
+        'crediario': '05', // Crédito loja
       }
 
       const formaPagamento = selectedPayment === 'cartao_credito' ? 'cartao_credito' :
                             selectedPayment === 'cartao_debito' ? 'cartao_debito' :
-                            selectedPayment === 'pix' ? 'pix' : 'dinheiro'
+                            selectedPayment === 'pix' ? 'pix' :
+                            selectedPayment === 'crediario' ? 'crediario' : 'dinheiro'
 
       const vendaData = {
         tempId: `venda-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -458,6 +544,27 @@ export default function PDVPage() {
             })
 
           if (pagamentoError) throw pagamentoError
+
+          // Registrar no crediário se for venda fiado
+          if (formaPagamento === 'crediario' && clienteSelecionado) {
+            const { error: crediarioError } = await supabase
+              .from('crediario')
+              .insert({
+                empresa_id: userData.empresa_id,
+                cliente_id: clienteSelecionado.id,
+                venda_id: venda.id,
+                tipo: 'debito',
+                valor: total,
+                saldo_anterior: clienteSelecionado.saldo_devedor,
+                saldo_posterior: clienteSelecionado.saldo_devedor + total,
+                descricao: `Venda #${venda.numero} - PDV`,
+              })
+
+            if (crediarioError) {
+              console.error('Erro ao registrar crediário:', crediarioError)
+              // Não bloqueia a venda, apenas loga o erro
+            }
+          }
 
           // Emitir NFC-e se configurado e habilitado
           if (emitirNFCe && fiscalConfigurado) {
@@ -559,6 +666,7 @@ export default function PDVPage() {
         setNfceResult(null)
         setCpfCliente('')
         setVendaFinalizada(null)
+        setClienteSelecionado(null)
         searchRef.current?.focus()
       }, 10000) // 10 segundos para dar tempo de imprimir
 
@@ -948,6 +1056,7 @@ export default function PDVPage() {
                     setNfceResult(null)
                     setCpfCliente('')
                     setVendaFinalizada(null)
+                    setClienteSelecionado(null)
                     searchRef.current?.focus()
                   }}
                 >
@@ -997,7 +1106,60 @@ export default function PDVPage() {
                   <QrCode className="h-6 w-6 mb-1" />
                   PIX
                 </Button>
+                <Button
+                  variant={selectedPayment === 'crediario' ? 'default' : 'outline'}
+                  className="h-20 flex-col col-span-2"
+                  onClick={() => {
+                    setSelectedPayment('crediario')
+                    if (!clienteSelecionado) {
+                      setShowClienteModal(true)
+                    }
+                  }}
+                >
+                  <Users className="h-6 w-6 mb-1" />
+                  Crediário / Fiado
+                </Button>
               </div>
+
+              {/* Cliente selecionado para crediário */}
+              {selectedPayment === 'crediario' && clienteSelecionado && (
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 rounded-lg p-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <UserCheck className="h-5 w-5 text-blue-600" />
+                      <div>
+                        <p className="font-medium">{clienteSelecionado.nome}</p>
+                        <p className="text-xs text-muted-foreground">{clienteSelecionado.cpf_cnpj}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs text-muted-foreground">Crédito disponível</p>
+                      <p className="font-bold text-green-600">
+                        {formatCurrency(clienteSelecionado.limite_credito - clienteSelecionado.saldo_devedor)}
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    variant="link"
+                    size="sm"
+                    className="mt-2 p-0 h-auto"
+                    onClick={() => setShowClienteModal(true)}
+                  >
+                    Trocar cliente
+                  </Button>
+                </div>
+              )}
+
+              {selectedPayment === 'crediario' && !clienteSelecionado && (
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => setShowClienteModal(true)}
+                >
+                  <Users className="h-4 w-4 mr-2" />
+                  Selecionar Cliente
+                </Button>
+              )}
 
               {selectedPayment === 'dinheiro' && (
                 <div className="space-y-3">
@@ -1100,6 +1262,104 @@ export default function PDVPage() {
               </DialogFooter>
             </>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Seleção de Cliente (Crediário) */}
+      <Dialog open={showClienteModal} onOpenChange={setShowClienteModal}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              Selecionar Cliente
+            </DialogTitle>
+            <DialogDescription>
+              Busque o cliente para venda no crediário
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {/* Busca */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Nome ou CPF/CNPJ do cliente..."
+                className="pl-10"
+                value={clienteSearch}
+                onChange={(e) => setClienteSearch(e.target.value)}
+                autoFocus
+              />
+              {loadingClientes && (
+                <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+              )}
+            </div>
+
+            {/* Lista de clientes */}
+            <ScrollArea className="h-64">
+              {clientes.length > 0 ? (
+                <div className="space-y-2">
+                  {clientes.map((cliente) => {
+                    const creditoDisponivel = cliente.limite_credito - cliente.saldo_devedor
+                    const temCredito = creditoDisponivel >= total
+
+                    return (
+                      <button
+                        key={cliente.id}
+                        className={`w-full p-3 rounded-lg border text-left transition-colors ${
+                          temCredito
+                            ? 'hover:bg-muted cursor-pointer'
+                            : 'opacity-50 cursor-not-allowed bg-muted/50'
+                        }`}
+                        onClick={() => temCredito && selecionarCliente(cliente)}
+                        disabled={!temCredito}
+                      >
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <p className="font-medium">{cliente.nome}</p>
+                            <p className="text-sm text-muted-foreground">{cliente.cpf_cnpj}</p>
+                            {cliente.telefone && (
+                              <p className="text-xs text-muted-foreground">{cliente.telefone}</p>
+                            )}
+                          </div>
+                          <div className="text-right">
+                            <p className="text-xs text-muted-foreground">Limite</p>
+                            <p className="text-sm font-medium">{formatCurrency(cliente.limite_credito)}</p>
+                            <p className={`text-xs ${temCredito ? 'text-green-600' : 'text-red-600'}`}>
+                              Disponível: {formatCurrency(creditoDisponivel)}
+                            </p>
+                          </div>
+                        </div>
+                        {!temCredito && (
+                          <p className="text-xs text-red-600 mt-1">
+                            Crédito insuficiente para esta venda
+                          </p>
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
+              ) : clienteSearch ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Users className="h-12 w-12 mx-auto mb-2 opacity-20" />
+                  <p>Nenhum cliente encontrado</p>
+                  <Button variant="link" asChild className="mt-2">
+                    <Link href="/dashboard/clientes/novo">Cadastrar novo cliente</Link>
+                  </Button>
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Search className="h-12 w-12 mx-auto mb-2 opacity-20" />
+                  <p>Digite para buscar clientes</p>
+                </div>
+              )}
+            </ScrollArea>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowClienteModal(false)}>
+              Cancelar
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
