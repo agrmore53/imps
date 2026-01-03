@@ -43,6 +43,8 @@ import {
   FileText,
   Printer,
   AlertCircle,
+  Wallet,
+  LockOpen,
 } from 'lucide-react'
 
 interface Produto {
@@ -77,6 +79,8 @@ export default function PDVPage() {
   const [nfceResult, setNfceResult] = useState<NFCeResult | null>(null)
   const [cpfCliente, setCpfCliente] = useState('')
   const [fiscalConfigurado, setFiscalConfigurado] = useState(false)
+  const [caixaAberto, setCaixaAberto] = useState<{ id: string; valor_abertura: number } | null>(null)
+  const [loadingCaixa, setLoadingCaixa] = useState(true)
 
   const {
     items,
@@ -119,6 +123,24 @@ export default function PDVPage() {
       }
     }
     verificarFiscal()
+  }, [])
+
+  // Verificar se há caixa aberto
+  useEffect(() => {
+    async function verificarCaixa() {
+      try {
+        const response = await fetch('/api/caixa')
+        if (response.ok) {
+          const data = await response.json()
+          setCaixaAberto(data.caixa)
+        }
+      } catch {
+        setCaixaAberto(null)
+      } finally {
+        setLoadingCaixa(false)
+      }
+    }
+    verificarCaixa()
   }, [])
 
   function formatCurrency(value: number) {
@@ -308,6 +330,7 @@ export default function PDVPage() {
             .insert({
               empresa_id: userData.empresa_id,
               usuario_id: userData.id,
+              caixa_id: caixaAberto?.id || null,
               subtotal,
               desconto,
               total,
@@ -318,6 +341,19 @@ export default function PDVPage() {
             .single()
 
           if (vendaError) throw vendaError
+
+          // Registrar movimento no caixa (se houver caixa aberto)
+          if (caixaAberto?.id) {
+            await supabase
+              .from('caixa_movimentos')
+              .insert({
+                caixa_id: caixaAberto.id,
+                tipo: 'entrada',
+                valor: total,
+                descricao: `Venda #${venda.numero}`,
+                venda_id: venda.id,
+              })
+          }
 
           // Criar itens da venda
           const itensVenda = items.map((item) => ({
@@ -514,6 +550,22 @@ export default function PDVPage() {
                 <CloudOff className="h-3 w-3 mr-1" />
                 {vendasPendentes} pendente{vendasPendentes > 1 ? 's' : ''}
               </Badge>
+            )}
+            {/* Status do Caixa */}
+            {!loadingCaixa && (
+              <Link href="/pdv/caixa">
+                {caixaAberto ? (
+                  <Badge variant="default" className="bg-green-600 hover:bg-green-700 cursor-pointer">
+                    <LockOpen className="h-3 w-3 mr-1" />
+                    Caixa Aberto
+                  </Badge>
+                ) : (
+                  <Badge variant="destructive" className="cursor-pointer">
+                    <Wallet className="h-3 w-3 mr-1" />
+                    Abrir Caixa
+                  </Badge>
+                )}
+              </Link>
             )}
           </div>
           <div className="flex items-center gap-2">
