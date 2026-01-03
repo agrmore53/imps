@@ -560,16 +560,23 @@ export default function PDVPage() {
 
   // Imprimir cupom
   function imprimirCupom() {
-    if (!vendaFinalizada || !empresa) {
+    if (!vendaFinalizada) {
       toast.error('Dados da venda não disponíveis')
       return
     }
 
+    // Usar dados da empresa ou valores padrão
+    const empresaData = empresa || {
+      nome: 'EMPRESA',
+      cnpj: '00000000000000',
+      endereco: undefined,
+    }
+
     const dadosRecibo: DadosRecibo = {
       empresa: {
-        nome: empresa.nome,
-        cnpj: empresa.cnpj,
-        endereco: empresa.endereco,
+        nome: empresaData.nome,
+        cnpj: empresaData.cnpj,
+        endereco: empresaData.endereco,
       },
       numero: vendaFinalizada.numero,
       data: new Date(),
@@ -912,7 +919,7 @@ export default function PDVPage() {
                   variant="default"
                   className="w-full"
                   onClick={imprimirCupom}
-                  disabled={!vendaFinalizada || !empresa}
+                  disabled={!vendaFinalizada}
                 >
                   <Printer className="h-4 w-4 mr-2" />
                   Imprimir Cupom
