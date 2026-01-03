@@ -1241,7 +1241,7 @@ export default function PDVPage() {
 
       {/* Modal de Pagamento */}
       <Dialog open={showPayment} onOpenChange={setShowPayment}>
-        <DialogContent className="sm:max-w-xl md:max-w-2xl max-h-[90vh] flex flex-col p-0 gap-0">
+        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-0 gap-0">
           {paymentSuccess ? (
             <div className="flex flex-col items-center justify-center py-4 sm:py-8 px-4 sm:px-6">
               <CheckCircle className="h-12 w-12 sm:h-16 sm:w-16 text-green-500 mb-3 sm:mb-4" />
