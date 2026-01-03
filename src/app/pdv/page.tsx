@@ -150,23 +150,28 @@ export default function PDVPage() {
           if (usuario) {
             const { data: empresaData } = await supabase
               .from('empresas')
-              .select('razao_social, nome_fantasia, cnpj, endereco_logradouro, endereco_numero, endereco_bairro, endereco_cidade, endereco_uf')
+              .select('razao_social, nome_fantasia, cnpj, endereco')
               .eq('id', usuario.empresa_id)
               .single()
 
             if (empresaData) {
-              const endereco = [
-                empresaData.endereco_logradouro,
-                empresaData.endereco_numero,
-                empresaData.endereco_bairro,
-                empresaData.endereco_cidade,
-                empresaData.endereco_uf,
-              ].filter(Boolean).join(', ')
+              // endereco é um campo JSON
+              let enderecoFormatado: string | undefined
+              if (empresaData.endereco && typeof empresaData.endereco === 'object') {
+                const end = empresaData.endereco as Record<string, string>
+                enderecoFormatado = [
+                  end.logradouro,
+                  end.numero,
+                  end.bairro,
+                  end.cidade,
+                  end.uf,
+                ].filter(Boolean).join(', ')
+              }
 
               setEmpresa({
                 nome: empresaData.nome_fantasia || empresaData.razao_social,
                 cnpj: empresaData.cnpj,
-                endereco: endereco || undefined,
+                endereco: enderecoFormatado || undefined,
               })
             }
           }
