@@ -69,6 +69,8 @@ export default function ConfiguracoesPage() {
     numero_nfce: '1',
     serie_nfe: '1',
     numero_nfe: '1',
+    // PIX
+    chave_pix: '',
   })
 
   useEffect(() => {
@@ -121,6 +123,8 @@ export default function ConfiguracoesPage() {
           numero_nfce: empresaData.config_fiscal?.numero_nfce?.toString() || '1',
           serie_nfe: empresaData.config_fiscal?.serie_nfe || '1',
           numero_nfe: empresaData.config_fiscal?.numero_nfe?.toString() || '1',
+          // PIX
+          chave_pix: empresaData.config_fiscal?.chave_pix || '',
         })
       }
     } catch (error) {
@@ -210,6 +214,7 @@ export default function ConfiguracoesPage() {
         numero_nfce: parseInt(formData.numero_nfce) || 1,
         serie_nfe: formData.serie_nfe,
         numero_nfe: parseInt(formData.numero_nfe) || 1,
+        chave_pix: formData.chave_pix || null,
       }
 
       const { error } = await supabase
@@ -589,6 +594,24 @@ export default function ConfiguracoesPage() {
                         disabled={saving}
                       />
                     </div>
+                  </div>
+                </div>
+
+                <div className="border-t pt-4 mt-4">
+                  <h4 className="font-medium mb-4">PIX - Pagamento Instantâneo</h4>
+                  <div className="space-y-2">
+                    <Label htmlFor="chave_pix">Chave PIX da Empresa</Label>
+                    <Input
+                      id="chave_pix"
+                      name="chave_pix"
+                      placeholder="CPF, CNPJ, email, telefone ou chave aleatória"
+                      value={formData.chave_pix}
+                      onChange={handleChange}
+                      disabled={saving}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Configure a chave PIX para receber pagamentos via QR Code no PDV
+                    </p>
                   </div>
                 </div>
 

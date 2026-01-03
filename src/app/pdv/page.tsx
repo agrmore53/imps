@@ -48,6 +48,7 @@ import {
   Receipt,
 } from 'lucide-react'
 import { printReceipt, type DadosRecibo } from '@/components/pdv/receipt'
+import { PixQRCode } from '@/components/pdv/pix-qrcode'
 
 interface Produto {
   id: string
@@ -83,7 +84,7 @@ export default function PDVPage() {
   const [fiscalConfigurado, setFiscalConfigurado] = useState(false)
   const [caixaAberto, setCaixaAberto] = useState<{ id: string; valor_abertura: number } | null>(null)
   const [loadingCaixa, setLoadingCaixa] = useState(true)
-  const [empresa, setEmpresa] = useState<{ nome: string; cnpj: string; endereco?: string } | null>(null)
+  const [empresa, setEmpresa] = useState<{ nome: string; cnpj: string; endereco?: string; chavePix?: string; cidade?: string } | null>(null)
   const [vendaFinalizada, setVendaFinalizada] = useState<{
     numero?: number
     itens: { codigo: string; nome: string; quantidade: number; preco: number; total: number }[]
@@ -152,14 +153,17 @@ export default function PDVPage() {
 
         const { data: empresaData } = await supabase
           .from('empresas')
-          .select('razao_social, nome_fantasia, cnpj, endereco')
+          .select('razao_social, nome_fantasia, cnpj, endereco, config_fiscal')
           .eq('id', usuario.empresa_id)
           .single()
 
         if (empresaData) {
           let enderecoFormatado: string | undefined
+          let cidade: string | undefined
+
           if (empresaData.endereco && typeof empresaData.endereco === 'object') {
             const end = empresaData.endereco as Record<string, string>
+            cidade = end.cidade
             enderecoFormatado = [
               end.logradouro,
               end.numero,
@@ -169,10 +173,19 @@ export default function PDVPage() {
             ].filter(Boolean).join(', ')
           }
 
+          // Buscar chave PIX do config_fiscal
+          let chavePix: string | undefined
+          if (empresaData.config_fiscal && typeof empresaData.config_fiscal === 'object') {
+            const config = empresaData.config_fiscal as Record<string, unknown>
+            chavePix = config.chave_pix as string | undefined
+          }
+
           setEmpresa({
             nome: empresaData.nome_fantasia || empresaData.razao_social,
             cnpj: empresaData.cnpj,
             endereco: enderecoFormatado || undefined,
+            chavePix: chavePix || undefined,
+            cidade: cidade || undefined,
           })
         }
       } catch (error) {
@@ -1009,6 +1022,19 @@ export default function PDVPage() {
                       </span>
                     </div>
                   )}
+                </div>
+              )}
+
+              {/* QR Code PIX */}
+              {selectedPayment === 'pix' && (
+                <div className="border rounded-lg p-4 bg-muted/30">
+                  <PixQRCode
+                    valor={total}
+                    chavePix={empresa?.chavePix}
+                    beneficiario={empresa?.nome}
+                    cidade={empresa?.cidade}
+                    txid={`PDV${Date.now()}`}
+                  />
                 </div>
               )}
 
