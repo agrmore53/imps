@@ -113,14 +113,42 @@ export function gerarPayloadPix(dados: PixPayload): string {
   return payload
 }
 
+// Verificar se é um número de celular brasileiro (DDD + 9 + 8 dígitos)
+function isCelularBrasileiro(numero: string): boolean {
+  // Formato: XX9XXXXXXXX (11 dígitos, 3º dígito é 9)
+  if (!/^\d{11}$/.test(numero)) return false
+
+  const ddd = parseInt(numero.substring(0, 2))
+  const terceiroDigito = numero.charAt(2)
+
+  // DDDs válidos são de 11 a 99
+  // Celulares brasileiros começam com 9 após o DDD
+  return ddd >= 11 && ddd <= 99 && terceiroDigito === '9'
+}
+
 // Formatar chave PIX para exibição
 export function formatarChavePix(chave: string): { tipo: string; formatada: string } {
   // Remove espaços e caracteres especiais para análise
   const limpa = chave.replace(/\s/g, '')
 
-  // Detectar tipo de chave
-  if (/^\d{11}$/.test(limpa)) {
-    // CPF
+  // Detectar tipo de chave - verificar telefone ANTES de CPF
+  if (/^\+55\d{10,11}$/.test(limpa) || /^55\d{10,11}$/.test(limpa)) {
+    // Telefone com código do país
+    const tel = limpa.startsWith('+') ? limpa : '+' + limpa
+    return {
+      tipo: 'Telefone',
+      formatada: tel,
+    }
+  } else if (isCelularBrasileiro(limpa)) {
+    // Celular brasileiro sem código do país (11 dígitos, começa com DDD + 9)
+    const ddd = limpa.substring(0, 2)
+    const numero = limpa.substring(2)
+    return {
+      tipo: 'Celular',
+      formatada: `(${ddd}) ${numero.substring(0, 5)}-${numero.substring(5)}`,
+    }
+  } else if (/^\d{11}$/.test(limpa)) {
+    // CPF (11 dígitos que não são celular)
     return {
       tipo: 'CPF',
       formatada: limpa.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4'),
@@ -130,13 +158,6 @@ export function formatarChavePix(chave: string): { tipo: string; formatada: stri
     return {
       tipo: 'CNPJ',
       formatada: limpa.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5'),
-    }
-  } else if (/^\+55\d{10,11}$/.test(limpa) || /^55\d{10,11}$/.test(limpa)) {
-    // Telefone
-    const tel = limpa.startsWith('+') ? limpa : '+' + limpa
-    return {
-      tipo: 'Telefone',
-      formatada: tel,
     }
   } else if (limpa.includes('@')) {
     // Email
@@ -163,14 +184,17 @@ export function formatarChavePix(chave: string): { tipo: string; formatada: stri
 export function validarChavePix(chave: string): boolean {
   const limpa = chave.replace(/\s/g, '')
 
-  // CPF (11 dígitos)
+  // Telefone (+55 + DDD + número)
+  if (/^\+?55\d{10,11}$/.test(limpa)) return true
+
+  // Celular brasileiro sem código do país (DDD + 9 + número)
+  if (isCelularBrasileiro(limpa)) return true
+
+  // CPF (11 dígitos que não são celular)
   if (/^\d{11}$/.test(limpa)) return true
 
   // CNPJ (14 dígitos)
   if (/^\d{14}$/.test(limpa)) return true
-
-  // Telefone (+55 + DDD + número)
-  if (/^\+?55\d{10,11}$/.test(limpa)) return true
 
   // Email
   if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(limpa)) return true
