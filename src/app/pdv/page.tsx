@@ -45,7 +45,9 @@ import {
   AlertCircle,
   Wallet,
   LockOpen,
+  Receipt,
 } from 'lucide-react'
+import { printReceipt, type DadosRecibo } from '@/components/pdv/receipt'
 
 interface Produto {
   id: string
@@ -81,6 +83,18 @@ export default function PDVPage() {
   const [fiscalConfigurado, setFiscalConfigurado] = useState(false)
   const [caixaAberto, setCaixaAberto] = useState<{ id: string; valor_abertura: number } | null>(null)
   const [loadingCaixa, setLoadingCaixa] = useState(true)
+  const [empresa, setEmpresa] = useState<{ nome: string; cnpj: string; endereco?: string } | null>(null)
+  const [vendaFinalizada, setVendaFinalizada] = useState<{
+    numero?: number
+    itens: { codigo: string; nome: string; quantidade: number; preco: number; total: number }[]
+    subtotal: number
+    desconto: number
+    total: number
+    pagamentos: { forma: string; valor: number }[]
+    valorRecebido?: number
+    troco?: number
+    operador: string
+  } | null>(null)
 
   const {
     items,
@@ -108,7 +122,7 @@ export default function PDVPage() {
   const total = getTotal()
   const troco = parseFloat(valorRecebido || '0') - total
 
-  // Verificar se fiscal está configurado
+  // Verificar se fiscal está configurado e buscar dados da empresa
   useEffect(() => {
     async function verificarFiscal() {
       try {
@@ -122,7 +136,48 @@ export default function PDVPage() {
         setFiscalConfigurado(false)
       }
     }
+
+    async function buscarEmpresa() {
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+          const { data: usuario } = await supabase
+            .from('usuarios')
+            .select('empresa_id')
+            .eq('auth_id', user.id)
+            .single()
+
+          if (usuario) {
+            const { data: empresaData } = await supabase
+              .from('empresas')
+              .select('razao_social, nome_fantasia, cnpj, endereco_logradouro, endereco_numero, endereco_bairro, endereco_cidade, endereco_uf')
+              .eq('id', usuario.empresa_id)
+              .single()
+
+            if (empresaData) {
+              const endereco = [
+                empresaData.endereco_logradouro,
+                empresaData.endereco_numero,
+                empresaData.endereco_bairro,
+                empresaData.endereco_cidade,
+                empresaData.endereco_uf,
+              ].filter(Boolean).join(', ')
+
+              setEmpresa({
+                nome: empresaData.nome_fantasia || empresaData.razao_social,
+                cnpj: empresaData.cnpj,
+                endereco: endereco || undefined,
+              })
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Erro ao buscar empresa:', error)
+      }
+    }
+
     verificarFiscal()
+    buscarEmpresa()
   }, [])
 
   // Verificar se há caixa aberto
@@ -267,16 +322,19 @@ export default function PDVPage() {
       // Obter usuario
       const { data: { user } } = await supabase.auth.getUser()
       let usuarioId = 'offline-user'
+      let operadorNome = 'Operador'
+      let vendaNumero: number | undefined
 
       if (user) {
         const { data: userData } = await supabase
           .from('usuarios')
-          .select('id, empresa_id')
+          .select('id, empresa_id, nome')
           .eq('auth_id', user.id)
           .single()
 
         if (userData) {
           usuarioId = userData.id
+          operadorNome = userData.nome || 'Operador'
         }
       }
 
@@ -341,6 +399,8 @@ export default function PDVPage() {
             .single()
 
           if (vendaError) throw vendaError
+
+          vendaNumero = venda.numero
 
           // Registrar movimento no caixa (se houver caixa aberto)
           if (caixaAberto?.id) {
@@ -451,9 +511,28 @@ export default function PDVPage() {
         })
       }
 
+      // Salvar dados da venda para impressão
+      setVendaFinalizada({
+        numero: vendaNumero,
+        itens: items.map((item) => ({
+          codigo: item.codigo,
+          nome: item.nome,
+          quantidade: item.quantidade,
+          preco: item.preco,
+          total: item.preco * item.quantidade,
+        })),
+        subtotal,
+        desconto,
+        total,
+        pagamentos: [{ forma: formaPagamento, valor: total }],
+        valorRecebido: selectedPayment === 'dinheiro' ? parseFloat(valorRecebido || '0') : undefined,
+        troco: selectedPayment === 'dinheiro' && troco > 0 ? troco : undefined,
+        operador: operadorNome,
+      })
+
       setPaymentSuccess(true)
 
-      // Após alguns segundos, limpar e fechar
+      // Após alguns segundos, limpar e fechar (não fechar automaticamente para permitir impressão)
       setTimeout(() => {
         clearCart()
         setShowPayment(false)
@@ -462,8 +541,9 @@ export default function PDVPage() {
         setValorRecebido('')
         setNfceResult(null)
         setCpfCliente('')
+        setVendaFinalizada(null)
         searchRef.current?.focus()
-      }, nfceResult?.sucesso ? 5000 : 2000)
+      }, 10000) // 10 segundos para dar tempo de imprimir
 
     } catch (error) {
       console.error('Erro ao finalizar venda:', error)
@@ -473,31 +553,36 @@ export default function PDVPage() {
     }
   }
 
-  // Imprimir DANFCE
+  // Imprimir cupom
   function imprimirCupom() {
-    if (!nfceResult?.sucesso) return
-    // Abre popup para imprimir (simplificado)
-    const printWindow = window.open('', '_blank', 'width=400,height=600')
-    if (printWindow) {
-      printWindow.document.write(`
-        <html>
-          <head><title>DANFCE</title></head>
-          <body style="font-family: monospace; padding: 20px;">
-            <h3 style="text-align: center;">NFC-e EMITIDA</h3>
-            <p><strong>Chave:</strong><br>${nfceResult.chave}</p>
-            <p><strong>Protocolo:</strong> ${nfceResult.protocolo}</p>
-            <p><strong>Total:</strong> ${formatCurrency(total)}</p>
-            <hr>
-            <p style="text-align: center; font-size: 10px;">
-              Consulte pela chave de acesso em<br>
-              www.nfce.fazenda.gov.br/portal
-            </p>
-          </body>
-        </html>
-      `)
-      printWindow.document.close()
-      printWindow.print()
+    if (!vendaFinalizada || !empresa) {
+      toast.error('Dados da venda não disponíveis')
+      return
     }
+
+    const dadosRecibo: DadosRecibo = {
+      empresa: {
+        nome: empresa.nome,
+        cnpj: empresa.cnpj,
+        endereco: empresa.endereco,
+      },
+      numero: vendaFinalizada.numero,
+      data: new Date(),
+      operador: vendaFinalizada.operador,
+      itens: vendaFinalizada.itens,
+      subtotal: vendaFinalizada.subtotal,
+      desconto: vendaFinalizada.desconto,
+      total: vendaFinalizada.total,
+      pagamentos: vendaFinalizada.pagamentos,
+      valorRecebido: vendaFinalizada.valorRecebido,
+      troco: vendaFinalizada.troco,
+      nfce: nfceResult?.sucesso
+        ? { chave: nfceResult.chave, protocolo: nfceResult.protocolo }
+        : undefined,
+      cliente: cpfCliente ? { cpf: cpfCliente } : undefined,
+    }
+
+    printReceipt({ dados: dadosRecibo, largura: '80mm' })
   }
 
   // Atalhos de teclado
@@ -807,15 +892,6 @@ export default function PDVPage() {
                       <p className="text-xs font-mono text-muted-foreground break-all">
                         Chave: {nfceResult.chave}
                       </p>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="mt-3 w-full"
-                        onClick={imprimirCupom}
-                      >
-                        <Printer className="h-4 w-4 mr-2" />
-                        Imprimir Cupom
-                      </Button>
                     </>
                   ) : (
                     <p className="text-xs text-red-600">
@@ -824,6 +900,36 @@ export default function PDVPage() {
                   )}
                 </div>
               )}
+
+              {/* Botão de Impressão */}
+              <div className="mt-4 w-full space-y-2">
+                <Button
+                  variant="default"
+                  className="w-full"
+                  onClick={imprimirCupom}
+                  disabled={!vendaFinalizada || !empresa}
+                >
+                  <Printer className="h-4 w-4 mr-2" />
+                  Imprimir Cupom
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => {
+                    clearCart()
+                    setShowPayment(false)
+                    setPaymentSuccess(false)
+                    setSelectedPayment(null)
+                    setValorRecebido('')
+                    setNfceResult(null)
+                    setCpfCliente('')
+                    setVendaFinalizada(null)
+                    searchRef.current?.focus()
+                  }}
+                >
+                  Nova Venda
+                </Button>
+              </div>
             </div>
           ) : (
             <>
