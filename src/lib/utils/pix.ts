@@ -44,12 +44,39 @@ function emvField(id: string, value: string): string {
   return `${id}${length}${value}`
 }
 
+// Normalizar chave PIX para o formato correto do payload EMV
+function normalizarChavePix(chave: string): string {
+  const limpa = chave.replace(/\s/g, '')
+
+  // Se for celular brasileiro sem +55, adicionar
+  // Formato: 11 dígitos, DDD (11-99) + começa com 9
+  if (/^\d{11}$/.test(limpa)) {
+    const ddd = parseInt(limpa.substring(0, 2))
+    const terceiroDigito = limpa.charAt(2)
+
+    if (ddd >= 11 && ddd <= 99 && terceiroDigito === '9') {
+      // É um celular brasileiro, adicionar +55
+      return '+55' + limpa
+    }
+  }
+
+  // Se já tem 55 mas não tem +, adicionar
+  if (/^55\d{10,11}$/.test(limpa)) {
+    return '+' + limpa
+  }
+
+  return limpa
+}
+
 // Gera o payload PIX no formato EMV
 export function gerarPayloadPix(dados: PixPayload): string {
   // Limitar tamanhos conforme especificação
   const beneficiario = dados.beneficiario.substring(0, 25).toUpperCase()
   const cidade = dados.cidade.substring(0, 15).toUpperCase()
   const txid = dados.txid?.substring(0, 25) || '***'
+
+  // Normalizar a chave PIX (adiciona +55 para celulares)
+  const chaveNormalizada = normalizarChavePix(dados.chavePix)
 
   // Formatar valor (2 casas decimais, sem separador de milhar)
   let valorFormatado = ''
@@ -62,7 +89,7 @@ export function gerarPayloadPix(dados: PixPayload): string {
   // 01 = Chave PIX
   // 02 = Descrição (opcional)
   let merchantAccountInfo = emvField('00', 'br.gov.bcb.pix')
-  merchantAccountInfo += emvField('01', dados.chavePix)
+  merchantAccountInfo += emvField('01', chaveNormalizada)
   if (dados.descricao) {
     merchantAccountInfo += emvField('02', dados.descricao.substring(0, 72))
   }
