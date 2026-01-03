@@ -134,27 +134,27 @@ export function PixQRCode({
   }
 
   return (
-    <div className="flex flex-col items-center py-4">
+    <div className="flex flex-col items-center py-2 sm:py-4">
       {/* Valor */}
-      <div className="text-center mb-4">
-        <p className="text-sm text-muted-foreground">Valor a pagar</p>
-        <p className="text-3xl font-bold text-primary">{valorFormatado}</p>
+      <div className="text-center mb-2 sm:mb-4">
+        <p className="text-xs sm:text-sm text-muted-foreground">Valor a pagar</p>
+        <p className="text-2xl sm:text-3xl font-bold text-primary">{valorFormatado}</p>
       </div>
 
       {/* QR Code */}
-      <div className="bg-white p-4 rounded-lg shadow-sm mb-4">
+      <div className="bg-white p-2 sm:p-4 rounded-lg shadow-sm mb-3">
         {loading ? (
-          <div className="w-64 h-64 flex items-center justify-center">
+          <div className="w-40 h-40 sm:w-52 sm:h-52 flex items-center justify-center">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
         ) : qrCodeUrl ? (
           <img
             src={qrCodeUrl}
             alt="QR Code PIX"
-            className="w-64 h-64"
+            className="w-40 h-40 sm:w-52 sm:h-52"
           />
         ) : (
-          <div className="w-64 h-64 flex items-center justify-center bg-muted rounded">
+          <div className="w-40 h-40 sm:w-52 sm:h-52 flex items-center justify-center bg-muted rounded">
             <p className="text-sm text-muted-foreground">Erro ao gerar QR Code</p>
           </div>
         )}

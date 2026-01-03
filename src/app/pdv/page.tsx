@@ -985,15 +985,15 @@ export default function PDVPage() {
 
       {/* Modal de Pagamento */}
       <Dialog open={showPayment} onOpenChange={setShowPayment}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-xl md:max-w-2xl max-h-[90vh] flex flex-col p-0 gap-0">
           {paymentSuccess ? (
-            <div className="flex flex-col items-center justify-center py-8">
-              <CheckCircle className="h-16 w-16 text-green-500 mb-4" />
-              <DialogTitle className="text-2xl text-center">Venda Finalizada!</DialogTitle>
+            <div className="flex flex-col items-center justify-center py-4 sm:py-8 px-4 sm:px-6">
+              <CheckCircle className="h-12 w-12 sm:h-16 sm:w-16 text-green-500 mb-3 sm:mb-4" />
+              <DialogTitle className="text-xl sm:text-2xl text-center">Venda Finalizada!</DialogTitle>
               <DialogDescription className="text-center mt-2">
                 Total: {formatCurrency(total)}
                 {selectedPayment === 'dinheiro' && troco > 0 && (
-                  <span className="block mt-2 text-lg font-bold text-green-600">
+                  <span className="block mt-2 text-base sm:text-lg font-bold text-green-600">
                     Troco: {formatCurrency(troco)}
                   </span>
                 )}
@@ -1001,18 +1001,18 @@ export default function PDVPage() {
 
               {/* Resultado NFC-e */}
               {nfceResult && (
-                <div className={`mt-4 p-4 rounded-lg w-full ${
+                <div className={`mt-3 sm:mt-4 p-2 sm:p-4 rounded-lg w-full ${
                   nfceResult.sucesso
                     ? 'bg-green-50 dark:bg-green-900/20 border border-green-200'
                     : 'bg-red-50 dark:bg-red-900/20 border border-red-200'
                 }`}>
-                  <div className="flex items-center gap-2 mb-2">
+                  <div className="flex items-center gap-2 mb-1 sm:mb-2">
                     {nfceResult.sucesso ? (
-                      <FileText className="h-5 w-5 text-green-600" />
+                      <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />
                     ) : (
-                      <AlertCircle className="h-5 w-5 text-red-600" />
+                      <AlertCircle className="h-4 w-4 sm:h-5 sm:w-5 text-red-600" />
                     )}
-                    <span className={`font-medium ${nfceResult.sucesso ? 'text-green-700' : 'text-red-700'}`}>
+                    <span className={`font-medium text-sm sm:text-base ${nfceResult.sucesso ? 'text-green-700' : 'text-red-700'}`}>
                       {nfceResult.sucesso ? 'NFC-e Autorizada' : 'Erro na NFC-e'}
                     </span>
                   </div>
@@ -1034,7 +1034,7 @@ export default function PDVPage() {
               )}
 
               {/* Botão de Impressão */}
-              <div className="mt-4 w-full space-y-2">
+              <div className="mt-3 sm:mt-4 w-full space-y-2">
                 <Button
                   variant="default"
                   className="w-full"
@@ -1066,197 +1066,210 @@ export default function PDVPage() {
             </div>
           ) : (
             <>
-              <DialogHeader>
-                <DialogTitle>Forma de Pagamento</DialogTitle>
+              {/* Header fixo */}
+              <DialogHeader className="px-4 sm:px-6 pt-4 sm:pt-6 pb-2 shrink-0">
+                <DialogTitle className="text-base sm:text-lg">Forma de Pagamento</DialogTitle>
                 <DialogDescription>
-                  Total a pagar: <span className="font-bold text-xl">{formatCurrency(total)}</span>
+                  Total a pagar: <span className="font-bold text-lg sm:text-xl">{formatCurrency(total)}</span>
                 </DialogDescription>
               </DialogHeader>
 
-              <div className="grid grid-cols-2 gap-3 py-4">
-                <Button
-                  variant={selectedPayment === 'dinheiro' ? 'default' : 'outline'}
-                  className="h-20 flex-col"
-                  onClick={() => setSelectedPayment('dinheiro')}
-                >
-                  <DollarSign className="h-6 w-6 mb-1" />
-                  Dinheiro
-                </Button>
-                <Button
-                  variant={selectedPayment === 'cartao_credito' ? 'default' : 'outline'}
-                  className="h-20 flex-col"
-                  onClick={() => setSelectedPayment('cartao_credito')}
-                >
-                  <CreditCard className="h-6 w-6 mb-1" />
-                  Crédito
-                </Button>
-                <Button
-                  variant={selectedPayment === 'cartao_debito' ? 'default' : 'outline'}
-                  className="h-20 flex-col"
-                  onClick={() => setSelectedPayment('cartao_debito')}
-                >
-                  <CreditCard className="h-6 w-6 mb-1" />
-                  Débito
-                </Button>
-                <Button
-                  variant={selectedPayment === 'pix' ? 'default' : 'outline'}
-                  className="h-20 flex-col"
-                  onClick={() => setSelectedPayment('pix')}
-                >
-                  <QrCode className="h-6 w-6 mb-1" />
-                  PIX
-                </Button>
-                <Button
-                  variant={selectedPayment === 'crediario' ? 'default' : 'outline'}
-                  className="h-20 flex-col col-span-2"
-                  onClick={() => {
-                    setSelectedPayment('crediario')
-                    if (!clienteSelecionado) {
-                      setShowClienteModal(true)
-                    }
-                  }}
-                >
-                  <Users className="h-6 w-6 mb-1" />
-                  Crediário / Fiado
-                </Button>
-              </div>
-
-              {/* Cliente selecionado para crediário */}
-              {selectedPayment === 'crediario' && clienteSelecionado && (
-                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 rounded-lg p-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <UserCheck className="h-5 w-5 text-blue-600" />
-                      <div>
-                        <p className="font-medium">{clienteSelecionado.nome}</p>
-                        <p className="text-xs text-muted-foreground">{clienteSelecionado.cpf_cnpj}</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-xs text-muted-foreground">Crédito disponível</p>
-                      <p className="font-bold text-green-600">
-                        {formatCurrency(clienteSelecionado.limite_credito - clienteSelecionado.saldo_devedor)}
-                      </p>
-                    </div>
-                  </div>
+              {/* Conteúdo com scroll */}
+              <div className="flex-1 overflow-y-auto px-4 sm:px-6 space-y-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
                   <Button
-                    variant="link"
-                    size="sm"
-                    className="mt-2 p-0 h-auto"
-                    onClick={() => setShowClienteModal(true)}
+                    variant={selectedPayment === 'dinheiro' ? 'default' : 'outline'}
+                    className="h-14 flex-col text-xs sm:text-sm"
+                    onClick={() => setSelectedPayment('dinheiro')}
                   >
-                    Trocar cliente
+                    <DollarSign className="h-5 w-5 mb-0.5" />
+                    Dinheiro
+                  </Button>
+                  <Button
+                    variant={selectedPayment === 'cartao_credito' ? 'default' : 'outline'}
+                    className="h-14 flex-col text-xs sm:text-sm"
+                    onClick={() => setSelectedPayment('cartao_credito')}
+                  >
+                    <CreditCard className="h-5 w-5 mb-0.5" />
+                    Crédito
+                  </Button>
+                  <Button
+                    variant={selectedPayment === 'cartao_debito' ? 'default' : 'outline'}
+                    className="h-14 flex-col text-xs sm:text-sm"
+                    onClick={() => setSelectedPayment('cartao_debito')}
+                  >
+                    <CreditCard className="h-5 w-5 mb-0.5" />
+                    Débito
+                  </Button>
+                  <Button
+                    variant={selectedPayment === 'pix' ? 'default' : 'outline'}
+                    className="h-14 flex-col text-xs sm:text-sm"
+                    onClick={() => setSelectedPayment('pix')}
+                  >
+                    <QrCode className="h-5 w-5 mb-0.5" />
+                    PIX
+                  </Button>
+                  <Button
+                    variant={selectedPayment === 'crediario' ? 'default' : 'outline'}
+                    className="h-14 flex-col col-span-2 sm:col-span-1 md:col-span-1 text-xs sm:text-sm"
+                    onClick={() => {
+                      setSelectedPayment('crediario')
+                      if (!clienteSelecionado) {
+                        setShowClienteModal(true)
+                      }
+                    }}
+                  >
+                    <Users className="h-5 w-5 mb-0.5" />
+                    Crediário
                   </Button>
                 </div>
-              )}
 
-              {selectedPayment === 'crediario' && !clienteSelecionado && (
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => setShowClienteModal(true)}
-                >
-                  <Users className="h-4 w-4 mr-2" />
-                  Selecionar Cliente
-                </Button>
-              )}
-
-              {selectedPayment === 'dinheiro' && (
-                <div className="space-y-3">
-                  <div>
-                    <label className="text-sm font-medium">Valor Recebido</label>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      placeholder="0,00"
-                      value={valorRecebido}
-                      onChange={(e) => setValorRecebido(e.target.value)}
-                      className="text-lg h-12"
-                      autoFocus
-                    />
+                {/* Cliente selecionado para crediário */}
+                {selectedPayment === 'crediario' && clienteSelecionado && (
+                  <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 rounded-lg p-2 sm:p-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <UserCheck className="h-4 w-4 text-blue-600 shrink-0" />
+                        <div className="min-w-0">
+                          <p className="font-medium text-sm truncate">{clienteSelecionado.nome}</p>
+                          <p className="text-xs text-muted-foreground">{clienteSelecionado.cpf_cnpj}</p>
+                        </div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p className="text-xs text-muted-foreground">Disponível</p>
+                        <p className="font-bold text-green-600 text-sm">
+                          {formatCurrency(clienteSelecionado.limite_credito - clienteSelecionado.saldo_devedor)}
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      variant="link"
+                      size="sm"
+                      className="mt-1 p-0 h-auto text-xs"
+                      onClick={() => setShowClienteModal(true)}
+                    >
+                      Trocar cliente
+                    </Button>
                   </div>
-                  {parseFloat(valorRecebido || '0') >= total && (
-                    <div className="bg-green-100 dark:bg-green-900/20 p-3 rounded-lg text-center">
-                      <span className="text-sm">Troco:</span>
-                      <span className="block text-2xl font-bold text-green-600">
-                        {formatCurrency(troco)}
-                      </span>
+                )}
+
+                {selectedPayment === 'crediario' && !clienteSelecionado && (
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => setShowClienteModal(true)}
+                  >
+                    <Users className="h-4 w-4 mr-2" />
+                    Selecionar Cliente
+                  </Button>
+                )}
+
+                {selectedPayment === 'dinheiro' && (
+                  <div className="space-y-2">
+                    <div>
+                      <label className="text-xs sm:text-sm font-medium">Valor Recebido</label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        placeholder="0,00"
+                        value={valorRecebido}
+                        onChange={(e) => setValorRecebido(e.target.value)}
+                        className="text-base h-10"
+                        autoFocus
+                      />
+                    </div>
+                    {parseFloat(valorRecebido || '0') >= total && (
+                      <div className="bg-green-100 dark:bg-green-900/20 p-2 rounded-lg text-center">
+                        <span className="text-xs">Troco:</span>
+                        <span className="block text-xl font-bold text-green-600">
+                          {formatCurrency(troco)}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Área de conteúdo específico + NFC-e */}
+                <div className={`grid gap-3 ${selectedPayment === 'pix' ? 'md:grid-cols-2' : 'grid-cols-1'}`}>
+                  {/* QR Code PIX */}
+                  {selectedPayment === 'pix' && (
+                    <div className="border rounded-lg p-2 bg-muted/30">
+                      <PixQRCode
+                        valor={total}
+                        chavePix={empresa?.chavePix}
+                        beneficiario={empresa?.nome}
+                        cidade={empresa?.cidade}
+                        txid={`PDV${Date.now()}`}
+                      />
                     </div>
                   )}
-                </div>
-              )}
 
-              {/* QR Code PIX */}
-              {selectedPayment === 'pix' && (
-                <div className="border rounded-lg p-4 bg-muted/30">
-                  <PixQRCode
-                    valor={total}
-                    chavePix={empresa?.chavePix}
-                    beneficiario={empresa?.nome}
-                    cidade={empresa?.cidade}
-                    txid={`PDV${Date.now()}`}
-                  />
-                </div>
-              )}
+                  {/* Opções de NFC-e */}
+                  <div className={`border-t pt-3 space-y-2 ${selectedPayment === 'pix' ? 'md:border-t-0 md:border-l md:pt-0 md:pl-3' : ''}`}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <FileText className="h-4 w-4 text-muted-foreground" />
+                        <Label htmlFor="emitir-nfce" className="text-xs sm:text-sm">
+                          Emitir NFC-e
+                        </Label>
+                      </div>
+                      <Switch
+                        id="emitir-nfce"
+                        checked={emitirNFCe}
+                        onCheckedChange={setEmitirNFCe}
+                        disabled={!fiscalConfigurado}
+                      />
+                    </div>
 
-              {/* Opções de NFC-e */}
-              <div className="border-t pt-4 mt-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <FileText className="h-4 w-4 text-muted-foreground" />
-                    <Label htmlFor="emitir-nfce" className="text-sm">
-                      Emitir NFC-e
-                    </Label>
+                    {!fiscalConfigurado && (
+                      <p className="text-xs text-muted-foreground">
+                        Configure o certificado digital em{' '}
+                        <Link href="/dashboard/fiscal/configuracoes" className="underline text-primary">
+                          Configurações Fiscais
+                        </Link>
+                      </p>
+                    )}
+
+                    {emitirNFCe && fiscalConfigurado && (
+                      <div>
+                        <Label htmlFor="cpf-cliente" className="text-xs sm:text-sm">
+                          CPF do cliente (opcional)
+                        </Label>
+                        <Input
+                          id="cpf-cliente"
+                          placeholder="000.000.000-00"
+                          value={cpfCliente}
+                          onChange={(e) => setCpfCliente(e.target.value)}
+                          className="mt-1 h-9"
+                        />
+                      </div>
+                    )}
                   </div>
-                  <Switch
-                    id="emitir-nfce"
-                    checked={emitirNFCe}
-                    onCheckedChange={setEmitirNFCe}
-                    disabled={!fiscalConfigurado}
-                  />
                 </div>
-
-                {!fiscalConfigurado && (
-                  <p className="text-xs text-muted-foreground">
-                    Configure o certificado digital em{' '}
-                    <Link href="/dashboard/fiscal/configuracoes" className="underline text-primary">
-                      Configurações Fiscais
-                    </Link>
-                  </p>
-                )}
-
-                {emitirNFCe && fiscalConfigurado && (
-                  <div>
-                    <Label htmlFor="cpf-cliente" className="text-sm">
-                      CPF do cliente (opcional)
-                    </Label>
-                    <Input
-                      id="cpf-cliente"
-                      placeholder="000.000.000-00"
-                      value={cpfCliente}
-                      onChange={(e) => setCpfCliente(e.target.value)}
-                      className="mt-1"
-                    />
-                  </div>
-                )}
               </div>
 
-              <DialogFooter className="mt-4">
-                <Button variant="outline" onClick={() => setShowPayment(false)}>
+              {/* Footer fixo */}
+              <DialogFooter className="px-4 sm:px-6 py-3 sm:py-4 border-t mt-auto shrink-0 gap-2">
+                <Button variant="outline" onClick={() => setShowPayment(false)} className="flex-1 sm:flex-none">
                   Cancelar
                 </Button>
                 <Button
                   onClick={finalizarVenda}
                   disabled={!selectedPayment || paymentLoading}
+                  className="flex-1 sm:flex-none"
                 >
                   {paymentLoading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      {emitirNFCe && fiscalConfigurado ? 'Emitindo NFC-e...' : 'Processando...'}
+                      <span className="hidden sm:inline">{emitirNFCe && fiscalConfigurado ? 'Emitindo NFC-e...' : 'Processando...'}</span>
+                      <span className="sm:hidden">Processando...</span>
                     </>
                   ) : (
-                    'Confirmar Pagamento'
+                    <>
+                      <span className="hidden sm:inline">Confirmar Pagamento</span>
+                      <span className="sm:hidden">Confirmar</span>
+                    </>
                   )}
                 </Button>
               </DialogFooter>

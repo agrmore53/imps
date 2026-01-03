@@ -265,7 +265,7 @@ export default function NovoClientePage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="telefone">Telefone</Label>
+                <Label htmlFor="telefone">WhatsApp</Label>
                 <Input
                   id="telefone"
                   name="telefone"
