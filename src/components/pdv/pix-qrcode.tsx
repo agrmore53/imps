@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { toast } from 'sonner'
-import { Copy, CheckCircle, Loader2, QrCode, RefreshCw } from 'lucide-react'
+import { CheckCircle, Loader2, QrCode } from 'lucide-react'
 import { formatarChavePix, validarChavePix } from '@/lib/utils/pix'
 
 interface PixQRCodeProps {
@@ -27,8 +27,6 @@ export function PixQRCode({
   onPagamentoConfirmado,
 }: PixQRCodeProps) {
   const [qrCodeUrl, setQrCodeUrl] = useState<string>('')
-  const [pixPayload, setPixPayload] = useState<string>('')
-  const [copiado, setCopiado] = useState(false)
   const [loading, setLoading] = useState(true)
   const [chaveConfigurada, setChaveConfigurada] = useState(!!chavePix)
 
@@ -86,9 +84,6 @@ export function PixQRCode({
           value: valor,
         })
 
-        const payload = qrCodePix.payload()
-        setPixPayload(payload)
-
         // Gerar imagem QR Code usando a biblioteca
         const base64 = await qrCodePix.base64()
         setQrCodeUrl(base64)
@@ -102,20 +97,6 @@ export function PixQRCode({
 
     gerarQRCode()
   }, [chavePix, beneficiario, cidade, valor, txid])
-
-  // Copiar código PIX
-  async function copiarPix() {
-    if (!pixPayload) return
-
-    try {
-      await navigator.clipboard.writeText(pixPayload)
-      setCopiado(true)
-      toast.success('Código PIX copiado!')
-      setTimeout(() => setCopiado(false), 3000)
-    } catch (error) {
-      toast.error('Erro ao copiar código')
-    }
-  }
 
   // Se não tem chave configurada
   if (!chaveConfigurada && !loading) {
@@ -170,31 +151,9 @@ export function PixQRCode({
         </div>
       )}
 
-      {/* Botão Copiar */}
-      <Button
-        variant="outline"
-        className="w-full mb-3"
-        onClick={copiarPix}
-        disabled={!pixPayload || loading}
-      >
-        {copiado ? (
-          <>
-            <CheckCircle className="h-4 w-4 mr-2 text-green-500" />
-            Copiado!
-          </>
-        ) : (
-          <>
-            <Copy className="h-4 w-4 mr-2" />
-            Copiar código PIX
-          </>
-        )}
-      </Button>
-
       {/* Instruções */}
-      <div className="text-xs text-muted-foreground text-center space-y-1">
-        <p>1. Abra o app do seu banco</p>
-        <p>2. Escolha pagar com PIX</p>
-        <p>3. Escaneie o QR Code ou cole o código</p>
+      <div className="text-xs text-muted-foreground text-center">
+        <p>Escaneie o QR Code com o app do banco</p>
       </div>
 
       {/* Botão confirmar pagamento */}

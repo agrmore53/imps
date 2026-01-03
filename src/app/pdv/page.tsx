@@ -42,18 +42,12 @@ import {
   CloudOff,
   FileText,
   Printer,
-  AlertCircle,
   Wallet,
   LockOpen,
-  Receipt,
-  UserCheck,
   Users,
   Star,
-  Gift,
   Keyboard,
-  HelpCircle,
   Scan,
-  Volume2,
 } from 'lucide-react'
 import { printReceipt, type DadosRecibo } from '@/components/pdv/receipt'
 import { PixQRCode } from '@/components/pdv/pix-qrcode'
@@ -111,7 +105,6 @@ export default function PDVPage() {
   const audioContextRef = useRef<AudioContext | null>(null)
   const [produtos, setProdutos] = useState<Produto[]>([])
   const [loading, setLoading] = useState(false)
-  const [showPayment, setShowPayment] = useState(false)
   const [paymentLoading, setPaymentLoading] = useState(false)
   const [paymentSuccess, setPaymentSuccess] = useState(false)
   const [selectedPayment, setSelectedPayment] = useState<string | null>(null)
@@ -450,18 +443,18 @@ export default function PDVPage() {
   // Auto-focus no campo de busca
   useEffect(() => {
     // Foca no campo quando modais fecham
-    if (!showPayment && !showClienteModal && !showAjuda) {
+    if (!showClienteModal && !showAjuda) {
       const timer = setTimeout(() => {
         searchRef.current?.focus()
       }, 100)
       return () => clearTimeout(timer)
     }
-  }, [showPayment, showClienteModal, showAjuda])
+  }, [showClienteModal, showAjuda])
 
   // Manter foco no campo de busca (a cada 5 segundos verifica)
   useEffect(() => {
     const interval = setInterval(() => {
-      if (!showPayment && !showClienteModal && !showAjuda) {
+      if (!showClienteModal && !showAjuda) {
         const activeElement = document.activeElement
         const isInputFocused = activeElement?.tagName === 'INPUT' || activeElement?.tagName === 'TEXTAREA'
 
@@ -473,7 +466,7 @@ export default function PDVPage() {
     }, 5000)
 
     return () => clearInterval(interval)
-  }, [showPayment, showClienteModal, showAjuda])
+  }, [showClienteModal, showAjuda])
 
   // Buscar produtos (online ou offline)
   async function buscarProdutos(termo: string) {
@@ -1000,10 +993,9 @@ export default function PDVPage() {
 
       setPaymentSuccess(true)
 
-      // Após alguns segundos, limpar e fechar (não fechar automaticamente para permitir impressão)
+      // Após alguns segundos, limpar e resetar (não resetar automaticamente para permitir impressão)
       setTimeout(() => {
         clearCart()
-        setShowPayment(false)
         setPaymentSuccess(false)
         setSelectedPayment(null)
         setValorRecebido('')
@@ -1084,56 +1076,56 @@ export default function PDVPage() {
           break
         case 'F3':
           e.preventDefault()
-          if (!showPayment) {
-            window.open('/dashboard/clientes/novo', '_blank')
-          }
+          window.open('/dashboard/clientes/novo', '_blank')
           break
         case 'F4':
           e.preventDefault()
-          if (items.length > 0 && !showPayment) {
-            setShowPayment(true)
+          // F4 agora confirma a venda diretamente (Split View)
+          if (items.length > 0 && selectedPayment && !paymentLoading) {
+            if (selectedPayment === 'dinheiro' && troco < 0) {
+              toast.error('Valor recebido insuficiente')
+            } else {
+              finalizarVenda()
+            }
           }
           break
         case 'F5':
           e.preventDefault()
-          if (items.length > 0 && !showPayment) {
+          if (items.length > 0) {
             if (confirm('Limpar todos os itens do carrinho?')) {
               clearCart()
+              setSelectedPayment(null)
+              setValorRecebido('')
             }
           }
           break
         case 'F6':
           e.preventDefault()
           if (items.length > 0) {
-            setShowPayment(true)
             setSelectedPayment('dinheiro')
           }
           break
         case 'F7':
           e.preventDefault()
           if (items.length > 0) {
-            setShowPayment(true)
             setSelectedPayment('cartao_credito')
           }
           break
         case 'F8':
           e.preventDefault()
           if (items.length > 0) {
-            setShowPayment(true)
             setSelectedPayment('cartao_debito')
           }
           break
         case 'F9':
           e.preventDefault()
           if (items.length > 0) {
-            setShowPayment(true)
             setSelectedPayment('pix')
           }
           break
         case 'F10':
           e.preventDefault()
           if (items.length > 0) {
-            setShowPayment(true)
             setSelectedPayment('crediario')
             if (!clienteSelecionado) {
               setShowClienteModal(true)
@@ -1142,7 +1134,7 @@ export default function PDVPage() {
           break
         case 'F11':
           e.preventDefault()
-          if (fidelidadeConfig && !showPayment) {
+          if (fidelidadeConfig) {
             setShowClienteModal(true)
           }
           break
@@ -1153,8 +1145,11 @@ export default function PDVPage() {
         case 'Escape':
           if (showAjuda) {
             setShowAjuda(false)
-          } else if (showPayment) {
-            setShowPayment(false)
+          } else if (showClienteModal) {
+            setShowClienteModal(false)
+          } else if (selectedPayment) {
+            setSelectedPayment(null)
+            setValorRecebido('')
           } else {
             setProdutos([])
           }
@@ -1164,7 +1159,7 @@ export default function PDVPage() {
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [items, showPayment, clienteSelecionado, fidelidadeConfig, showAjuda, clearCart])
+  }, [items, selectedPayment, clienteSelecionado, fidelidadeConfig, showAjuda, showClienteModal, clearCart, paymentLoading, troco, finalizarVenda])
 
   return (
     <div className="flex h-screen">
@@ -1381,112 +1376,271 @@ export default function PDVPage() {
         </Card>
       </div>
 
-      {/* Sidebar - Resumo e Pagamento */}
-      <div className="w-80 border-l flex flex-col bg-muted/30">
-        {/* Header do carrinho */}
-        <div className="p-4 border-b">
-          <h2 className="font-semibold text-lg flex items-center gap-2">
-            <ShoppingCart className="h-5 w-5" />
-            Resumo
-            {getTotalItems() > 0 && (
-              <span className="bg-primary text-primary-foreground text-xs px-2 py-0.5 rounded-full">
-                {getTotalItems()}
-              </span>
-            )}
-          </h2>
-        </div>
-
-        {/* Espaçador */}
-        <div className="flex-1" />
-
-        {/* Totais */}
-        <div className="border-t p-4 space-y-3">
-          <div className="flex justify-between">
-            <span>Subtotal</span>
-            <span className="font-medium">{formatCurrency(subtotal)}</span>
-          </div>
-          <div className="flex justify-between text-muted-foreground">
-            <span>Desconto</span>
-            <span>-{formatCurrency(desconto)}</span>
-          </div>
-          <Separator />
-          <div className="flex justify-between text-2xl font-bold">
-            <span>Total</span>
-            <span className="text-primary">{formatCurrency(total)}</span>
-          </div>
-        </div>
-
-        {/* Ações */}
-        <div className="border-t p-4 space-y-2">
-          <Button
-            className="w-full h-14 text-lg"
-            disabled={items.length === 0}
-            onClick={() => setShowPayment(true)}
-          >
-            Finalizar Venda (F4)
-          </Button>
-          <Button
-            variant="outline"
-            className="w-full"
-            disabled={items.length === 0}
-            onClick={clearCart}
-          >
-            <Trash2 className="mr-2 h-4 w-4" />
-            Limpar Carrinho
-          </Button>
-        </div>
-      </div>
-
-      {/* Modal de Pagamento - Design Compacto */}
-      <Dialog open={showPayment} onOpenChange={setShowPayment}>
-        <DialogContent className="max-w-3xl p-0 gap-0">
-          {paymentSuccess ? (
-            /* ========== TELA DE SUCESSO ========== */
-            <div className="p-6 text-center">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
-                <CheckCircle className="h-8 w-8 text-green-600" />
-              </div>
-              <DialogTitle className="text-2xl font-bold text-green-700">Venda Finalizada!</DialogTitle>
-
-              <div className="mt-4 p-4 bg-muted/50 rounded-xl inline-block">
-                <p className="text-sm text-muted-foreground">Total</p>
-                <p className="text-3xl font-bold">{formatCurrency(total)}</p>
-                {selectedPayment === 'dinheiro' && troco > 0 && (
-                  <div className="mt-2 pt-2 border-t">
-                    <p className="text-sm text-muted-foreground">Troco</p>
-                    <p className="text-2xl font-bold text-amber-600">{formatCurrency(troco)}</p>
-                  </div>
+      {/* Sidebar - Resumo e Pagamento (Split View) */}
+      <div className="w-[420px] border-l flex flex-col bg-muted/30">
+        <ScrollArea className="flex-1">
+          {/* Header com Total */}
+          <div className="p-4 border-b bg-gradient-to-r from-primary/10 to-primary/5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <ShoppingCart className="h-5 w-5" />
+                <span className="font-semibold">Resumo</span>
+                {getTotalItems() > 0 && (
+                  <Badge variant="secondary">{getTotalItems()} itens</Badge>
                 )}
               </div>
+              {items.length > 0 && (
+                <Button variant="ghost" size="sm" onClick={clearCart} className="text-destructive h-8">
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+            <div className="mt-3 flex items-baseline justify-between">
+              <div className="text-sm text-muted-foreground">
+                <div>Subtotal: {formatCurrency(subtotal)}</div>
+                {desconto > 0 && <div>Desconto: -{formatCurrency(desconto)}</div>}
+                {descontoPontos > 0 && <div className="text-amber-600">Pontos: -{formatCurrency(descontoPontos)}</div>}
+              </div>
+              <div className="text-3xl font-bold text-primary">{formatCurrency(total)}</div>
+            </div>
+          </div>
 
-              {/* Info extras */}
-              {(pontosGanhos || nfceResult?.sucesso) && (
-                <div className="mt-4 flex justify-center gap-3">
-                  {pontosGanhos !== null && pontosGanhos > 0 && (
-                    <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100">
-                      <Star className="h-3 w-3 mr-1" />
-                      +{pontosGanhos} pontos
-                    </Badge>
+          {/* Seção de Cliente/Fidelidade */}
+          {(fidelidadeConfig || selectedPayment === 'crediario') && (
+            <div className="p-3 border-b">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium flex items-center gap-2">
+                  <Users className="h-4 w-4" />
+                  Cliente
+                </span>
+                <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setShowClienteModal(true)}>
+                  {clienteSelecionado ? 'Trocar' : 'Selecionar'}
+                </Button>
+              </div>
+              {clienteSelecionado ? (
+                <div className="bg-muted/50 rounded-lg p-2">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium text-sm">{clienteSelecionado.nome}</p>
+                      <p className="text-xs text-muted-foreground">{clienteSelecionado.cpf_cnpj}</p>
+                    </div>
+                    {fidelidadeConfig && (
+                      <div className="text-right">
+                        <div className="flex items-center gap-1 text-amber-600">
+                          <Star className="h-3 w-3" />
+                          <span className="font-bold text-sm">{(clientePontos?.saldo_pontos || 0).toLocaleString('pt-BR')}</span>
+                        </div>
+                        {clientePontos && clientePontos.saldo_pontos > 0 && (
+                          <div className="flex items-center gap-1 mt-1">
+                            <Switch
+                              id="usar-pontos-split"
+                              checked={usarPontos}
+                              onCheckedChange={(checked) => {
+                                setUsarPontos(checked)
+                                if (!checked) setPontosAUsar('')
+                                else setPontosAUsar(String(clientePontos.saldo_pontos))
+                              }}
+                              className="scale-75"
+                            />
+                            <Label htmlFor="usar-pontos-split" className="text-xs">Usar pts</Label>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  {selectedPayment === 'crediario' && (
+                    <div className="mt-2 pt-2 border-t flex justify-between text-xs">
+                      <span>Crédito disponível:</span>
+                      <span className="font-bold text-green-600">
+                        {formatCurrency(clienteSelecionado.limite_credito - clienteSelecionado.saldo_devedor)}
+                      </span>
+                    </div>
                   )}
-                  {nfceResult?.sucesso && (
-                    <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100">
-                      <FileText className="h-3 w-3 mr-1" />
-                      NFC-e OK
-                    </Badge>
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground">Identifique para usar pontos ou crediário</p>
+              )}
+            </div>
+          )}
+
+          {/* Formas de Pagamento */}
+          <div className="p-3">
+            <p className="text-xs font-medium text-muted-foreground uppercase mb-2">Forma de Pagamento</p>
+            <div className="grid grid-cols-5 gap-1">
+              {[
+                { id: 'dinheiro', label: 'Dinheiro', icon: DollarSign, key: 'F6', color: 'green' },
+                { id: 'cartao_credito', label: 'Crédito', icon: CreditCard, key: 'F7', color: 'blue' },
+                { id: 'cartao_debito', label: 'Débito', icon: CreditCard, key: 'F8', color: 'indigo' },
+                { id: 'pix', label: 'PIX', icon: QrCode, key: 'F9', color: 'teal' },
+                { id: 'crediario', label: 'Fiado', icon: Users, key: 'F10', color: 'orange' },
+              ].map((method) => {
+                const Icon = method.icon
+                const isSelected = selectedPayment === method.id
+                const colors: Record<string, { bg: string; selected: string }> = {
+                  green: { bg: 'bg-green-100 text-green-600', selected: 'bg-green-500 text-white' },
+                  blue: { bg: 'bg-blue-100 text-blue-600', selected: 'bg-blue-500 text-white' },
+                  indigo: { bg: 'bg-indigo-100 text-indigo-600', selected: 'bg-indigo-500 text-white' },
+                  teal: { bg: 'bg-teal-100 text-teal-600', selected: 'bg-teal-500 text-white' },
+                  orange: { bg: 'bg-orange-100 text-orange-600', selected: 'bg-orange-500 text-white' },
+                }
+                return (
+                  <button
+                    key={method.id}
+                    onClick={() => {
+                      setSelectedPayment(method.id)
+                      if (method.id === 'crediario' && !clienteSelecionado) {
+                        setShowClienteModal(true)
+                      }
+                    }}
+                    disabled={items.length === 0}
+                    className={`flex flex-col items-center gap-1 p-2 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
+                      isSelected
+                        ? `${colors[method.color].selected} ring-2 ring-offset-1 ring-${method.color}-500`
+                        : `${colors[method.color].bg} hover:opacity-80`
+                    }`}
+                    title={`${method.label} (${method.key})`}
+                  >
+                    <Icon className="h-5 w-5" />
+                    <span className="text-[10px] font-medium leading-none">{method.label}</span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Detalhes do Pagamento Selecionado */}
+          {selectedPayment && items.length > 0 && (
+            <div className="p-3 border-t">
+              {/* Dinheiro */}
+              {selectedPayment === 'dinheiro' && (
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-xs font-medium">Valor Recebido</label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      placeholder="0,00"
+                      value={valorRecebido}
+                      onChange={(e) => setValorRecebido(e.target.value)}
+                      className="text-xl h-12 text-center font-bold mt-1"
+                      autoFocus
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 gap-1">
+                    {[10, 20, 50, 100].map((v) => (
+                      <Button key={v} variant="outline" size="sm" onClick={() => setValorRecebido(String(v))} className="text-xs h-8">
+                        R${v}
+                      </Button>
+                    ))}
+                  </div>
+                  <div className="grid grid-cols-3 gap-1">
+                    <Button variant="outline" size="sm" onClick={() => setValorRecebido(String(total))} className="text-xs h-8">Exato</Button>
+                    <Button variant="outline" size="sm" onClick={() => setValorRecebido(String(Math.ceil(total / 10) * 10))} className="text-xs h-8">R${Math.ceil(total / 10) * 10}</Button>
+                    <Button variant="outline" size="sm" onClick={() => setValorRecebido('200')} className="text-xs h-8">R$200</Button>
+                  </div>
+                  {parseFloat(valorRecebido || '0') >= total && (
+                    <div className="bg-green-100 dark:bg-green-900/30 p-3 rounded-lg text-center">
+                      <p className="text-xs text-green-600">Troco</p>
+                      <p className="text-2xl font-bold text-green-600">{formatCurrency(troco)}</p>
+                    </div>
                   )}
                 </div>
               )}
 
-              <div className="mt-6 flex gap-3 justify-center">
-                <Button onClick={imprimirCupom} className="bg-green-600 hover:bg-green-700">
+              {/* PIX */}
+              {selectedPayment === 'pix' && (
+                <div className="flex justify-center">
+                  <PixQRCode
+                    valor={total}
+                    chavePix={empresa?.chavePix}
+                    beneficiario={empresa?.nome}
+                    cidade={empresa?.cidade}
+                    txid={`PDV${Date.now()}`}
+                  />
+                </div>
+              )}
+
+              {/* Cartões */}
+              {(selectedPayment === 'cartao_credito' || selectedPayment === 'cartao_debito') && (
+                <div className="flex flex-col items-center justify-center py-6 text-center">
+                  <CreditCard className="h-12 w-12 text-muted-foreground mb-3" />
+                  <p className="font-medium">Aguardando maquininha</p>
+                  <p className="text-sm text-muted-foreground">
+                    Passe o cartão de {selectedPayment === 'cartao_credito' ? 'crédito' : 'débito'}
+                  </p>
+                </div>
+              )}
+
+              {/* Crediário */}
+              {selectedPayment === 'crediario' && !clienteSelecionado && (
+                <div className="text-center py-4">
+                  <Users className="h-10 w-10 mx-auto text-muted-foreground mb-2" />
+                  <p className="text-sm text-muted-foreground mb-2">Selecione um cliente</p>
+                  <Button variant="outline" onClick={() => setShowClienteModal(true)}>
+                    <Users className="h-4 w-4 mr-2" />
+                    Selecionar Cliente
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* NFC-e */}
+          <div className="p-3 border-t">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <FileText className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm">Emitir NFC-e</span>
+              </div>
+              <Switch
+                checked={emitirNFCe}
+                onCheckedChange={setEmitirNFCe}
+                disabled={!fiscalConfigurado}
+              />
+            </div>
+            {!fiscalConfigurado && (
+              <Link href="/dashboard/fiscal/configuracoes" className="text-xs text-primary underline mt-1 block">
+                Configurar certificado
+              </Link>
+            )}
+            {emitirNFCe && fiscalConfigurado && (
+              <Input
+                placeholder="CPF na nota (opcional)"
+                value={cpfCliente}
+                onChange={(e) => setCpfCliente(e.target.value)}
+                className="h-8 text-xs mt-2"
+              />
+            )}
+          </div>
+        </ScrollArea>
+
+        {/* Botão Confirmar Venda - Fixo no rodapé */}
+        <div className="border-t p-3 bg-background">
+          {paymentSuccess ? (
+            <div className="text-center">
+              <div className="inline-flex items-center justify-center w-12 h-12 bg-green-100 rounded-full mb-2">
+                <CheckCircle className="h-6 w-6 text-green-600" />
+              </div>
+              <p className="font-bold text-green-700">Venda Finalizada!</p>
+              {selectedPayment === 'dinheiro' && troco > 0 && (
+                <p className="text-amber-600 font-bold">Troco: {formatCurrency(troco)}</p>
+              )}
+              {pontosGanhos !== null && pontosGanhos > 0 && (
+                <Badge className="bg-amber-100 text-amber-700 mt-1">
+                  <Star className="h-3 w-3 mr-1" />
+                  +{pontosGanhos} pontos
+                </Badge>
+              )}
+              <div className="flex gap-2 mt-3">
+                <Button onClick={imprimirCupom} className="flex-1 bg-green-600 hover:bg-green-700">
                   <Printer className="h-4 w-4 mr-2" />
                   Imprimir
                 </Button>
                 <Button
                   variant="outline"
+                  className="flex-1"
                   onClick={() => {
                     clearCart()
-                    setShowPayment(false)
                     setPaymentSuccess(false)
                     setSelectedPayment(null)
                     setValorRecebido('')
@@ -1506,282 +1660,27 @@ export default function PDVPage() {
               </div>
             </div>
           ) : (
-            /* ========== TELA DE PAGAMENTO ========== */
-            <>
-              {/* Header */}
-              <div className="flex items-center justify-between p-4 border-b bg-muted/30">
-                <div>
-                  <DialogTitle className="text-lg">Pagamento</DialogTitle>
-                  <DialogDescription className="text-xs">Selecione a forma de pagamento</DialogDescription>
-                </div>
-                <div className="text-right">
-                  <p className="text-xs text-muted-foreground">Total</p>
-                  <p className="text-3xl font-bold text-primary">{formatCurrency(total)}</p>
-                  {descontoPontos > 0 && (
-                    <p className="text-xs text-amber-600">-{formatCurrency(descontoPontos)} pontos</p>
-                  )}
-                </div>
-              </div>
-
-              {/* Conteúdo em 2 colunas */}
-              <div className="p-4">
-                <div className="grid grid-cols-2 gap-4">
-                  {/* Coluna Esquerda: Formas de Pagamento */}
-                  <div>
-                    <p className="text-xs font-medium text-muted-foreground uppercase mb-3">Forma de Pagamento</p>
-                    <div className="grid grid-cols-1 gap-2">
-                      {[
-                        { id: 'dinheiro', label: 'Dinheiro', icon: DollarSign, key: 'F6', color: 'green' },
-                        { id: 'cartao_credito', label: 'Crédito', icon: CreditCard, key: 'F7', color: 'blue' },
-                        { id: 'cartao_debito', label: 'Débito', icon: CreditCard, key: 'F8', color: 'indigo' },
-                        { id: 'pix', label: 'PIX', icon: QrCode, key: 'F9', color: 'teal' },
-                        { id: 'crediario', label: 'Crediário', icon: Users, key: 'F10', color: 'orange' },
-                      ].map((method) => {
-                        const Icon = method.icon
-                        const isSelected = selectedPayment === method.id
-                        const colorClasses = {
-                          green: isSelected ? 'border-green-500 bg-green-50 dark:bg-green-900/20' : '',
-                          blue: isSelected ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : '',
-                          indigo: isSelected ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20' : '',
-                          teal: isSelected ? 'border-teal-500 bg-teal-50 dark:bg-teal-900/20' : '',
-                          orange: isSelected ? 'border-orange-500 bg-orange-50 dark:bg-orange-900/20' : '',
-                        }
-                        const iconBg = {
-                          green: isSelected ? 'bg-green-500 text-white' : 'bg-green-100 text-green-600',
-                          blue: isSelected ? 'bg-blue-500 text-white' : 'bg-blue-100 text-blue-600',
-                          indigo: isSelected ? 'bg-indigo-500 text-white' : 'bg-indigo-100 text-indigo-600',
-                          teal: isSelected ? 'bg-teal-500 text-white' : 'bg-teal-100 text-teal-600',
-                          orange: isSelected ? 'bg-orange-500 text-white' : 'bg-orange-100 text-orange-600',
-                        }
-                        return (
-                          <button
-                            key={method.id}
-                            onClick={() => {
-                              setSelectedPayment(method.id)
-                              if (method.id === 'crediario' && !clienteSelecionado) {
-                                setShowClienteModal(true)
-                              }
-                            }}
-                            className={`flex items-center gap-3 p-3 rounded-lg border-2 transition-all ${
-                              isSelected ? colorClasses[method.color as keyof typeof colorClasses] : 'border-transparent bg-muted/50 hover:bg-muted'
-                            }`}
-                          >
-                            <div className={`p-2 rounded-lg ${iconBg[method.color as keyof typeof iconBg]}`}>
-                              <Icon className="h-5 w-5" />
-                            </div>
-                            <div className="flex-1 text-left">
-                              <p className="font-medium">{method.label}</p>
-                            </div>
-                            <span className="text-xs text-muted-foreground">{method.key}</span>
-                            {isSelected && <CheckCircle className="h-4 w-4 text-current" />}
-                          </button>
-                        )
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Coluna Direita: Detalhes + Opções */}
-                  <div className="space-y-4">
-                    {/* Área de detalhes */}
-                    <div className="bg-muted/30 rounded-xl p-4 min-h-[200px]">
-                      {/* Dinheiro */}
-                      {selectedPayment === 'dinheiro' && (
-                        <div className="space-y-3">
-                          <div>
-                            <label className="text-sm font-medium">Valor Recebido</label>
-                            <Input
-                              type="number"
-                              step="0.01"
-                              placeholder="0,00"
-                              value={valorRecebido}
-                              onChange={(e) => setValorRecebido(e.target.value)}
-                              className="text-xl h-12 text-center font-bold mt-1"
-                              autoFocus
-                            />
-                          </div>
-                          <div className="grid grid-cols-4 gap-1">
-                            {[10, 20, 50, 100].map((v) => (
-                              <Button key={v} variant="outline" size="sm" onClick={() => setValorRecebido(String(v))} className="text-xs">
-                                R${v}
-                              </Button>
-                            ))}
-                          </div>
-                          <div className="grid grid-cols-3 gap-1">
-                            <Button variant="outline" size="sm" onClick={() => setValorRecebido(String(total))} className="text-xs">Exato</Button>
-                            <Button variant="outline" size="sm" onClick={() => setValorRecebido(String(Math.ceil(total / 10) * 10))} className="text-xs">R${Math.ceil(total / 10) * 10}</Button>
-                            <Button variant="outline" size="sm" onClick={() => setValorRecebido('200')} className="text-xs">R$200</Button>
-                          </div>
-                          {parseFloat(valorRecebido || '0') >= total && (
-                            <div className="bg-green-100 dark:bg-green-900/30 p-3 rounded-lg text-center">
-                              <p className="text-xs text-green-600">Troco</p>
-                              <p className="text-2xl font-bold text-green-600">{formatCurrency(troco)}</p>
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                      {/* PIX */}
-                      {selectedPayment === 'pix' && (
-                        <div className="flex justify-center">
-                          <PixQRCode
-                            valor={total}
-                            chavePix={empresa?.chavePix}
-                            beneficiario={empresa?.nome}
-                            cidade={empresa?.cidade}
-                            txid={`PDV${Date.now()}`}
-                          />
-                        </div>
-                      )}
-
-                      {/* Cartões */}
-                      {(selectedPayment === 'cartao_credito' || selectedPayment === 'cartao_debito') && (
-                        <div className="flex flex-col items-center justify-center h-full py-8">
-                          <CreditCard className="h-12 w-12 text-muted-foreground mb-3" />
-                          <p className="font-medium">Aguardando maquininha</p>
-                          <p className="text-sm text-muted-foreground">Passe o cartão de {selectedPayment === 'cartao_credito' ? 'crédito' : 'débito'}</p>
-                        </div>
-                      )}
-
-                      {/* Crediário */}
-                      {selectedPayment === 'crediario' && (
-                        <div>
-                          {clienteSelecionado ? (
-                            <div className="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-3 border border-orange-200">
-                              <div className="flex items-center gap-2">
-                                <UserCheck className="h-5 w-5 text-orange-600" />
-                                <div className="flex-1">
-                                  <p className="font-medium">{clienteSelecionado.nome}</p>
-                                  <p className="text-xs text-muted-foreground">{clienteSelecionado.cpf_cnpj}</p>
-                                </div>
-                              </div>
-                              <div className="flex justify-between items-center mt-2 pt-2 border-t border-orange-200">
-                                <span className="text-sm">Disponível:</span>
-                                <span className="font-bold text-green-600">
-                                  {formatCurrency(clienteSelecionado.limite_credito - clienteSelecionado.saldo_devedor)}
-                                </span>
-                              </div>
-                              <Button variant="link" size="sm" className="p-0 h-auto mt-1 text-xs" onClick={() => setShowClienteModal(true)}>
-                                Trocar cliente
-                              </Button>
-                            </div>
-                          ) : (
-                            <Button variant="outline" className="w-full" onClick={() => setShowClienteModal(true)}>
-                              <Users className="h-4 w-4 mr-2" />
-                              Selecionar Cliente
-                            </Button>
-                          )}
-                        </div>
-                      )}
-
-                      {/* Placeholder */}
-                      {!selectedPayment && (
-                        <div className="flex flex-col items-center justify-center h-full py-8 text-muted-foreground">
-                          <CreditCard className="h-10 w-10 mb-2 opacity-50" />
-                          <p>Selecione uma forma de pagamento</p>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Opções: Fidelidade e NFC-e lado a lado */}
-                    <div className="grid grid-cols-2 gap-3">
-                      {/* Fidelidade */}
-                      {fidelidadeConfig && (
-                        <div className="bg-amber-50 dark:bg-amber-900/20 rounded-lg p-3 border border-amber-200">
-                          <div className="flex items-center gap-2 mb-2">
-                            <Gift className="h-4 w-4 text-amber-600" />
-                            <span className="text-sm font-medium text-amber-700">Fidelidade</span>
-                          </div>
-                          {!clienteSelecionado ? (
-                            <Button variant="outline" size="sm" className="w-full text-xs h-8" onClick={() => setShowClienteModal(true)}>
-                              Identificar
-                            </Button>
-                          ) : (
-                            <div className="space-y-1">
-                              <p className="text-lg font-bold text-amber-600 text-center">
-                                {(clientePontos?.saldo_pontos || 0).toLocaleString('pt-BR')} pts
-                              </p>
-                              {clientePontos && clientePontos.saldo_pontos > 0 && (
-                                <div className="flex items-center gap-1">
-                                  <Switch
-                                    id="usar-pontos"
-                                    checked={usarPontos}
-                                    onCheckedChange={(checked) => {
-                                      setUsarPontos(checked)
-                                      if (!checked) setPontosAUsar('')
-                                      else setPontosAUsar(String(clientePontos.saldo_pontos))
-                                    }}
-                                    className="scale-75"
-                                  />
-                                  <Label htmlFor="usar-pontos" className="text-xs">Usar</Label>
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                      {/* NFC-e */}
-                      <div className="bg-muted/50 rounded-lg p-3 border">
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center gap-2">
-                            <FileText className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-sm font-medium">NFC-e</span>
-                          </div>
-                          <Switch
-                            id="emitir-nfce"
-                            checked={emitirNFCe}
-                            onCheckedChange={setEmitirNFCe}
-                            disabled={!fiscalConfigurado}
-                            className="scale-75"
-                          />
-                        </div>
-                        {!fiscalConfigurado && (
-                          <Link href="/dashboard/fiscal/configuracoes" className="text-xs text-primary underline">
-                            Configurar
-                          </Link>
-                        )}
-                        {emitirNFCe && fiscalConfigurado && (
-                          <Input
-                            placeholder="CPF (opcional)"
-                            value={cpfCliente}
-                            onChange={(e) => setCpfCliente(e.target.value)}
-                            className="h-7 text-xs"
-                          />
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Footer */}
-              <div className="flex items-center justify-between p-4 border-t bg-muted/20">
-                <Button variant="ghost" size="sm" onClick={() => setShowPayment(false)}>
-                  <X className="h-4 w-4 mr-1" />
-                  Cancelar
-                </Button>
-                <Button
-                  onClick={finalizarVenda}
-                  disabled={!selectedPayment || paymentLoading}
-                  className="min-w-[180px]"
-                >
-                  {paymentLoading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Processando...
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle className="mr-2 h-4 w-4" />
-                      Confirmar
-                    </>
-                  )}
-                </Button>
-              </div>
-            </>
+            <Button
+              className="w-full h-14 text-lg"
+              disabled={items.length === 0 || !selectedPayment || paymentLoading || (selectedPayment === 'dinheiro' && troco < 0)}
+              onClick={finalizarVenda}
+            >
+              {paymentLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  Processando...
+                </>
+              ) : (
+                <>
+                  <CheckCircle className="mr-2 h-5 w-5" />
+                  Confirmar Venda (F4)
+                </>
+              )}
+            </Button>
           )}
-        </DialogContent>
-      </Dialog>
+        </div>
+      </div>
+
 
       {/* Modal de Seleção de Cliente (Crediário) */}
       <Dialog open={showClienteModal} onOpenChange={setShowClienteModal}>
@@ -1927,7 +1826,7 @@ export default function PDVPage() {
               </div>
               <div className="flex items-center gap-2 p-2 rounded bg-muted">
                 <kbd className="px-2 py-1 bg-background border rounded text-xs font-mono">F4</kbd>
-                <span>Finalizar venda</span>
+                <span>Confirmar venda</span>
               </div>
               <div className="flex items-center gap-2 p-2 rounded bg-muted">
                 <kbd className="px-2 py-1 bg-background border rounded text-xs font-mono">F5</kbd>
