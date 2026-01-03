@@ -1,13 +1,13 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import QRCode from 'qrcode'
+import { QrCodePix } from 'qrcode-pix'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { toast } from 'sonner'
 import { Copy, CheckCircle, Loader2, QrCode, RefreshCw } from 'lucide-react'
-import { gerarPayloadPix, formatarChavePix, validarChavePix } from '@/lib/utils/pix'
+import { formatarChavePix, validarChavePix } from '@/lib/utils/pix'
 
 interface PixQRCodeProps {
   valor: number
@@ -38,10 +38,10 @@ export function PixQRCode({
     currency: 'BRL',
   }).format(valor)
 
-  // Gerar QR Code
+  // Gerar QR Code usando biblioteca validada
   useEffect(() => {
     async function gerarQRCode() {
-      if (!chavePix || !validarChavePix(chavePix)) {
+      if (!chavePix) {
         setLoading(false)
         setChaveConfigurada(false)
         return
@@ -51,29 +51,47 @@ export function PixQRCode({
       setChaveConfigurada(true)
 
       try {
-        // Gerar payload PIX
-        const payload = gerarPayloadPix({
-          chavePix,
-          beneficiario,
-          cidade,
-          valor,
-          txid: txid || `PDV${Date.now()}`,
+        // Normalizar chave para telefone se necessário
+        let chaveNormalizada = chavePix.replace(/\s/g, '')
+
+        // Se for celular brasileiro (11 dígitos começando com 9 após DDD), adicionar +55
+        if (/^\d{11}$/.test(chaveNormalizada)) {
+          const ddd = parseInt(chaveNormalizada.substring(0, 2))
+          const terceiroDigito = chaveNormalizada.charAt(2)
+          if (ddd >= 11 && ddd <= 99 && terceiroDigito === '9') {
+            chaveNormalizada = '+55' + chaveNormalizada
+          }
+        }
+
+        // Remover acentos do nome e cidade
+        const nomeNormalizado = beneficiario
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .replace(/[^a-zA-Z0-9 ]/g, '')
+          .substring(0, 25)
+
+        const cidadeNormalizada = cidade
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .replace(/[^a-zA-Z0-9 ]/g, '')
+          .substring(0, 15)
+
+        // Usar biblioteca qrcode-pix (validada pela comunidade)
+        const qrCodePix = QrCodePix({
+          version: '01',
+          key: chaveNormalizada,
+          name: nomeNormalizado,
+          city: cidadeNormalizada,
+          transactionId: txid?.replace(/[^a-zA-Z0-9]/g, '').substring(0, 25) || '***',
+          value: valor,
         })
 
+        const payload = qrCodePix.payload()
         setPixPayload(payload)
 
-        // Gerar imagem QR Code
-        const url = await QRCode.toDataURL(payload, {
-          width: 256,
-          margin: 2,
-          color: {
-            dark: '#000000',
-            light: '#FFFFFF',
-          },
-          errorCorrectionLevel: 'M',
-        })
-
-        setQrCodeUrl(url)
+        // Gerar imagem QR Code usando a biblioteca
+        const base64 = await qrCodePix.base64()
+        setQrCodeUrl(base64)
       } catch (error) {
         console.error('Erro ao gerar QR Code:', error)
         toast.error('Erro ao gerar QR Code PIX')
