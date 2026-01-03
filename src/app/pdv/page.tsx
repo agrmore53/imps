@@ -139,45 +139,59 @@ export default function PDVPage() {
 
     async function buscarEmpresa() {
       try {
-        const { data: { user } } = await supabase.auth.getUser()
-        if (user) {
-          const { data: usuario } = await supabase
-            .from('usuarios')
-            .select('empresa_id')
-            .eq('auth_id', user.id)
-            .single()
+        const { data: { user }, error: authError } = await supabase.auth.getUser()
+        console.log('[PDV] Auth user:', user?.id, 'Error:', authError)
 
-          if (usuario) {
-            const { data: empresaData } = await supabase
-              .from('empresas')
-              .select('razao_social, nome_fantasia, cnpj, endereco')
-              .eq('id', usuario.empresa_id)
-              .single()
+        if (!user) {
+          console.log('[PDV] Sem usuário autenticado')
+          return
+        }
 
-            if (empresaData) {
-              // endereco é um campo JSON
-              let enderecoFormatado: string | undefined
-              if (empresaData.endereco && typeof empresaData.endereco === 'object') {
-                const end = empresaData.endereco as Record<string, string>
-                enderecoFormatado = [
-                  end.logradouro,
-                  end.numero,
-                  end.bairro,
-                  end.cidade,
-                  end.uf,
-                ].filter(Boolean).join(', ')
-              }
+        const { data: usuario, error: usuarioError } = await supabase
+          .from('usuarios')
+          .select('empresa_id')
+          .eq('auth_id', user.id)
+          .single()
 
-              setEmpresa({
-                nome: empresaData.nome_fantasia || empresaData.razao_social,
-                cnpj: empresaData.cnpj,
-                endereco: enderecoFormatado || undefined,
-              })
-            }
+        console.log('[PDV] Usuario:', usuario, 'Error:', usuarioError)
+
+        if (!usuario) {
+          console.log('[PDV] Usuario não encontrado na tabela usuarios')
+          return
+        }
+
+        const { data: empresaData, error: empresaError } = await supabase
+          .from('empresas')
+          .select('razao_social, nome_fantasia, cnpj, endereco')
+          .eq('id', usuario.empresa_id)
+          .single()
+
+        console.log('[PDV] Empresa:', empresaData, 'Error:', empresaError)
+
+        if (empresaData) {
+          // endereco é um campo JSON
+          let enderecoFormatado: string | undefined
+          if (empresaData.endereco && typeof empresaData.endereco === 'object') {
+            const end = empresaData.endereco as Record<string, string>
+            enderecoFormatado = [
+              end.logradouro,
+              end.numero,
+              end.bairro,
+              end.cidade,
+              end.uf,
+            ].filter(Boolean).join(', ')
           }
+
+          const empresaFinal = {
+            nome: empresaData.nome_fantasia || empresaData.razao_social,
+            cnpj: empresaData.cnpj,
+            endereco: enderecoFormatado || undefined,
+          }
+          console.log('[PDV] Empresa carregada:', empresaFinal)
+          setEmpresa(empresaFinal)
         }
       } catch (error) {
-        console.error('Erro ao buscar empresa:', error)
+        console.error('[PDV] Erro ao buscar empresa:', error)
       }
     }
 
