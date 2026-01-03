@@ -461,11 +461,7 @@ export default function PDVPage() {
         .eq('cliente_id', clienteId)
         .single()
 
-      if (pontos) {
-        setClientePontos(pontos)
-      } else {
-        setClientePontos({ saldo_pontos: 0, total_acumulado: 0 })
-      }
+      setClientePontos(pontos || null)
     } catch {
       setClientePontos(null)
     }
@@ -663,17 +659,19 @@ export default function PDVPage() {
               // Verificar/criar conta de pontos do cliente
               let saldoAtual = clientePontos?.saldo_pontos || 0
 
-              if (!clientePontos) {
-                // Criar conta de pontos
-                await supabase
-                  .from('fidelidade_pontos')
-                  .upsert({
-                    empresa_id: userData.empresa_id,
-                    cliente_id: clienteSelecionado.id,
-                    saldo_pontos: 0,
-                    total_acumulado: 0,
-                    total_resgatado: 0,
-                  }, { onConflict: 'empresa_id,cliente_id' })
+              // Sempre garantir que existe o registro de pontos
+              const { error: upsertError } = await supabase
+                .from('fidelidade_pontos')
+                .upsert({
+                  empresa_id: userData.empresa_id,
+                  cliente_id: clienteSelecionado.id,
+                  saldo_pontos: saldoAtual,
+                  total_acumulado: clientePontos?.total_acumulado || 0,
+                  total_resgatado: 0,
+                }, { onConflict: 'empresa_id,cliente_id', ignoreDuplicates: true })
+
+              if (upsertError) {
+                console.error('Erro ao criar registro de pontos:', upsertError)
               }
 
               // 1. Registrar resgate de pontos (se usou)
@@ -1392,68 +1390,66 @@ export default function PDVPage() {
                           </Button>
                         </div>
 
-                        {clientePontos && (
-                          <>
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-1">
-                                <Star className="h-4 w-4 text-yellow-500" />
-                                <span className="text-sm">Saldo:</span>
-                                <span className="font-bold">{clientePontos.saldo_pontos.toLocaleString('pt-BR')} pts</span>
-                              </div>
-                              <span className="text-xs text-muted-foreground">
-                                = {formatCurrency(clientePontos.saldo_pontos * fidelidadeConfig.valor_ponto_resgate)}
-                              </span>
+                        <>
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-1">
+                              <Star className="h-4 w-4 text-yellow-500" />
+                              <span className="text-sm">Saldo:</span>
+                              <span className="font-bold">{(clientePontos?.saldo_pontos || 0).toLocaleString('pt-BR')} pts</span>
                             </div>
+                            <span className="text-xs text-muted-foreground">
+                              = {formatCurrency((clientePontos?.saldo_pontos || 0) * fidelidadeConfig.valor_ponto_resgate)}
+                            </span>
+                          </div>
 
-                            {clientePontos.saldo_pontos > 0 && (
-                              <div className="space-y-2">
-                                <div className="flex items-center gap-2">
-                                  <Switch
-                                    id="usar-pontos"
-                                    checked={usarPontos}
-                                    onCheckedChange={(checked) => {
-                                      setUsarPontos(checked)
-                                      if (!checked) setPontosAUsar('')
-                                    }}
-                                  />
-                                  <Label htmlFor="usar-pontos" className="text-sm">
-                                    Usar pontos como desconto
-                                  </Label>
-                                </div>
-
-                                {usarPontos && (
-                                  <div className="flex items-center gap-2">
-                                    <Input
-                                      type="number"
-                                      min="0"
-                                      max={clientePontos.saldo_pontos}
-                                      placeholder="Pontos"
-                                      value={pontosAUsar}
-                                      onChange={(e) => setPontosAUsar(e.target.value)}
-                                      className="w-24 h-8 text-sm"
-                                    />
-                                    <span className="text-sm text-muted-foreground">
-                                      = {formatCurrency(pontosUsados * fidelidadeConfig.valor_ponto_resgate)} desc.
-                                    </span>
-                                    <Button
-                                      type="button"
-                                      variant="outline"
-                                      size="sm"
-                                      className="h-8 text-xs"
-                                      onClick={() => setPontosAUsar(String(clientePontos.saldo_pontos))}
-                                    >
-                                      Usar todos
-                                    </Button>
-                                  </div>
-                                )}
+                          {clientePontos && clientePontos.saldo_pontos > 0 && (
+                            <div className="space-y-2">
+                              <div className="flex items-center gap-2">
+                                <Switch
+                                  id="usar-pontos"
+                                  checked={usarPontos}
+                                  onCheckedChange={(checked) => {
+                                    setUsarPontos(checked)
+                                    if (!checked) setPontosAUsar('')
+                                  }}
+                                />
+                                <Label htmlFor="usar-pontos" className="text-sm">
+                                  Usar pontos como desconto
+                                </Label>
                               </div>
-                            )}
 
-                            <p className="text-xs text-muted-foreground">
-                              Esta compra vale +{Math.floor(total * fidelidadeConfig.pontos_por_real)} pontos
-                            </p>
-                          </>
-                        )}
+                              {usarPontos && (
+                                <div className="flex items-center gap-2">
+                                  <Input
+                                    type="number"
+                                    min="0"
+                                    max={clientePontos.saldo_pontos}
+                                    placeholder="Pontos"
+                                    value={pontosAUsar}
+                                    onChange={(e) => setPontosAUsar(e.target.value)}
+                                    className="w-24 h-8 text-sm"
+                                  />
+                                  <span className="text-sm text-muted-foreground">
+                                    = {formatCurrency(pontosUsados * fidelidadeConfig.valor_ponto_resgate)} desc.
+                                  </span>
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-8 text-xs"
+                                    onClick={() => setPontosAUsar(String(clientePontos.saldo_pontos))}
+                                  >
+                                    Usar todos
+                                  </Button>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          <p className="text-xs text-muted-foreground">
+                            Esta compra vale +{Math.floor(total * fidelidadeConfig.pontos_por_real)} pontos
+                          </p>
+                        </>
                       </div>
                     )}
                   </div>
