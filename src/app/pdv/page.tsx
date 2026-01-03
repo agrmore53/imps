@@ -50,6 +50,8 @@ import {
   Users,
   Star,
   Gift,
+  Keyboard,
+  HelpCircle,
 } from 'lucide-react'
 import { printReceipt, type DadosRecibo } from '@/components/pdv/receipt'
 import { PixQRCode } from '@/components/pdv/pix-qrcode'
@@ -123,6 +125,7 @@ export default function PDVPage() {
   const [usarPontos, setUsarPontos] = useState(false)
   const [pontosAUsar, setPontosAUsar] = useState('')
   const [pontosGanhos, setPontosGanhos] = useState<number | null>(null)
+  const [showAjuda, setShowAjuda] = useState(false)
   const [vendaFinalizada, setVendaFinalizada] = useState<{
     numero?: number
     itens: { codigo: string; nome: string; quantidade: number; preco: number; total: number }[]
@@ -886,21 +889,102 @@ export default function PDVPage() {
   // Atalhos de teclado
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === 'F2') {
-        e.preventDefault()
-        searchRef.current?.focus()
-      } else if (e.key === 'F4' && items.length > 0) {
-        e.preventDefault()
-        setShowPayment(true)
-      } else if (e.key === 'Escape') {
-        setShowPayment(false)
-        setProdutos([])
+      // Ignorar se estiver digitando em input
+      const target = e.target as HTMLElement
+      const isTyping = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA'
+
+      switch (e.key) {
+        case 'F1':
+          e.preventDefault()
+          setShowAjuda(true)
+          break
+        case 'F2':
+          e.preventDefault()
+          searchRef.current?.focus()
+          break
+        case 'F3':
+          e.preventDefault()
+          if (!showPayment) {
+            window.open('/dashboard/clientes/novo', '_blank')
+          }
+          break
+        case 'F4':
+          e.preventDefault()
+          if (items.length > 0 && !showPayment) {
+            setShowPayment(true)
+          }
+          break
+        case 'F5':
+          e.preventDefault()
+          if (items.length > 0 && !showPayment) {
+            if (confirm('Limpar todos os itens do carrinho?')) {
+              clearCart()
+            }
+          }
+          break
+        case 'F6':
+          e.preventDefault()
+          if (items.length > 0) {
+            setShowPayment(true)
+            setSelectedPayment('dinheiro')
+          }
+          break
+        case 'F7':
+          e.preventDefault()
+          if (items.length > 0) {
+            setShowPayment(true)
+            setSelectedPayment('cartao_credito')
+          }
+          break
+        case 'F8':
+          e.preventDefault()
+          if (items.length > 0) {
+            setShowPayment(true)
+            setSelectedPayment('cartao_debito')
+          }
+          break
+        case 'F9':
+          e.preventDefault()
+          if (items.length > 0) {
+            setShowPayment(true)
+            setSelectedPayment('pix')
+          }
+          break
+        case 'F10':
+          e.preventDefault()
+          if (items.length > 0) {
+            setShowPayment(true)
+            setSelectedPayment('crediario')
+            if (!clienteSelecionado) {
+              setShowClienteModal(true)
+            }
+          }
+          break
+        case 'F11':
+          e.preventDefault()
+          if (fidelidadeConfig && !showPayment) {
+            setShowClienteModal(true)
+          }
+          break
+        case 'F12':
+          e.preventDefault()
+          window.location.href = '/pdv/caixa'
+          break
+        case 'Escape':
+          if (showAjuda) {
+            setShowAjuda(false)
+          } else if (showPayment) {
+            setShowPayment(false)
+          } else {
+            setProdutos([])
+          }
+          break
       }
     }
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [items])
+  }, [items, showPayment, clienteSelecionado, fidelidadeConfig, showAjuda, clearCart])
 
   return (
     <div className="flex h-screen">
@@ -973,9 +1057,15 @@ export default function PDVPage() {
                 <span className="hidden md:inline">Sincronizar</span>
               </Button>
             )}
-            <div className="text-sm text-muted-foreground hidden lg:block">
-              F2: Buscar | F4: Pagamento | ESC: Cancelar
-            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowAjuda(true)}
+              className="text-muted-foreground"
+            >
+              <Keyboard className="h-4 w-4 mr-1" />
+              <span className="hidden md:inline">F1: Atalhos</span>
+            </Button>
           </div>
         </div>
 
@@ -1662,6 +1752,86 @@ export default function PDVPage() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowClienteModal(false)}>
               Cancelar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Atalhos de Teclado */}
+      <Dialog open={showAjuda} onOpenChange={setShowAjuda}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Keyboard className="h-5 w-5" />
+              Atalhos de Teclado
+            </DialogTitle>
+            <DialogDescription>
+              Use os atalhos abaixo para agilizar suas vendas
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-2 text-sm">
+              <div className="flex items-center gap-2 p-2 rounded bg-muted">
+                <kbd className="px-2 py-1 bg-background border rounded text-xs font-mono">F1</kbd>
+                <span>Esta ajuda</span>
+              </div>
+              <div className="flex items-center gap-2 p-2 rounded bg-muted">
+                <kbd className="px-2 py-1 bg-background border rounded text-xs font-mono">F2</kbd>
+                <span>Buscar produto</span>
+              </div>
+              <div className="flex items-center gap-2 p-2 rounded bg-muted">
+                <kbd className="px-2 py-1 bg-background border rounded text-xs font-mono">F3</kbd>
+                <span>Novo cliente</span>
+              </div>
+              <div className="flex items-center gap-2 p-2 rounded bg-muted">
+                <kbd className="px-2 py-1 bg-background border rounded text-xs font-mono">F4</kbd>
+                <span>Finalizar venda</span>
+              </div>
+              <div className="flex items-center gap-2 p-2 rounded bg-muted">
+                <kbd className="px-2 py-1 bg-background border rounded text-xs font-mono">F5</kbd>
+                <span>Limpar carrinho</span>
+              </div>
+              <div className="flex items-center gap-2 p-2 rounded bg-muted">
+                <kbd className="px-2 py-1 bg-background border rounded text-xs font-mono">F6</kbd>
+                <span>Pagar Dinheiro</span>
+              </div>
+              <div className="flex items-center gap-2 p-2 rounded bg-muted">
+                <kbd className="px-2 py-1 bg-background border rounded text-xs font-mono">F7</kbd>
+                <span>Pagar Crédito</span>
+              </div>
+              <div className="flex items-center gap-2 p-2 rounded bg-muted">
+                <kbd className="px-2 py-1 bg-background border rounded text-xs font-mono">F8</kbd>
+                <span>Pagar Débito</span>
+              </div>
+              <div className="flex items-center gap-2 p-2 rounded bg-muted">
+                <kbd className="px-2 py-1 bg-background border rounded text-xs font-mono">F9</kbd>
+                <span>Pagar PIX</span>
+              </div>
+              <div className="flex items-center gap-2 p-2 rounded bg-muted">
+                <kbd className="px-2 py-1 bg-background border rounded text-xs font-mono">F10</kbd>
+                <span>Crediário</span>
+              </div>
+              {fidelidadeConfig && (
+                <div className="flex items-center gap-2 p-2 rounded bg-muted">
+                  <kbd className="px-2 py-1 bg-background border rounded text-xs font-mono">F11</kbd>
+                  <span>Fidelidade</span>
+                </div>
+              )}
+              <div className="flex items-center gap-2 p-2 rounded bg-muted">
+                <kbd className="px-2 py-1 bg-background border rounded text-xs font-mono">F12</kbd>
+                <span>Abrir/Fechar Caixa</span>
+              </div>
+              <div className="flex items-center gap-2 p-2 rounded bg-muted col-span-2">
+                <kbd className="px-2 py-1 bg-background border rounded text-xs font-mono">ESC</kbd>
+                <span>Fechar modal / Cancelar</span>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button onClick={() => setShowAjuda(false)}>
+              Entendi
             </Button>
           </DialogFooter>
         </DialogContent>
