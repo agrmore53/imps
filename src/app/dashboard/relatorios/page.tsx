@@ -74,6 +74,17 @@ interface ResumoFinanceiro {
   quantidade_vendas: number
 }
 
+interface ProdutoCurvaABC {
+  id: string
+  codigo: string
+  nome: string
+  quantidade_vendida: number
+  valor_vendido: number
+  percentual: number
+  percentual_acumulado: number
+  classe: 'A' | 'B' | 'C'
+}
+
 export default function RelatoriosPage() {
   const supabase = createClient()
   const [loading, setLoading] = useState(false)
@@ -91,6 +102,16 @@ export default function RelatoriosPage() {
   const [produtos, setProdutos] = useState<ProdutoRelatorio[]>([])
   const [pagamentos, setPagamentos] = useState<PagamentoRelatorio[]>([])
   const [resumoFinanceiro, setResumoFinanceiro] = useState<ResumoFinanceiro | null>(null)
+  const [curvaABC, setCurvaABC] = useState<ProdutoCurvaABC[]>([])
+  const [resumoCurvaABC, setResumoCurvaABC] = useState({
+    totalFaturamento: 0,
+    qtdClasseA: 0,
+    qtdClasseB: 0,
+    qtdClasseC: 0,
+    valorClasseA: 0,
+    valorClasseB: 0,
+    valorClasseC: 0,
+  })
 
   const [resumoVendas, setResumoVendas] = useState({
     total: 0,
@@ -335,6 +356,97 @@ export default function RelatoriosPage() {
     }
   }
 
+  async function buscarCurvaABC() {
+    setLoading(true)
+    try {
+      const { data: itensVendidos, error } = await supabase
+        .from('venda_itens')
+        .select(`
+          produto_id,
+          quantidade,
+          total,
+          produtos (id, codigo, nome)
+        `)
+        .gte('created_at', `${dataInicio}T00:00:00`)
+        .lte('created_at', `${dataFim}T23:59:59`)
+
+      if (error) throw error
+
+      // Agrupar por produto
+      const agrupado: { [key: string]: { id: string; codigo: string; nome: string; quantidade: number; valor: number } } = {}
+      itensVendidos?.forEach((item: any) => {
+        if (item.produtos) {
+          const id = item.produto_id
+          if (!agrupado[id]) {
+            agrupado[id] = {
+              id: item.produtos.id,
+              codigo: item.produtos.codigo,
+              nome: item.produtos.nome,
+              quantidade: 0,
+              valor: 0,
+            }
+          }
+          agrupado[id].quantidade += item.quantidade
+          agrupado[id].valor += item.total
+        }
+      })
+
+      // Ordenar por valor (decrescente)
+      const produtosOrdenados = Object.values(agrupado).sort((a, b) => b.valor - a.valor)
+
+      // Calcular total faturamento
+      const totalFaturamento = produtosOrdenados.reduce((acc, p) => acc + p.valor, 0)
+
+      // Calcular percentuais e classificar
+      let acumulado = 0
+      const produtosABC: ProdutoCurvaABC[] = produtosOrdenados.map((p) => {
+        const percentual = totalFaturamento > 0 ? (p.valor / totalFaturamento) * 100 : 0
+        acumulado += percentual
+
+        let classe: 'A' | 'B' | 'C' = 'C'
+        if (acumulado <= 80) {
+          classe = 'A'
+        } else if (acumulado <= 95) {
+          classe = 'B'
+        }
+
+        return {
+          id: p.id,
+          codigo: p.codigo,
+          nome: p.nome,
+          quantidade_vendida: p.quantidade,
+          valor_vendido: p.valor,
+          percentual,
+          percentual_acumulado: acumulado,
+          classe,
+        }
+      })
+
+      setCurvaABC(produtosABC)
+
+      // Calcular resumo
+      const classeA = produtosABC.filter(p => p.classe === 'A')
+      const classeB = produtosABC.filter(p => p.classe === 'B')
+      const classeC = produtosABC.filter(p => p.classe === 'C')
+
+      setResumoCurvaABC({
+        totalFaturamento,
+        qtdClasseA: classeA.length,
+        qtdClasseB: classeB.length,
+        qtdClasseC: classeC.length,
+        valorClasseA: classeA.reduce((acc, p) => acc + p.valor_vendido, 0),
+        valorClasseB: classeB.reduce((acc, p) => acc + p.valor_vendido, 0),
+        valorClasseC: classeC.reduce((acc, p) => acc + p.valor_vendido, 0),
+      })
+
+      toast.success('Curva ABC gerada!')
+    } catch (error) {
+      toast.error('Erro ao gerar Curva ABC')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   function exportarExcel(dados: any[], nomeArquivo: string) {
     if (dados.length === 0) {
       toast.error('Não há dados para exportar')
@@ -439,6 +551,10 @@ export default function RelatoriosPage() {
           <TabsTrigger value="mais-vendidos">
             <TrendingUp className="mr-2 h-4 w-4" />
             Mais Vendidos
+          </TabsTrigger>
+          <TabsTrigger value="curva-abc">
+            <BarChart3 className="mr-2 h-4 w-4" />
+            Curva ABC
           </TabsTrigger>
           <TabsTrigger value="produtos">
             <Package className="mr-2 h-4 w-4" />
@@ -764,6 +880,240 @@ export default function RelatoriosPage() {
                 <div className="text-center py-12 text-muted-foreground">
                   <TrendingUp className="h-12 w-12 mx-auto mb-4 opacity-50" />
                   <p>Clique em "Gerar Relatório" para visualizar os produtos mais vendidos</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Curva ABC */}
+        <TabsContent value="curva-abc" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Curva ABC - Análise de Pareto</CardTitle>
+              <CardDescription>
+                Classificação dos produtos por importância no faturamento (80-15-5)
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex flex-wrap gap-4 items-end">
+                <div className="space-y-2">
+                  <Label>Data Início</Label>
+                  <Input
+                    type="date"
+                    value={dataInicio}
+                    onChange={(e) => setDataInicio(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Data Fim</Label>
+                  <Input
+                    type="date"
+                    value={dataFim}
+                    onChange={(e) => setDataFim(e.target.value)}
+                  />
+                </div>
+                <Button onClick={buscarCurvaABC} disabled={loading}>
+                  {loading ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Search className="mr-2 h-4 w-4" />
+                  )}
+                  Gerar Curva ABC
+                </Button>
+                {curvaABC.length > 0 && (
+                  <Button
+                    variant="outline"
+                    onClick={() => exportarExcel(
+                      curvaABC.map((p, i) => ({
+                        Rank: i + 1,
+                        Codigo: p.codigo,
+                        Produto: p.nome,
+                        Quantidade: p.quantidade_vendida,
+                        Valor: p.valor_vendido,
+                        Percentual: p.percentual.toFixed(2),
+                        Acumulado: p.percentual_acumulado.toFixed(2),
+                        Classe: p.classe,
+                      })),
+                      'curva_abc'
+                    )}
+                  >
+                    <FileSpreadsheet className="mr-2 h-4 w-4" />
+                    Exportar
+                  </Button>
+                )}
+              </div>
+
+              {curvaABC.length > 0 && (
+                <>
+                  {/* Resumo das Classes */}
+                  <div className="grid gap-4 md:grid-cols-4">
+                    <Card className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/30 dark:to-green-800/20 border-green-200">
+                      <CardContent className="pt-6">
+                        <div className="text-center">
+                          <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-green-500 text-white text-xl font-bold mb-2">
+                            A
+                          </div>
+                          <p className="text-2xl font-bold text-green-700 dark:text-green-400">
+                            {resumoCurvaABC.qtdClasseA} produtos
+                          </p>
+                          <p className="text-sm text-green-600 dark:text-green-500">
+                            {formatCurrency(resumoCurvaABC.valorClasseA)}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            ~80% do faturamento
+                          </p>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="bg-gradient-to-br from-yellow-50 to-yellow-100 dark:from-yellow-900/30 dark:to-yellow-800/20 border-yellow-200">
+                      <CardContent className="pt-6">
+                        <div className="text-center">
+                          <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-yellow-500 text-white text-xl font-bold mb-2">
+                            B
+                          </div>
+                          <p className="text-2xl font-bold text-yellow-700 dark:text-yellow-400">
+                            {resumoCurvaABC.qtdClasseB} produtos
+                          </p>
+                          <p className="text-sm text-yellow-600 dark:text-yellow-500">
+                            {formatCurrency(resumoCurvaABC.valorClasseB)}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            ~15% do faturamento
+                          </p>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/30 dark:to-red-800/20 border-red-200">
+                      <CardContent className="pt-6">
+                        <div className="text-center">
+                          <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-red-500 text-white text-xl font-bold mb-2">
+                            C
+                          </div>
+                          <p className="text-2xl font-bold text-red-700 dark:text-red-400">
+                            {resumoCurvaABC.qtdClasseC} produtos
+                          </p>
+                          <p className="text-sm text-red-600 dark:text-red-500">
+                            {formatCurrency(resumoCurvaABC.valorClasseC)}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            ~5% do faturamento
+                          </p>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardContent className="pt-6">
+                        <div className="text-center">
+                          <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary text-primary-foreground text-lg font-bold mb-2">
+                            <DollarSign className="h-6 w-6" />
+                          </div>
+                          <p className="text-2xl font-bold">
+                            {formatCurrency(resumoCurvaABC.totalFaturamento)}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            Faturamento Total
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {curvaABC.length} produtos
+                          </p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  {/* Barra Visual das Classes */}
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-base">Distribuição do Faturamento</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex h-8 rounded-lg overflow-hidden">
+                        <div
+                          className="bg-green-500 flex items-center justify-center text-white text-xs font-medium"
+                          style={{ width: `${(resumoCurvaABC.valorClasseA / resumoCurvaABC.totalFaturamento) * 100}%` }}
+                        >
+                          A ({((resumoCurvaABC.valorClasseA / resumoCurvaABC.totalFaturamento) * 100).toFixed(0)}%)
+                        </div>
+                        <div
+                          className="bg-yellow-500 flex items-center justify-center text-white text-xs font-medium"
+                          style={{ width: `${(resumoCurvaABC.valorClasseB / resumoCurvaABC.totalFaturamento) * 100}%` }}
+                        >
+                          B ({((resumoCurvaABC.valorClasseB / resumoCurvaABC.totalFaturamento) * 100).toFixed(0)}%)
+                        </div>
+                        <div
+                          className="bg-red-500 flex items-center justify-center text-white text-xs font-medium"
+                          style={{ width: `${(resumoCurvaABC.valorClasseC / resumoCurvaABC.totalFaturamento) * 100}%` }}
+                        >
+                          C ({((resumoCurvaABC.valorClasseC / resumoCurvaABC.totalFaturamento) * 100).toFixed(0)}%)
+                        </div>
+                      </div>
+                      <div className="flex justify-between mt-2 text-xs text-muted-foreground">
+                        <span>{resumoCurvaABC.qtdClasseA} itens ({((resumoCurvaABC.qtdClasseA / curvaABC.length) * 100).toFixed(0)}%)</span>
+                        <span>{resumoCurvaABC.qtdClasseB} itens ({((resumoCurvaABC.qtdClasseB / curvaABC.length) * 100).toFixed(0)}%)</span>
+                        <span>{resumoCurvaABC.qtdClasseC} itens ({((resumoCurvaABC.qtdClasseC / curvaABC.length) * 100).toFixed(0)}%)</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Tabela de Produtos */}
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-16">Rank</TableHead>
+                        <TableHead className="w-16">Classe</TableHead>
+                        <TableHead>Código</TableHead>
+                        <TableHead>Produto</TableHead>
+                        <TableHead className="text-right">Qtd.</TableHead>
+                        <TableHead className="text-right">Faturamento</TableHead>
+                        <TableHead className="text-right">%</TableHead>
+                        <TableHead className="text-right">% Acum.</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {curvaABC.map((produto, index) => (
+                        <TableRow key={produto.id}>
+                          <TableCell className="font-medium">{index + 1}</TableCell>
+                          <TableCell>
+                            <Badge
+                              className={
+                                produto.classe === 'A'
+                                  ? 'bg-green-500 hover:bg-green-600'
+                                  : produto.classe === 'B'
+                                  ? 'bg-yellow-500 hover:bg-yellow-600'
+                                  : 'bg-red-500 hover:bg-red-600'
+                              }
+                            >
+                              {produto.classe}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="font-mono">{produto.codigo}</TableCell>
+                          <TableCell>{produto.nome}</TableCell>
+                          <TableCell className="text-right">{produto.quantidade_vendida}</TableCell>
+                          <TableCell className="text-right font-medium">
+                            {formatCurrency(produto.valor_vendido)}
+                          </TableCell>
+                          <TableCell className="text-right">{produto.percentual.toFixed(2)}%</TableCell>
+                          <TableCell className="text-right font-medium">
+                            {produto.percentual_acumulado.toFixed(2)}%
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </>
+              )}
+
+              {curvaABC.length === 0 && !loading && (
+                <div className="text-center py-12 text-muted-foreground">
+                  <BarChart3 className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>Clique em "Gerar Curva ABC" para classificar os produtos</p>
+                  <p className="text-sm mt-2">
+                    A análise ABC identifica quais produtos são mais importantes para seu faturamento
+                  </p>
                 </div>
               )}
             </CardContent>
