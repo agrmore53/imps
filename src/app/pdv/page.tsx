@@ -1437,308 +1437,192 @@ export default function PDVPage() {
         </div>
       </div>
 
-      {/* Modal de Pagamento - Design Moderno */}
+      {/* Modal de Pagamento - Design Compacto */}
       <Dialog open={showPayment} onOpenChange={setShowPayment}>
-        <DialogContent className="w-[calc(100vw-80px)] max-w-none p-0 gap-0 overflow-hidden">
+        <DialogContent className="max-w-3xl p-0 gap-0">
           {paymentSuccess ? (
             /* ========== TELA DE SUCESSO ========== */
-            <div className="bg-gradient-to-br from-green-50 to-emerald-100 dark:from-green-900/30 dark:to-emerald-900/20 p-8">
-              <div className="max-w-md mx-auto text-center">
-                {/* Ícone animado */}
-                <div className="relative inline-flex">
-                  <div className="absolute inset-0 bg-green-500/20 rounded-full animate-ping" />
-                  <div className="relative bg-green-500 rounded-full p-4">
-                    <CheckCircle className="h-12 w-12 text-white" />
+            <div className="p-6 text-center">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
+                <CheckCircle className="h-8 w-8 text-green-600" />
+              </div>
+              <DialogTitle className="text-2xl font-bold text-green-700">Venda Finalizada!</DialogTitle>
+
+              <div className="mt-4 p-4 bg-muted/50 rounded-xl inline-block">
+                <p className="text-sm text-muted-foreground">Total</p>
+                <p className="text-3xl font-bold">{formatCurrency(total)}</p>
+                {selectedPayment === 'dinheiro' && troco > 0 && (
+                  <div className="mt-2 pt-2 border-t">
+                    <p className="text-sm text-muted-foreground">Troco</p>
+                    <p className="text-2xl font-bold text-amber-600">{formatCurrency(troco)}</p>
                   </div>
-                </div>
+                )}
+              </div>
 
-                <DialogTitle className="text-3xl font-bold mt-6 text-green-800 dark:text-green-200">
-                  Venda Finalizada!
-                </DialogTitle>
-
-                {/* Total e Troco */}
-                <div className="mt-4 p-4 bg-white/80 dark:bg-black/20 rounded-2xl">
-                  <p className="text-sm text-muted-foreground">Total pago</p>
-                  <p className="text-4xl font-bold text-green-600">{formatCurrency(total)}</p>
-                  {selectedPayment === 'dinheiro' && troco > 0 && (
-                    <div className="mt-3 pt-3 border-t border-green-200">
-                      <p className="text-sm text-muted-foreground">Troco</p>
-                      <p className="text-3xl font-bold text-amber-600">{formatCurrency(troco)}</p>
-                    </div>
-                  )}
-                </div>
-
-                {/* Info cards */}
-                <div className="mt-4 grid grid-cols-2 gap-3">
+              {/* Info extras */}
+              {(pontosGanhos || nfceResult?.sucesso) && (
+                <div className="mt-4 flex justify-center gap-3">
                   {pontosGanhos !== null && pontosGanhos > 0 && (
-                    <div className="p-3 bg-amber-100 dark:bg-amber-900/30 rounded-xl text-left">
-                      <div className="flex items-center gap-2">
-                        <Star className="h-5 w-5 text-amber-500" />
-                        <span className="font-bold text-amber-700">+{pontosGanhos} pts</span>
-                      </div>
-                      <p className="text-xs text-amber-600 mt-1">{clienteSelecionado?.nome}</p>
-                    </div>
+                    <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100">
+                      <Star className="h-3 w-3 mr-1" />
+                      +{pontosGanhos} pontos
+                    </Badge>
                   )}
                   {nfceResult?.sucesso && (
-                    <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-xl text-left">
-                      <div className="flex items-center gap-2">
-                        <FileText className="h-5 w-5 text-blue-500" />
-                        <span className="font-bold text-blue-700">NFC-e OK</span>
-                      </div>
-                      <p className="text-xs text-blue-600 mt-1 truncate">Prot: {nfceResult.protocolo}</p>
-                    </div>
+                    <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100">
+                      <FileText className="h-3 w-3 mr-1" />
+                      NFC-e OK
+                    </Badge>
                   )}
                 </div>
+              )}
 
-                {/* Botões */}
-                <div className="mt-6 flex gap-3">
-                  <Button
-                    size="lg"
-                    className="flex-1 h-14 bg-green-600 hover:bg-green-700"
-                    onClick={imprimirCupom}
-                  >
-                    <Printer className="h-5 w-5 mr-2" />
-                    Imprimir
-                  </Button>
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    className="flex-1 h-14 border-green-300 hover:bg-green-50"
-                    onClick={() => {
-                      clearCart()
-                      setShowPayment(false)
-                      setPaymentSuccess(false)
-                      setSelectedPayment(null)
-                      setValorRecebido('')
-                      setNfceResult(null)
-                      setCpfCliente('')
-                      setVendaFinalizada(null)
-                      setClienteSelecionado(null)
-                      setClientePontos(null)
-                      setUsarPontos(false)
-                      setPontosAUsar('')
-                      setPontosGanhos(null)
-                      searchRef.current?.focus()
-                    }}
-                  >
-                    Nova Venda
-                  </Button>
-                </div>
+              <div className="mt-6 flex gap-3 justify-center">
+                <Button onClick={imprimirCupom} className="bg-green-600 hover:bg-green-700">
+                  <Printer className="h-4 w-4 mr-2" />
+                  Imprimir
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    clearCart()
+                    setShowPayment(false)
+                    setPaymentSuccess(false)
+                    setSelectedPayment(null)
+                    setValorRecebido('')
+                    setNfceResult(null)
+                    setCpfCliente('')
+                    setVendaFinalizada(null)
+                    setClienteSelecionado(null)
+                    setClientePontos(null)
+                    setUsarPontos(false)
+                    setPontosAUsar('')
+                    setPontosGanhos(null)
+                    searchRef.current?.focus()
+                  }}
+                >
+                  Nova Venda
+                </Button>
               </div>
             </div>
           ) : (
             /* ========== TELA DE PAGAMENTO ========== */
-            <div className="flex flex-col h-full">
-              {/* Header com Total Destacado */}
-              <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-6 border-b">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <DialogTitle className="text-xl font-semibold">Pagamento</DialogTitle>
-                    <DialogDescription className="text-sm">
-                      Selecione a forma de pagamento
-                    </DialogDescription>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-xs text-muted-foreground uppercase tracking-wide">Total a pagar</p>
-                    <p className="text-4xl font-bold text-primary">{formatCurrency(total)}</p>
-                    {descontoPontos > 0 && (
-                      <Badge variant="secondary" className="mt-1 bg-amber-100 text-amber-700">
-                        <Star className="h-3 w-3 mr-1" />
-                        -{formatCurrency(descontoPontos)} pontos
-                      </Badge>
-                    )}
-                  </div>
+            <>
+              {/* Header */}
+              <div className="flex items-center justify-between p-4 border-b bg-muted/30">
+                <div>
+                  <DialogTitle className="text-lg">Pagamento</DialogTitle>
+                  <DialogDescription className="text-xs">Selecione a forma de pagamento</DialogDescription>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs text-muted-foreground">Total</p>
+                  <p className="text-3xl font-bold text-primary">{formatCurrency(total)}</p>
+                  {descontoPontos > 0 && (
+                    <p className="text-xs text-amber-600">-{formatCurrency(descontoPontos)} pontos</p>
+                  )}
                 </div>
               </div>
 
-              {/* Conteúdo Principal */}
-              <div className="flex-1 p-6">
-                <div className="grid grid-cols-12 gap-6 h-full">
+              {/* Conteúdo em 2 colunas */}
+              <div className="p-4">
+                <div className="grid grid-cols-2 gap-4">
                   {/* Coluna Esquerda: Formas de Pagamento */}
-                  <div className="col-span-4 space-y-3">
-                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">
-                      Forma de Pagamento
-                    </p>
-
-                    {/* Botões de pagamento com cores */}
-                    <button
-                      onClick={() => setSelectedPayment('dinheiro')}
-                      className={`w-full p-4 rounded-xl border-2 transition-all flex items-center gap-4 ${
-                        selectedPayment === 'dinheiro'
-                          ? 'border-green-500 bg-green-50 dark:bg-green-900/30 shadow-lg shadow-green-500/20'
-                          : 'border-transparent bg-muted/50 hover:bg-muted hover:border-muted-foreground/20'
-                      }`}
-                    >
-                      <div className={`p-3 rounded-lg ${selectedPayment === 'dinheiro' ? 'bg-green-500' : 'bg-green-500/20'}`}>
-                        <DollarSign className={`h-6 w-6 ${selectedPayment === 'dinheiro' ? 'text-white' : 'text-green-600'}`} />
-                      </div>
-                      <div className="text-left flex-1">
-                        <p className="font-semibold">Dinheiro</p>
-                        <p className="text-xs text-muted-foreground">F6</p>
-                      </div>
-                      {selectedPayment === 'dinheiro' && <CheckCircle className="h-5 w-5 text-green-500" />}
-                    </button>
-
-                    <button
-                      onClick={() => setSelectedPayment('cartao_credito')}
-                      className={`w-full p-4 rounded-xl border-2 transition-all flex items-center gap-4 ${
-                        selectedPayment === 'cartao_credito'
-                          ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 shadow-lg shadow-blue-500/20'
-                          : 'border-transparent bg-muted/50 hover:bg-muted hover:border-muted-foreground/20'
-                      }`}
-                    >
-                      <div className={`p-3 rounded-lg ${selectedPayment === 'cartao_credito' ? 'bg-blue-500' : 'bg-blue-500/20'}`}>
-                        <CreditCard className={`h-6 w-6 ${selectedPayment === 'cartao_credito' ? 'text-white' : 'text-blue-600'}`} />
-                      </div>
-                      <div className="text-left flex-1">
-                        <p className="font-semibold">Crédito</p>
-                        <p className="text-xs text-muted-foreground">F7</p>
-                      </div>
-                      {selectedPayment === 'cartao_credito' && <CheckCircle className="h-5 w-5 text-blue-500" />}
-                    </button>
-
-                    <button
-                      onClick={() => setSelectedPayment('cartao_debito')}
-                      className={`w-full p-4 rounded-xl border-2 transition-all flex items-center gap-4 ${
-                        selectedPayment === 'cartao_debito'
-                          ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 shadow-lg shadow-indigo-500/20'
-                          : 'border-transparent bg-muted/50 hover:bg-muted hover:border-muted-foreground/20'
-                      }`}
-                    >
-                      <div className={`p-3 rounded-lg ${selectedPayment === 'cartao_debito' ? 'bg-indigo-500' : 'bg-indigo-500/20'}`}>
-                        <CreditCard className={`h-6 w-6 ${selectedPayment === 'cartao_debito' ? 'text-white' : 'text-indigo-600'}`} />
-                      </div>
-                      <div className="text-left flex-1">
-                        <p className="font-semibold">Débito</p>
-                        <p className="text-xs text-muted-foreground">F8</p>
-                      </div>
-                      {selectedPayment === 'cartao_debito' && <CheckCircle className="h-5 w-5 text-indigo-500" />}
-                    </button>
-
-                    <button
-                      onClick={() => setSelectedPayment('pix')}
-                      className={`w-full p-4 rounded-xl border-2 transition-all flex items-center gap-4 ${
-                        selectedPayment === 'pix'
-                          ? 'border-teal-500 bg-teal-50 dark:bg-teal-900/30 shadow-lg shadow-teal-500/20'
-                          : 'border-transparent bg-muted/50 hover:bg-muted hover:border-muted-foreground/20'
-                      }`}
-                    >
-                      <div className={`p-3 rounded-lg ${selectedPayment === 'pix' ? 'bg-teal-500' : 'bg-teal-500/20'}`}>
-                        <QrCode className={`h-6 w-6 ${selectedPayment === 'pix' ? 'text-white' : 'text-teal-600'}`} />
-                      </div>
-                      <div className="text-left flex-1">
-                        <p className="font-semibold">PIX</p>
-                        <p className="text-xs text-muted-foreground">F9</p>
-                      </div>
-                      {selectedPayment === 'pix' && <CheckCircle className="h-5 w-5 text-teal-500" />}
-                    </button>
-
-                    <button
-                      onClick={() => {
-                        setSelectedPayment('crediario')
-                        if (!clienteSelecionado) setShowClienteModal(true)
-                      }}
-                      className={`w-full p-4 rounded-xl border-2 transition-all flex items-center gap-4 ${
-                        selectedPayment === 'crediario'
-                          ? 'border-orange-500 bg-orange-50 dark:bg-orange-900/30 shadow-lg shadow-orange-500/20'
-                          : 'border-transparent bg-muted/50 hover:bg-muted hover:border-muted-foreground/20'
-                      }`}
-                    >
-                      <div className={`p-3 rounded-lg ${selectedPayment === 'crediario' ? 'bg-orange-500' : 'bg-orange-500/20'}`}>
-                        <Users className={`h-6 w-6 ${selectedPayment === 'crediario' ? 'text-white' : 'text-orange-600'}`} />
-                      </div>
-                      <div className="text-left flex-1">
-                        <p className="font-semibold">Crediário</p>
-                        <p className="text-xs text-muted-foreground">F10</p>
-                      </div>
-                      {selectedPayment === 'crediario' && <CheckCircle className="h-5 w-5 text-orange-500" />}
-                    </button>
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground uppercase mb-3">Forma de Pagamento</p>
+                    <div className="grid grid-cols-1 gap-2">
+                      {[
+                        { id: 'dinheiro', label: 'Dinheiro', icon: DollarSign, key: 'F6', color: 'green' },
+                        { id: 'cartao_credito', label: 'Crédito', icon: CreditCard, key: 'F7', color: 'blue' },
+                        { id: 'cartao_debito', label: 'Débito', icon: CreditCard, key: 'F8', color: 'indigo' },
+                        { id: 'pix', label: 'PIX', icon: QrCode, key: 'F9', color: 'teal' },
+                        { id: 'crediario', label: 'Crediário', icon: Users, key: 'F10', color: 'orange' },
+                      ].map((method) => {
+                        const Icon = method.icon
+                        const isSelected = selectedPayment === method.id
+                        const colorClasses = {
+                          green: isSelected ? 'border-green-500 bg-green-50 dark:bg-green-900/20' : '',
+                          blue: isSelected ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : '',
+                          indigo: isSelected ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20' : '',
+                          teal: isSelected ? 'border-teal-500 bg-teal-50 dark:bg-teal-900/20' : '',
+                          orange: isSelected ? 'border-orange-500 bg-orange-50 dark:bg-orange-900/20' : '',
+                        }
+                        const iconBg = {
+                          green: isSelected ? 'bg-green-500 text-white' : 'bg-green-100 text-green-600',
+                          blue: isSelected ? 'bg-blue-500 text-white' : 'bg-blue-100 text-blue-600',
+                          indigo: isSelected ? 'bg-indigo-500 text-white' : 'bg-indigo-100 text-indigo-600',
+                          teal: isSelected ? 'bg-teal-500 text-white' : 'bg-teal-100 text-teal-600',
+                          orange: isSelected ? 'bg-orange-500 text-white' : 'bg-orange-100 text-orange-600',
+                        }
+                        return (
+                          <button
+                            key={method.id}
+                            onClick={() => {
+                              setSelectedPayment(method.id)
+                              if (method.id === 'crediario' && !clienteSelecionado) {
+                                setShowClienteModal(true)
+                              }
+                            }}
+                            className={`flex items-center gap-3 p-3 rounded-lg border-2 transition-all ${
+                              isSelected ? colorClasses[method.color as keyof typeof colorClasses] : 'border-transparent bg-muted/50 hover:bg-muted'
+                            }`}
+                          >
+                            <div className={`p-2 rounded-lg ${iconBg[method.color as keyof typeof iconBg]}`}>
+                              <Icon className="h-5 w-5" />
+                            </div>
+                            <div className="flex-1 text-left">
+                              <p className="font-medium">{method.label}</p>
+                            </div>
+                            <span className="text-xs text-muted-foreground">{method.key}</span>
+                            {isSelected && <CheckCircle className="h-4 w-4 text-current" />}
+                          </button>
+                        )
+                      })}
+                    </div>
                   </div>
 
-                  {/* Coluna Central: Detalhes do Pagamento */}
-                  <div className="col-span-5 bg-muted/30 rounded-2xl p-5">
-                    {/* Dinheiro */}
-                    {selectedPayment === 'dinheiro' && (
-                      <div className="space-y-4">
-                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                          Pagamento em Dinheiro
-                        </p>
-
-                        <div>
-                          <label className="text-sm font-medium mb-2 block">Valor Recebido</label>
-                          <Input
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            placeholder="0,00"
-                            value={valorRecebido}
-                            onChange={(e) => setValorRecebido(e.target.value)}
-                            className="text-2xl h-14 text-center font-bold"
-                            autoFocus
-                          />
-                        </div>
-
-                        {/* Botões de valor rápido */}
-                        <div>
-                          <p className="text-xs text-muted-foreground mb-2">Valor rápido:</p>
-                          <div className="grid grid-cols-4 gap-2">
-                            {[10, 20, 50, 100].map((valor) => (
-                              <Button
-                                key={valor}
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setValorRecebido(String(valor))}
-                                className="font-mono"
-                              >
-                                R${valor}
+                  {/* Coluna Direita: Detalhes + Opções */}
+                  <div className="space-y-4">
+                    {/* Área de detalhes */}
+                    <div className="bg-muted/30 rounded-xl p-4 min-h-[200px]">
+                      {/* Dinheiro */}
+                      {selectedPayment === 'dinheiro' && (
+                        <div className="space-y-3">
+                          <div>
+                            <label className="text-sm font-medium">Valor Recebido</label>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              placeholder="0,00"
+                              value={valorRecebido}
+                              onChange={(e) => setValorRecebido(e.target.value)}
+                              className="text-xl h-12 text-center font-bold mt-1"
+                              autoFocus
+                            />
+                          </div>
+                          <div className="grid grid-cols-4 gap-1">
+                            {[10, 20, 50, 100].map((v) => (
+                              <Button key={v} variant="outline" size="sm" onClick={() => setValorRecebido(String(v))} className="text-xs">
+                                R${v}
                               </Button>
                             ))}
                           </div>
-                          <div className="grid grid-cols-3 gap-2 mt-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setValorRecebido(String(total))}
-                              className="font-mono"
-                            >
-                              Exato
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setValorRecebido(String(Math.ceil(total / 10) * 10))}
-                              className="font-mono"
-                            >
-                              R${Math.ceil(total / 10) * 10}
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setValorRecebido('200')}
-                              className="font-mono"
-                            >
-                              R$200
-                            </Button>
+                          <div className="grid grid-cols-3 gap-1">
+                            <Button variant="outline" size="sm" onClick={() => setValorRecebido(String(total))} className="text-xs">Exato</Button>
+                            <Button variant="outline" size="sm" onClick={() => setValorRecebido(String(Math.ceil(total / 10) * 10))} className="text-xs">R${Math.ceil(total / 10) * 10}</Button>
+                            <Button variant="outline" size="sm" onClick={() => setValorRecebido('200')} className="text-xs">R$200</Button>
                           </div>
+                          {parseFloat(valorRecebido || '0') >= total && (
+                            <div className="bg-green-100 dark:bg-green-900/30 p-3 rounded-lg text-center">
+                              <p className="text-xs text-green-600">Troco</p>
+                              <p className="text-2xl font-bold text-green-600">{formatCurrency(troco)}</p>
+                            </div>
+                          )}
                         </div>
+                      )}
 
-                        {/* Troco */}
-                        {parseFloat(valorRecebido || '0') >= total && (
-                          <div className="bg-green-100 dark:bg-green-900/30 p-4 rounded-xl text-center">
-                            <p className="text-sm text-green-700 dark:text-green-300">Troco</p>
-                            <p className="text-4xl font-bold text-green-600">{formatCurrency(troco)}</p>
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {/* PIX */}
-                    {selectedPayment === 'pix' && (
-                      <div className="space-y-3">
-                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                          Pagamento via PIX
-                        </p>
-                        <div className="bg-white dark:bg-black/20 rounded-xl p-4">
+                      {/* PIX */}
+                      {selectedPayment === 'pix' && (
+                        <div className="flex justify-center">
                           <PixQRCode
                             valor={total}
                             chavePix={empresa?.chavePix}
@@ -1747,208 +1631,154 @@ export default function PDVPage() {
                             txid={`PDV${Date.now()}`}
                           />
                         </div>
-                      </div>
-                    )}
+                      )}
 
-                    {/* Cartões */}
-                    {(selectedPayment === 'cartao_credito' || selectedPayment === 'cartao_debito') && (
-                      <div className="flex flex-col items-center justify-center h-full text-center">
-                        <div className="bg-primary/10 rounded-full p-6 mb-4">
-                          <CreditCard className="h-12 w-12 text-primary" />
-                        </div>
-                        <p className="text-lg font-medium">Aguardando maquininha</p>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          Passe o cartão de {selectedPayment === 'cartao_credito' ? 'crédito' : 'débito'}
-                        </p>
-                        <div className="flex items-center gap-2 mt-4 text-muted-foreground">
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                          <span className="text-sm">Processando...</span>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Crediário */}
-                    {selectedPayment === 'crediario' && (
-                      <div className="space-y-4">
-                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                          Venda no Crediário
-                        </p>
-
-                        {clienteSelecionado ? (
-                          <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 rounded-xl p-4">
-                            <div className="flex items-center gap-3">
-                              <div className="bg-orange-500 rounded-full p-2">
-                                <UserCheck className="h-5 w-5 text-white" />
-                              </div>
-                              <div className="flex-1">
-                                <p className="font-semibold">{clienteSelecionado.nome}</p>
-                                <p className="text-sm text-muted-foreground">{clienteSelecionado.cpf_cnpj}</p>
-                              </div>
-                            </div>
-                            <div className="mt-3 pt-3 border-t border-orange-200 flex justify-between items-center">
-                              <span className="text-sm">Crédito disponível:</span>
-                              <span className="text-lg font-bold text-green-600">
-                                {formatCurrency(clienteSelecionado.limite_credito - clienteSelecionado.saldo_devedor)}
-                              </span>
-                            </div>
-                            <Button
-                              variant="link"
-                              size="sm"
-                              className="mt-2 p-0 h-auto"
-                              onClick={() => setShowClienteModal(true)}
-                            >
-                              Trocar cliente
-                            </Button>
-                          </div>
-                        ) : (
-                          <Button
-                            variant="outline"
-                            className="w-full h-16"
-                            onClick={() => setShowClienteModal(true)}
-                          >
-                            <Users className="h-5 w-5 mr-2" />
-                            Selecionar Cliente
-                          </Button>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Placeholder */}
-                    {!selectedPayment && (
-                      <div className="flex flex-col items-center justify-center h-full text-center">
-                        <div className="bg-muted rounded-full p-6 mb-4">
-                          <CreditCard className="h-12 w-12 text-muted-foreground" />
-                        </div>
-                        <p className="text-lg font-medium text-muted-foreground">
-                          Selecione uma forma de pagamento
-                        </p>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          Use F6-F10 ou clique ao lado
-                        </p>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Coluna Direita: Opções */}
-                  <div className="col-span-3 space-y-4">
-                    {/* Fidelidade */}
-                    {fidelidadeConfig && (
-                      <div className="bg-amber-50 dark:bg-amber-900/20 rounded-xl p-4 border border-amber-200">
-                        <div className="flex items-center gap-2 mb-3">
-                          <Gift className="h-5 w-5 text-amber-600" />
-                          <span className="font-semibold text-amber-800 dark:text-amber-200">Fidelidade</span>
-                        </div>
-
-                        {!clienteSelecionado ? (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="w-full border-amber-300"
-                            onClick={() => setShowClienteModal(true)}
-                          >
-                            <UserCheck className="h-4 w-4 mr-2" />
-                            Identificar Cliente
-                          </Button>
-                        ) : (
-                          <div className="space-y-3">
-                            <div className="flex items-center justify-between">
-                              <span className="text-sm truncate">{clienteSelecionado.nome}</span>
-                              <Button variant="link" size="sm" className="p-0 h-auto text-xs" onClick={() => setShowClienteModal(true)}>
-                                Trocar
-                              </Button>
-                            </div>
-                            <div className="bg-white dark:bg-black/20 rounded-lg p-3 text-center">
-                              <p className="text-2xl font-bold text-amber-600">{(clientePontos?.saldo_pontos || 0).toLocaleString('pt-BR')}</p>
-                              <p className="text-xs text-muted-foreground">pontos disponíveis</p>
-                            </div>
-                            {clientePontos && clientePontos.saldo_pontos > 0 && (
-                              <div className="flex items-center gap-2">
-                                <Switch
-                                  id="usar-pontos"
-                                  checked={usarPontos}
-                                  onCheckedChange={(checked) => {
-                                    setUsarPontos(checked)
-                                    if (!checked) setPontosAUsar('')
-                                    else setPontosAUsar(String(clientePontos.saldo_pontos))
-                                  }}
-                                />
-                                <Label htmlFor="usar-pontos" className="text-xs">
-                                  Usar pontos (-{formatCurrency(clientePontos.saldo_pontos * fidelidadeConfig.valor_ponto_resgate)})
-                                </Label>
-                              </div>
-                            )}
-                            <p className="text-xs text-amber-600 text-center">
-                              Ganha +{Math.floor(total * fidelidadeConfig.pontos_por_real)} pts
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {/* NFC-e */}
-                    <div className="bg-muted/50 rounded-xl p-4 border">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-2">
-                          <FileText className="h-5 w-5 text-muted-foreground" />
-                          <span className="font-semibold">NFC-e</span>
-                        </div>
-                        <Switch
-                          id="emitir-nfce"
-                          checked={emitirNFCe}
-                          onCheckedChange={setEmitirNFCe}
-                          disabled={!fiscalConfigurado}
-                        />
-                      </div>
-
-                      {!fiscalConfigurado ? (
-                        <p className="text-xs text-muted-foreground">
-                          <Link href="/dashboard/fiscal/configuracoes" className="underline text-primary">
-                            Configurar fiscal
-                          </Link>
-                        </p>
-                      ) : emitirNFCe && (
-                        <div>
-                          <Label htmlFor="cpf-cliente" className="text-xs">CPF na nota</Label>
-                          <Input
-                            id="cpf-cliente"
-                            placeholder="Opcional"
-                            value={cpfCliente}
-                            onChange={(e) => setCpfCliente(e.target.value)}
-                            className="mt-1 h-9"
-                          />
+                      {/* Cartões */}
+                      {(selectedPayment === 'cartao_credito' || selectedPayment === 'cartao_debito') && (
+                        <div className="flex flex-col items-center justify-center h-full py-8">
+                          <CreditCard className="h-12 w-12 text-muted-foreground mb-3" />
+                          <p className="font-medium">Aguardando maquininha</p>
+                          <p className="text-sm text-muted-foreground">Passe o cartão de {selectedPayment === 'cartao_credito' ? 'crédito' : 'débito'}</p>
                         </div>
                       )}
+
+                      {/* Crediário */}
+                      {selectedPayment === 'crediario' && (
+                        <div>
+                          {clienteSelecionado ? (
+                            <div className="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-3 border border-orange-200">
+                              <div className="flex items-center gap-2">
+                                <UserCheck className="h-5 w-5 text-orange-600" />
+                                <div className="flex-1">
+                                  <p className="font-medium">{clienteSelecionado.nome}</p>
+                                  <p className="text-xs text-muted-foreground">{clienteSelecionado.cpf_cnpj}</p>
+                                </div>
+                              </div>
+                              <div className="flex justify-between items-center mt-2 pt-2 border-t border-orange-200">
+                                <span className="text-sm">Disponível:</span>
+                                <span className="font-bold text-green-600">
+                                  {formatCurrency(clienteSelecionado.limite_credito - clienteSelecionado.saldo_devedor)}
+                                </span>
+                              </div>
+                              <Button variant="link" size="sm" className="p-0 h-auto mt-1 text-xs" onClick={() => setShowClienteModal(true)}>
+                                Trocar cliente
+                              </Button>
+                            </div>
+                          ) : (
+                            <Button variant="outline" className="w-full" onClick={() => setShowClienteModal(true)}>
+                              <Users className="h-4 w-4 mr-2" />
+                              Selecionar Cliente
+                            </Button>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Placeholder */}
+                      {!selectedPayment && (
+                        <div className="flex flex-col items-center justify-center h-full py-8 text-muted-foreground">
+                          <CreditCard className="h-10 w-10 mb-2 opacity-50" />
+                          <p>Selecione uma forma de pagamento</p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Opções: Fidelidade e NFC-e lado a lado */}
+                    <div className="grid grid-cols-2 gap-3">
+                      {/* Fidelidade */}
+                      {fidelidadeConfig && (
+                        <div className="bg-amber-50 dark:bg-amber-900/20 rounded-lg p-3 border border-amber-200">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Gift className="h-4 w-4 text-amber-600" />
+                            <span className="text-sm font-medium text-amber-700">Fidelidade</span>
+                          </div>
+                          {!clienteSelecionado ? (
+                            <Button variant="outline" size="sm" className="w-full text-xs h-8" onClick={() => setShowClienteModal(true)}>
+                              Identificar
+                            </Button>
+                          ) : (
+                            <div className="space-y-1">
+                              <p className="text-lg font-bold text-amber-600 text-center">
+                                {(clientePontos?.saldo_pontos || 0).toLocaleString('pt-BR')} pts
+                              </p>
+                              {clientePontos && clientePontos.saldo_pontos > 0 && (
+                                <div className="flex items-center gap-1">
+                                  <Switch
+                                    id="usar-pontos"
+                                    checked={usarPontos}
+                                    onCheckedChange={(checked) => {
+                                      setUsarPontos(checked)
+                                      if (!checked) setPontosAUsar('')
+                                      else setPontosAUsar(String(clientePontos.saldo_pontos))
+                                    }}
+                                    className="scale-75"
+                                  />
+                                  <Label htmlFor="usar-pontos" className="text-xs">Usar</Label>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* NFC-e */}
+                      <div className="bg-muted/50 rounded-lg p-3 border">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <FileText className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-sm font-medium">NFC-e</span>
+                          </div>
+                          <Switch
+                            id="emitir-nfce"
+                            checked={emitirNFCe}
+                            onCheckedChange={setEmitirNFCe}
+                            disabled={!fiscalConfigurado}
+                            className="scale-75"
+                          />
+                        </div>
+                        {!fiscalConfigurado && (
+                          <Link href="/dashboard/fiscal/configuracoes" className="text-xs text-primary underline">
+                            Configurar
+                          </Link>
+                        )}
+                        {emitirNFCe && fiscalConfigurado && (
+                          <Input
+                            placeholder="CPF (opcional)"
+                            value={cpfCliente}
+                            onChange={(e) => setCpfCliente(e.target.value)}
+                            className="h-7 text-xs"
+                          />
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
 
               {/* Footer */}
-              <div className="border-t bg-muted/30 p-4 flex items-center justify-between">
-                <Button variant="ghost" onClick={() => setShowPayment(false)} className="text-muted-foreground">
-                  <X className="h-4 w-4 mr-2" />
-                  Cancelar (ESC)
+              <div className="flex items-center justify-between p-4 border-t bg-muted/20">
+                <Button variant="ghost" size="sm" onClick={() => setShowPayment(false)}>
+                  <X className="h-4 w-4 mr-1" />
+                  Cancelar
                 </Button>
                 <Button
-                  size="lg"
                   onClick={finalizarVenda}
                   disabled={!selectedPayment || paymentLoading}
-                  className="min-w-[250px] h-12 text-lg"
+                  className="min-w-[180px]"
                 >
                   {paymentLoading ? (
                     <>
-                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                      {emitirNFCe && fiscalConfigurado ? 'Emitindo NFC-e...' : 'Processando...'}
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Processando...
                     </>
                   ) : (
                     <>
-                      <CheckCircle className="mr-2 h-5 w-5" />
-                      Confirmar Pagamento
+                      <CheckCircle className="mr-2 h-4 w-4" />
+                      Confirmar
                     </>
                   )}
                 </Button>
               </div>
-            </div>
+            </>
           )}
         </DialogContent>
       </Dialog>
