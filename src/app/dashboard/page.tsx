@@ -17,6 +17,7 @@ import {
   Clock,
 } from 'lucide-react'
 import { DashboardCharts } from '@/components/dashboard/dashboard-charts'
+import { NotificationsPanel } from '@/components/dashboard/notifications-panel'
 
 export const dynamic = 'force-dynamic'
 
@@ -324,48 +325,8 @@ export default async function DashboardPage() {
         </Card>
       </div>
 
-      {/* Alertas */}
-      {(produtosBaixoEstoque && produtosBaixoEstoque.length > 0) || totalVencidoPagar > 0 ? (
-        <Card className="border-yellow-500 bg-yellow-50 dark:bg-yellow-900/10">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-yellow-700 dark:text-yellow-500">
-              <AlertTriangle className="h-5 w-5" />
-              Alertas
-            </CardTitle>
-            <CardDescription>
-              Itens que precisam de sua atenção
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {produtosBaixoEstoque && produtosBaixoEstoque.length > 0 && (
-              <div>
-                <p className="text-sm font-medium mb-2">Produtos com estoque baixo:</p>
-                <div className="flex flex-wrap gap-2">
-                  {produtosBaixoEstoque.map((p) => (
-                    <Badge key={p.id} variant="outline" className="text-yellow-700 border-yellow-500">
-                      {p.nome} ({p.estoque_atual} {p.unidade})
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            )}
-            {totalVencidoPagar > 0 && (
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-red-700">Contas a pagar vencidas</p>
-                  <p className="text-xs text-red-600">{contasPagarVencidas?.length} conta(s) - {formatCurrency(totalVencidoPagar)}</p>
-                </div>
-                <Button variant="outline" size="sm" asChild>
-                  <Link href="/dashboard/financeiro/contas-pagar">
-                    Ver contas
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Link>
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      ) : null}
+      {/* Painel de Notificações */}
+      <NotificationsPanel />
 
       {/* Ações Rápidas */}
       <div className="grid gap-4 md:grid-cols-4">
