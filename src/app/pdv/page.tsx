@@ -129,6 +129,7 @@ export default function PDVPage() {
   const [pontosAUsar, setPontosAUsar] = useState('')
   const [pontosGanhos, setPontosGanhos] = useState<number | null>(null)
   const [showAjuda, setShowAjuda] = useState(false)
+  const [showPixModal, setShowPixModal] = useState(false)
   const [vendaFinalizada, setVendaFinalizada] = useState<{
     numero?: number
     itens: { codigo: string; nome: string; quantidade: number; preco: number; total: number }[]
@@ -1121,6 +1122,7 @@ export default function PDVPage() {
           e.preventDefault()
           if (items.length > 0) {
             setSelectedPayment('pix')
+            setShowPixModal(true)
           }
           break
         case 'F10':
@@ -1488,7 +1490,9 @@ export default function PDVPage() {
                     key={method.id}
                     onClick={() => {
                       setSelectedPayment(method.id)
-                      if (method.id === 'crediario' && !clienteSelecionado) {
+                      if (method.id === 'pix') {
+                        setShowPixModal(true)
+                      } else if (method.id === 'crediario' && !clienteSelecionado) {
                         setShowClienteModal(true)
                       }
                     }}
@@ -1549,14 +1553,18 @@ export default function PDVPage() {
 
               {/* PIX */}
               {selectedPayment === 'pix' && (
-                <div className="flex justify-center">
-                  <PixQRCode
-                    valor={total}
-                    chavePix={empresa?.chavePix}
-                    beneficiario={empresa?.nome}
-                    cidade={empresa?.cidade}
-                    txid={`PDV${Date.now()}`}
-                  />
+                <div className="flex flex-col items-center justify-center py-6 text-center">
+                  <QrCode className="h-12 w-12 text-teal-500 mb-3" />
+                  <p className="font-medium">Pagamento via PIX</p>
+                  <p className="text-sm text-muted-foreground mb-3">QR Code exibido na tela</p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowPixModal(true)}
+                  >
+                    <QrCode className="h-4 w-4 mr-2" />
+                    Ver QR Code
+                  </Button>
                 </div>
               )}
 
@@ -1681,6 +1689,57 @@ export default function PDVPage() {
         </div>
       </div>
 
+
+      {/* Modal Exclusivo PIX */}
+      <Dialog open={showPixModal} onOpenChange={setShowPixModal}>
+        <DialogContent className="sm:max-w-md">
+          <div className="flex flex-col items-center py-4">
+            {/* Header */}
+            <div className="text-center mb-4">
+              <div className="inline-flex items-center justify-center w-12 h-12 bg-teal-100 rounded-full mb-2">
+                <QrCode className="h-6 w-6 text-teal-600" />
+              </div>
+              <DialogTitle className="text-xl">Pagamento via PIX</DialogTitle>
+              <p className="text-3xl font-bold text-primary mt-2">{formatCurrency(total)}</p>
+            </div>
+
+            {/* QR Code */}
+            <div className="bg-white p-4 rounded-xl shadow-sm border mb-4">
+              <PixQRCode
+                valor={total}
+                chavePix={empresa?.chavePix}
+                beneficiario={empresa?.nome}
+                cidade={empresa?.cidade}
+                txid={`PDV${Date.now()}`}
+              />
+            </div>
+
+            {/* Botões */}
+            <div className="flex gap-3 w-full">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => {
+                  setShowPixModal(false)
+                  setSelectedPayment(null)
+                }}
+              >
+                Cancelar
+              </Button>
+              <Button
+                className="flex-1 bg-teal-600 hover:bg-teal-700"
+                onClick={() => {
+                  setShowPixModal(false)
+                  finalizarVenda()
+                }}
+              >
+                <CheckCircle className="h-4 w-4 mr-2" />
+                Recebido
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Modal de Seleção de Cliente (Crediário) */}
       <Dialog open={showClienteModal} onOpenChange={setShowClienteModal}>
