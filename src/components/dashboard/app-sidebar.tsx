@@ -29,6 +29,7 @@ import {
   LogOut,
   Building2,
   HandCoins,
+  Gift,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
@@ -48,6 +49,7 @@ const menuItems = [
       { title: 'Produtos', href: '/dashboard/produtos', icon: Package },
       { title: 'Clientes', href: '/dashboard/clientes', icon: Users },
       { title: 'Fornecedores', href: '/dashboard/fornecedores', icon: Truck },
+      { title: 'Fidelidade', href: '/dashboard/fidelidade', icon: Gift },
     ],
   },
   {

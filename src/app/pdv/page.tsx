@@ -48,6 +48,8 @@ import {
   Receipt,
   UserCheck,
   Users,
+  Star,
+  Gift,
 } from 'lucide-react'
 import { printReceipt, type DadosRecibo } from '@/components/pdv/receipt'
 import { PixQRCode } from '@/components/pdv/pix-qrcode'
@@ -69,6 +71,19 @@ interface Cliente {
   telefone?: string
   limite_credito: number
   saldo_devedor: number
+}
+
+interface FidelidadeConfig {
+  id: string
+  pontos_por_real: number
+  valor_ponto_resgate: number
+  validade_dias: number
+  ativo: boolean
+}
+
+interface ClientePontos {
+  saldo_pontos: number
+  total_acumulado: number
 }
 
 interface NFCeResult {
@@ -102,6 +117,12 @@ export default function PDVPage() {
   const [clientes, setClientes] = useState<Cliente[]>([])
   const [clienteSelecionado, setClienteSelecionado] = useState<Cliente | null>(null)
   const [loadingClientes, setLoadingClientes] = useState(false)
+  // Estados para fidelidade
+  const [fidelidadeConfig, setFidelidadeConfig] = useState<FidelidadeConfig | null>(null)
+  const [clientePontos, setClientePontos] = useState<ClientePontos | null>(null)
+  const [usarPontos, setUsarPontos] = useState(false)
+  const [pontosAUsar, setPontosAUsar] = useState('')
+  const [pontosGanhos, setPontosGanhos] = useState<number | null>(null)
   const [vendaFinalizada, setVendaFinalizada] = useState<{
     numero?: number
     itens: { codigo: string; nome: string; quantidade: number; preco: number; total: number }[]
@@ -137,7 +158,12 @@ export default function PDVPage() {
   } = useOffline()
 
   const subtotal = getSubtotal()
-  const total = getTotal()
+  // Calcular desconto de pontos
+  const pontosUsados = usarPontos && clientePontos && fidelidadeConfig
+    ? Math.min(parseFloat(pontosAUsar || '0') || 0, clientePontos.saldo_pontos)
+    : 0
+  const descontoPontos = pontosUsados * (fidelidadeConfig?.valor_ponto_resgate || 0)
+  const total = Math.max(0, getTotal() - descontoPontos)
   const troco = parseFloat(valorRecebido || '0') - total
 
   // Verificar se fiscal está configurado e buscar dados da empresa
@@ -210,8 +236,37 @@ export default function PDVPage() {
       }
     }
 
+    async function buscarFidelidadeConfig() {
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) return
+
+        const { data: usuario } = await supabase
+          .from('usuarios')
+          .select('empresa_id')
+          .eq('auth_id', user.id)
+          .single()
+
+        if (!usuario) return
+
+        const { data: config } = await supabase
+          .from('fidelidade_config')
+          .select('*')
+          .eq('empresa_id', usuario.empresa_id)
+          .eq('ativo', true)
+          .single()
+
+        if (config) {
+          setFidelidadeConfig(config)
+        }
+      } catch {
+        // Programa de fidelidade não configurado
+      }
+    }
+
     verificarFiscal()
     buscarEmpresa()
+    buscarFidelidadeConfig()
   }, [])
 
   // Verificar se há caixa aberto
@@ -368,7 +423,7 @@ export default function PDVPage() {
   function selecionarCliente(cliente: Cliente) {
     const creditoDisponivel = cliente.limite_credito - cliente.saldo_devedor
 
-    if (creditoDisponivel < total) {
+    if (selectedPayment === 'crediario' && creditoDisponivel < total) {
       toast.error(`Crédito insuficiente. Disponível: ${formatCurrency(creditoDisponivel)}`)
       return
     }
@@ -378,6 +433,42 @@ export default function PDVPage() {
     setClienteSearch('')
     setClientes([])
     toast.success(`Cliente ${cliente.nome} selecionado`)
+
+    // Buscar pontos do cliente se programa de fidelidade ativo
+    if (fidelidadeConfig) {
+      buscarPontosCliente(cliente.id)
+    }
+  }
+
+  // Buscar pontos do cliente
+  async function buscarPontosCliente(clienteId: string) {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const { data: usuario } = await supabase
+        .from('usuarios')
+        .select('empresa_id')
+        .eq('auth_id', user.id)
+        .single()
+
+      if (!usuario) return
+
+      const { data: pontos } = await supabase
+        .from('fidelidade_pontos')
+        .select('saldo_pontos, total_acumulado')
+        .eq('empresa_id', usuario.empresa_id)
+        .eq('cliente_id', clienteId)
+        .single()
+
+      if (pontos) {
+        setClientePontos(pontos)
+      } else {
+        setClientePontos({ saldo_pontos: 0, total_acumulado: 0 })
+      }
+    } catch {
+      setClientePontos(null)
+    }
   }
 
   // Debounce na busca de clientes
@@ -566,6 +657,78 @@ export default function PDVPage() {
             }
           }
 
+          // Programa de Fidelidade - Registrar resgate e acúmulo
+          if (fidelidadeConfig && clienteSelecionado) {
+            try {
+              // Verificar/criar conta de pontos do cliente
+              let saldoAtual = clientePontos?.saldo_pontos || 0
+
+              if (!clientePontos) {
+                // Criar conta de pontos
+                await supabase
+                  .from('fidelidade_pontos')
+                  .upsert({
+                    empresa_id: userData.empresa_id,
+                    cliente_id: clienteSelecionado.id,
+                    saldo_pontos: 0,
+                    total_acumulado: 0,
+                    total_resgatado: 0,
+                  }, { onConflict: 'empresa_id,cliente_id' })
+              }
+
+              // 1. Registrar resgate de pontos (se usou)
+              if (usarPontos && pontosUsados > 0) {
+                await supabase
+                  .from('fidelidade_movimentos')
+                  .insert({
+                    empresa_id: userData.empresa_id,
+                    cliente_id: clienteSelecionado.id,
+                    venda_id: venda.id,
+                    tipo: 'resgate',
+                    pontos: -pontosUsados,
+                    saldo_anterior: saldoAtual,
+                    saldo_posterior: saldoAtual - pontosUsados,
+                    valor_venda: total,
+                    descricao: `Resgate na venda #${venda.numero}`,
+                  })
+
+                // Atualizar saldo local
+                saldoAtual -= pontosUsados
+              }
+
+              // 2. Calcular e registrar acúmulo de pontos
+              const valorParaPontos = total // Valor após desconto
+              const pontosGanhosVenda = Math.floor(valorParaPontos * fidelidadeConfig.pontos_por_real)
+
+              if (pontosGanhosVenda > 0) {
+                // Calcular data de expiração
+                const dataExpiracao = fidelidadeConfig.validade_dias > 0
+                  ? new Date(Date.now() + fidelidadeConfig.validade_dias * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+                  : null
+
+                await supabase
+                  .from('fidelidade_movimentos')
+                  .insert({
+                    empresa_id: userData.empresa_id,
+                    cliente_id: clienteSelecionado.id,
+                    venda_id: venda.id,
+                    tipo: 'acumulo',
+                    pontos: pontosGanhosVenda,
+                    saldo_anterior: saldoAtual,
+                    saldo_posterior: saldoAtual + pontosGanhosVenda,
+                    valor_venda: valorParaPontos,
+                    data_expiracao: dataExpiracao,
+                    descricao: `Acúmulo na venda #${venda.numero}`,
+                  })
+
+                setPontosGanhos(pontosGanhosVenda)
+              }
+            } catch (fidelError) {
+              console.error('Erro no programa de fidelidade:', fidelError)
+              // Não bloqueia a venda
+            }
+          }
+
           // Emitir NFC-e se configurado e habilitado
           if (emitirNFCe && fiscalConfigurado) {
             try {
@@ -667,6 +830,11 @@ export default function PDVPage() {
         setCpfCliente('')
         setVendaFinalizada(null)
         setClienteSelecionado(null)
+        // Reset fidelidade
+        setClientePontos(null)
+        setUsarPontos(false)
+        setPontosAUsar('')
+        setPontosGanhos(null)
         searchRef.current?.focus()
       }, 10000) // 10 segundos para dar tempo de imprimir
 
@@ -999,6 +1167,24 @@ export default function PDVPage() {
                 )}
               </DialogDescription>
 
+              {/* Pontos ganhos */}
+              {pontosGanhos !== null && pontosGanhos > 0 && (
+                <div className="mt-3 sm:mt-4 p-3 sm:p-4 rounded-lg w-full bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200">
+                  <div className="flex items-center justify-center gap-2">
+                    <Star className="h-5 w-5 text-yellow-500" />
+                    <span className="font-medium text-yellow-700">
+                      {clienteSelecionado?.nome} ganhou{' '}
+                      <span className="text-lg font-bold">{pontosGanhos}</span> pontos!
+                    </span>
+                  </div>
+                  {usarPontos && pontosUsados > 0 && (
+                    <p className="text-center text-xs text-muted-foreground mt-1">
+                      Usou {pontosUsados} pontos ({formatCurrency(descontoPontos)} de desconto)
+                    </p>
+                  )}
+                </div>
+              )}
+
               {/* Resultado NFC-e */}
               {nfceResult && (
                 <div className={`mt-3 sm:mt-4 p-2 sm:p-4 rounded-lg w-full ${
@@ -1057,6 +1243,11 @@ export default function PDVPage() {
                     setCpfCliente('')
                     setVendaFinalizada(null)
                     setClienteSelecionado(null)
+                    // Reset fidelidade
+                    setClientePontos(null)
+                    setUsarPontos(false)
+                    setPontosAUsar('')
+                    setPontosGanhos(null)
                     searchRef.current?.focus()
                   }}
                 >
@@ -1071,6 +1262,11 @@ export default function PDVPage() {
                 <DialogTitle className="text-base sm:text-lg">Forma de Pagamento</DialogTitle>
                 <DialogDescription>
                   Total a pagar: <span className="font-bold text-lg sm:text-xl">{formatCurrency(total)}</span>
+                  {descontoPontos > 0 && (
+                    <span className="block text-xs text-yellow-600">
+                      Inclui {formatCurrency(descontoPontos)} de desconto ({pontosUsados} pontos)
+                    </span>
+                  )}
                 </DialogDescription>
               </DialogHeader>
 
@@ -1162,6 +1358,105 @@ export default function PDVPage() {
                     <Users className="h-4 w-4 mr-2" />
                     Selecionar Cliente
                   </Button>
+                )}
+
+                {/* Programa de Fidelidade */}
+                {fidelidadeConfig && selectedPayment !== 'crediario' && (
+                  <div className="border rounded-lg p-3 bg-yellow-50/50 dark:bg-yellow-900/10">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Gift className="h-4 w-4 text-yellow-600" />
+                      <span className="font-medium text-sm">Programa de Fidelidade</span>
+                    </div>
+
+                    {!clienteSelecionado ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full"
+                        onClick={() => setShowClienteModal(true)}
+                      >
+                        <UserCheck className="h-4 w-4 mr-2" />
+                        Identificar Cliente
+                      </Button>
+                    ) : (
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-muted-foreground">{clienteSelecionado.nome}</span>
+                          <Button
+                            variant="link"
+                            size="sm"
+                            className="p-0 h-auto text-xs"
+                            onClick={() => setShowClienteModal(true)}
+                          >
+                            Trocar
+                          </Button>
+                        </div>
+
+                        {clientePontos && (
+                          <>
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-1">
+                                <Star className="h-4 w-4 text-yellow-500" />
+                                <span className="text-sm">Saldo:</span>
+                                <span className="font-bold">{clientePontos.saldo_pontos.toLocaleString('pt-BR')} pts</span>
+                              </div>
+                              <span className="text-xs text-muted-foreground">
+                                = {formatCurrency(clientePontos.saldo_pontos * fidelidadeConfig.valor_ponto_resgate)}
+                              </span>
+                            </div>
+
+                            {clientePontos.saldo_pontos > 0 && (
+                              <div className="space-y-2">
+                                <div className="flex items-center gap-2">
+                                  <Switch
+                                    id="usar-pontos"
+                                    checked={usarPontos}
+                                    onCheckedChange={(checked) => {
+                                      setUsarPontos(checked)
+                                      if (!checked) setPontosAUsar('')
+                                    }}
+                                  />
+                                  <Label htmlFor="usar-pontos" className="text-sm">
+                                    Usar pontos como desconto
+                                  </Label>
+                                </div>
+
+                                {usarPontos && (
+                                  <div className="flex items-center gap-2">
+                                    <Input
+                                      type="number"
+                                      min="0"
+                                      max={clientePontos.saldo_pontos}
+                                      placeholder="Pontos"
+                                      value={pontosAUsar}
+                                      onChange={(e) => setPontosAUsar(e.target.value)}
+                                      className="w-24 h-8 text-sm"
+                                    />
+                                    <span className="text-sm text-muted-foreground">
+                                      = {formatCurrency(pontosUsados * fidelidadeConfig.valor_ponto_resgate)} desc.
+                                    </span>
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      className="h-8 text-xs"
+                                      onClick={() => setPontosAUsar(String(clientePontos.saldo_pontos))}
+                                    >
+                                      Usar todos
+                                    </Button>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+
+                            <p className="text-xs text-muted-foreground">
+                              Esta compra vale +{Math.floor(total * fidelidadeConfig.pontos_por_real)} pontos
+                            </p>
+                          </>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 )}
 
                 {selectedPayment === 'dinheiro' && (
