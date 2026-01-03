@@ -15,6 +15,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
+import { Progress } from '@/components/ui/progress'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import {
@@ -26,7 +27,13 @@ import {
   Download,
   Search,
   TrendingUp,
+  CreditCard,
+  Banknote,
+  QrCode,
+  FileSpreadsheet,
   Users,
+  Calendar,
+  Wallet,
 } from 'lucide-react'
 
 interface VendaRelatorio {
@@ -46,8 +53,25 @@ interface ProdutoRelatorio {
   estoque_atual: number
   estoque_minimo: number
   preco_venda: number
+  preco_custo: number
   unidade: string
   total_vendido?: number
+  valor_vendido?: number
+}
+
+interface PagamentoRelatorio {
+  forma_pagamento: string
+  total: number
+  quantidade: number
+}
+
+interface ResumoFinanceiro {
+  total_vendas: number
+  total_custo: number
+  lucro_bruto: number
+  margem: number
+  ticket_medio: number
+  quantidade_vendas: number
 }
 
 export default function RelatoriosPage() {
@@ -65,6 +89,9 @@ export default function RelatoriosPage() {
   // Dados dos relatórios
   const [vendas, setVendas] = useState<VendaRelatorio[]>([])
   const [produtos, setProdutos] = useState<ProdutoRelatorio[]>([])
+  const [pagamentos, setPagamentos] = useState<PagamentoRelatorio[]>([])
+  const [resumoFinanceiro, setResumoFinanceiro] = useState<ResumoFinanceiro | null>(null)
+
   const [resumoVendas, setResumoVendas] = useState({
     total: 0,
     quantidade: 0,
@@ -73,6 +100,7 @@ export default function RelatoriosPage() {
   const [resumoEstoque, setResumoEstoque] = useState({
     totalProdutos: 0,
     valorEstoque: 0,
+    valorCusto: 0,
     baixoEstoque: 0,
   })
 
@@ -90,14 +118,13 @@ export default function RelatoriosPage() {
           clientes (nome),
           usuarios (nome)
         `)
-        .eq('status', 'concluida')
+        .eq('status', 'finalizada')
         .gte('data_hora', `${dataInicio}T00:00:00`)
         .lte('data_hora', `${dataFim}T23:59:59`)
         .order('data_hora', { ascending: false })
 
       if (error) throw error
 
-      // Transform data to match expected interface (Supabase returns relations as arrays)
       const vendasFormatadas: VendaRelatorio[] = (data || []).map((v: any) => ({
         id: v.id,
         numero: v.numero,
@@ -118,7 +145,7 @@ export default function RelatoriosPage() {
         ticketMedio: quantidade > 0 ? total / quantidade : 0,
       })
 
-      toast.success('Relatório gerado com sucesso!')
+      toast.success('Relatório gerado!')
     } catch (error) {
       toast.error('Erro ao gerar relatório')
     } finally {
@@ -131,7 +158,7 @@ export default function RelatoriosPage() {
     try {
       const { data, error } = await supabase
         .from('produtos')
-        .select('id, codigo, nome, estoque_atual, estoque_minimo, preco_venda, unidade')
+        .select('id, codigo, nome, estoque_atual, estoque_minimo, preco_venda, preco_custo, unidade')
         .eq('ativo', true)
         .order('nome')
 
@@ -141,15 +168,17 @@ export default function RelatoriosPage() {
 
       const totalProdutos = data?.length || 0
       const valorEstoque = data?.reduce((acc, p) => acc + (p.estoque_atual * p.preco_venda), 0) || 0
+      const valorCusto = data?.reduce((acc, p) => acc + (p.estoque_atual * (p.preco_custo || 0)), 0) || 0
       const baixoEstoque = data?.filter(p => p.estoque_atual <= p.estoque_minimo).length || 0
 
       setResumoEstoque({
         totalProdutos,
         valorEstoque,
+        valorCusto,
         baixoEstoque,
       })
 
-      toast.success('Relatório gerado com sucesso!')
+      toast.success('Relatório gerado!')
     } catch (error) {
       toast.error('Erro ao gerar relatório')
     } finally {
@@ -165,14 +194,15 @@ export default function RelatoriosPage() {
         .select(`
           produto_id,
           quantidade,
-          produtos (id, codigo, nome, preco_venda, unidade)
+          preco_unitario,
+          total,
+          produtos (id, codigo, nome, preco_venda, preco_custo, unidade)
         `)
         .gte('created_at', `${dataInicio}T00:00:00`)
         .lte('created_at', `${dataFim}T23:59:59`)
 
       if (error) throw error
 
-      // Agrupar por produto
       const agrupado: { [key: string]: ProdutoRelatorio } = {}
       itensVendidos?.forEach((item: any) => {
         if (item.produtos) {
@@ -183,27 +213,163 @@ export default function RelatoriosPage() {
               codigo: item.produtos.codigo,
               nome: item.produtos.nome,
               preco_venda: item.produtos.preco_venda,
+              preco_custo: item.produtos.preco_custo || 0,
               unidade: item.produtos.unidade,
               estoque_atual: 0,
               estoque_minimo: 0,
               total_vendido: 0,
+              valor_vendido: 0,
             }
           }
           agrupado[id].total_vendido! += item.quantidade
+          agrupado[id].valor_vendido! += item.total
         }
       })
 
       const produtosOrdenados = Object.values(agrupado).sort(
-        (a, b) => (b.total_vendido || 0) - (a.total_vendido || 0)
+        (a, b) => (b.valor_vendido || 0) - (a.valor_vendido || 0)
       )
 
       setProdutos(produtosOrdenados)
-      toast.success('Relatório gerado com sucesso!')
+      toast.success('Relatório gerado!')
     } catch (error) {
       toast.error('Erro ao gerar relatório')
     } finally {
       setLoading(false)
     }
+  }
+
+  async function buscarRelatorioPagamentos() {
+    setLoading(true)
+    try {
+      const { data, error } = await supabase
+        .from('venda_pagamentos')
+        .select(`
+          forma_pagamento,
+          valor,
+          vendas!inner (data_hora, status)
+        `)
+        .eq('vendas.status', 'finalizada')
+        .gte('vendas.data_hora', `${dataInicio}T00:00:00`)
+        .lte('vendas.data_hora', `${dataFim}T23:59:59`)
+
+      if (error) throw error
+
+      // Agrupar por forma de pagamento
+      const agrupado: { [key: string]: PagamentoRelatorio } = {}
+      data?.forEach((pag: any) => {
+        const forma = pag.forma_pagamento
+        if (!agrupado[forma]) {
+          agrupado[forma] = {
+            forma_pagamento: forma,
+            total: 0,
+            quantidade: 0,
+          }
+        }
+        agrupado[forma].total += pag.valor
+        agrupado[forma].quantidade++
+      })
+
+      const pagamentosOrdenados = Object.values(agrupado).sort((a, b) => b.total - a.total)
+      setPagamentos(pagamentosOrdenados)
+
+      toast.success('Relatório gerado!')
+    } catch (error) {
+      toast.error('Erro ao gerar relatório')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function buscarResumoFinanceiro() {
+    setLoading(true)
+    try {
+      // Buscar vendas com itens
+      const { data: vendas, error: vendasError } = await supabase
+        .from('vendas')
+        .select(`
+          id,
+          total,
+          venda_itens (
+            quantidade,
+            preco_unitario,
+            produtos (preco_custo)
+          )
+        `)
+        .eq('status', 'finalizada')
+        .gte('data_hora', `${dataInicio}T00:00:00`)
+        .lte('data_hora', `${dataFim}T23:59:59`)
+
+      if (vendasError) throw vendasError
+
+      let totalVendas = 0
+      let totalCusto = 0
+      let quantidadeVendas = vendas?.length || 0
+
+      vendas?.forEach((venda: any) => {
+        totalVendas += venda.total
+        venda.venda_itens?.forEach((item: any) => {
+          const custoProduto = item.produtos?.preco_custo || 0
+          totalCusto += item.quantidade * custoProduto
+        })
+      })
+
+      const lucroBruto = totalVendas - totalCusto
+      const margem = totalVendas > 0 ? (lucroBruto / totalVendas) * 100 : 0
+      const ticketMedio = quantidadeVendas > 0 ? totalVendas / quantidadeVendas : 0
+
+      setResumoFinanceiro({
+        total_vendas: totalVendas,
+        total_custo: totalCusto,
+        lucro_bruto: lucroBruto,
+        margem,
+        ticket_medio: ticketMedio,
+        quantidade_vendas: quantidadeVendas,
+      })
+
+      toast.success('Relatório gerado!')
+    } catch (error) {
+      toast.error('Erro ao gerar relatório')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  function exportarExcel(dados: any[], nomeArquivo: string) {
+    if (dados.length === 0) {
+      toast.error('Não há dados para exportar')
+      return
+    }
+
+    // Criar CSV
+    const headers = Object.keys(dados[0])
+    const csvContent = [
+      headers.join(';'),
+      ...dados.map(row =>
+        headers.map(header => {
+          let value = row[header]
+          if (typeof value === 'object' && value !== null) {
+            value = value.nome || JSON.stringify(value)
+          }
+          if (typeof value === 'number') {
+            value = value.toString().replace('.', ',')
+          }
+          return `"${value || ''}"`
+        }).join(';')
+      )
+    ].join('\n')
+
+    // Adicionar BOM para Excel reconhecer UTF-8
+    const BOM = '\uFEFF'
+    const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `${nomeArquivo}_${dataInicio}_${dataFim}.csv`
+    link.click()
+    URL.revokeObjectURL(url)
+
+    toast.success('Arquivo exportado!')
   }
 
   function formatCurrency(value: number) {
@@ -223,6 +389,34 @@ export default function RelatoriosPage() {
     }).format(new Date(date))
   }
 
+  function formatFormaPagamento(forma: string) {
+    const nomes: Record<string, string> = {
+      dinheiro: 'Dinheiro',
+      cartao_credito: 'Cartão Crédito',
+      cartao_debito: 'Cartão Débito',
+      pix: 'PIX',
+      crediario: 'Crediário',
+    }
+    return nomes[forma] || forma
+  }
+
+  function getIconePagamento(forma: string) {
+    switch (forma) {
+      case 'dinheiro':
+        return <Banknote className="h-5 w-5 text-green-600" />
+      case 'cartao_credito':
+        return <CreditCard className="h-5 w-5 text-blue-600" />
+      case 'cartao_debito':
+        return <CreditCard className="h-5 w-5 text-purple-600" />
+      case 'pix':
+        return <QrCode className="h-5 w-5 text-teal-600" />
+      default:
+        return <Wallet className="h-5 w-5 text-gray-600" />
+    }
+  }
+
+  const totalPagamentos = pagamentos.reduce((acc, p) => acc + p.total, 0)
+
   return (
     <div className="space-y-6">
       <div>
@@ -233,18 +427,26 @@ export default function RelatoriosPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList>
+        <TabsList className="flex-wrap h-auto gap-1">
           <TabsTrigger value="vendas">
             <ShoppingCart className="mr-2 h-4 w-4" />
             Vendas
+          </TabsTrigger>
+          <TabsTrigger value="pagamentos">
+            <CreditCard className="mr-2 h-4 w-4" />
+            Pagamentos
+          </TabsTrigger>
+          <TabsTrigger value="mais-vendidos">
+            <TrendingUp className="mr-2 h-4 w-4" />
+            Mais Vendidos
           </TabsTrigger>
           <TabsTrigger value="produtos">
             <Package className="mr-2 h-4 w-4" />
             Estoque
           </TabsTrigger>
-          <TabsTrigger value="mais-vendidos">
-            <TrendingUp className="mr-2 h-4 w-4" />
-            Mais Vendidos
+          <TabsTrigger value="financeiro">
+            <DollarSign className="mr-2 h-4 w-4" />
+            Financeiro
           </TabsTrigger>
         </TabsList>
 
@@ -285,6 +487,24 @@ export default function RelatoriosPage() {
                   )}
                   Gerar Relatório
                 </Button>
+                {vendas.length > 0 && (
+                  <Button
+                    variant="outline"
+                    onClick={() => exportarExcel(
+                      vendas.map(v => ({
+                        Numero: v.numero,
+                        Data: formatDateTime(v.data_hora),
+                        Cliente: v.clientes?.nome || 'Consumidor',
+                        Vendedor: v.usuarios?.nome || '-',
+                        Total: v.total,
+                      })),
+                      'vendas'
+                    )}
+                  >
+                    <FileSpreadsheet className="mr-2 h-4 w-4" />
+                    Exportar
+                  </Button>
+                )}
               </div>
 
               {resumoVendas.quantidade > 0 && (
@@ -355,6 +575,201 @@ export default function RelatoriosPage() {
           </Card>
         </TabsContent>
 
+        {/* Relatório de Pagamentos */}
+        <TabsContent value="pagamentos" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Vendas por Forma de Pagamento</CardTitle>
+              <CardDescription>
+                Análise das vendas por tipo de pagamento
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex flex-wrap gap-4 items-end">
+                <div className="space-y-2">
+                  <Label>Data Início</Label>
+                  <Input
+                    type="date"
+                    value={dataInicio}
+                    onChange={(e) => setDataInicio(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Data Fim</Label>
+                  <Input
+                    type="date"
+                    value={dataFim}
+                    onChange={(e) => setDataFim(e.target.value)}
+                  />
+                </div>
+                <Button onClick={buscarRelatorioPagamentos} disabled={loading}>
+                  {loading ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Search className="mr-2 h-4 w-4" />
+                  )}
+                  Gerar Relatório
+                </Button>
+              </div>
+
+              {pagamentos.length > 0 && (
+                <>
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                    {pagamentos.map((pag) => (
+                      <Card key={pag.forma_pagamento}>
+                        <CardContent className="pt-6">
+                          <div className="flex items-center gap-4">
+                            {getIconePagamento(pag.forma_pagamento)}
+                            <div className="flex-1">
+                              <p className="text-sm text-muted-foreground">
+                                {formatFormaPagamento(pag.forma_pagamento)}
+                              </p>
+                              <p className="text-xl font-bold">{formatCurrency(pag.total)}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {pag.quantidade} transação(ões)
+                              </p>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-base">Distribuição</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {pagamentos.map((pag) => {
+                        const percentual = totalPagamentos > 0
+                          ? (pag.total / totalPagamentos) * 100
+                          : 0
+                        return (
+                          <div key={pag.forma_pagamento} className="space-y-2">
+                            <div className="flex justify-between text-sm">
+                              <span className="flex items-center gap-2">
+                                {getIconePagamento(pag.forma_pagamento)}
+                                {formatFormaPagamento(pag.forma_pagamento)}
+                              </span>
+                              <span className="font-medium">
+                                {percentual.toFixed(1)}% ({formatCurrency(pag.total)})
+                              </span>
+                            </div>
+                            <Progress value={percentual} className="h-2" />
+                          </div>
+                        )
+                      })}
+                    </CardContent>
+                  </Card>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Mais Vendidos */}
+        <TabsContent value="mais-vendidos" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Produtos Mais Vendidos</CardTitle>
+              <CardDescription>
+                Ranking dos produtos mais vendidos no período
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex flex-wrap gap-4 items-end">
+                <div className="space-y-2">
+                  <Label>Data Início</Label>
+                  <Input
+                    type="date"
+                    value={dataInicio}
+                    onChange={(e) => setDataInicio(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Data Fim</Label>
+                  <Input
+                    type="date"
+                    value={dataFim}
+                    onChange={(e) => setDataFim(e.target.value)}
+                  />
+                </div>
+                <Button onClick={buscarRelatorioMaisVendidos} disabled={loading}>
+                  {loading ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Search className="mr-2 h-4 w-4" />
+                  )}
+                  Gerar Relatório
+                </Button>
+                {produtos.length > 0 && (
+                  <Button
+                    variant="outline"
+                    onClick={() => exportarExcel(
+                      produtos.map((p, i) => ({
+                        Rank: i + 1,
+                        Codigo: p.codigo,
+                        Produto: p.nome,
+                        Quantidade: p.total_vendido,
+                        Valor_Total: p.valor_vendido,
+                      })),
+                      'mais_vendidos'
+                    )}
+                  >
+                    <FileSpreadsheet className="mr-2 h-4 w-4" />
+                    Exportar
+                  </Button>
+                )}
+              </div>
+
+              {produtos.length > 0 && (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-16">Rank</TableHead>
+                      <TableHead>Código</TableHead>
+                      <TableHead>Produto</TableHead>
+                      <TableHead className="text-right">Qtd. Vendida</TableHead>
+                      <TableHead className="text-right">Total Faturado</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {produtos.slice(0, 20).map((produto, index) => (
+                      <TableRow key={produto.id}>
+                        <TableCell>
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                            index === 0 ? 'bg-yellow-100 text-yellow-700' :
+                            index === 1 ? 'bg-gray-100 text-gray-700' :
+                            index === 2 ? 'bg-orange-100 text-orange-700' :
+                            'bg-primary/10 text-primary'
+                          }`}>
+                            {index + 1}
+                          </div>
+                        </TableCell>
+                        <TableCell className="font-mono">{produto.codigo}</TableCell>
+                        <TableCell>{produto.nome}</TableCell>
+                        <TableCell className="text-right font-medium">
+                          {produto.total_vendido} {produto.unidade}
+                        </TableCell>
+                        <TableCell className="text-right font-medium text-green-600">
+                          {formatCurrency(produto.valor_vendido || 0)}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+
+              {produtos.length === 0 && !loading && (
+                <div className="text-center py-12 text-muted-foreground">
+                  <TrendingUp className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>Clique em "Gerar Relatório" para visualizar os produtos mais vendidos</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         {/* Relatório de Estoque */}
         <TabsContent value="produtos" className="space-y-4">
           <Card>
@@ -365,17 +780,39 @@ export default function RelatoriosPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <Button onClick={buscarRelatorioProdutos} disabled={loading}>
-                {loading ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <Search className="mr-2 h-4 w-4" />
+              <div className="flex gap-4">
+                <Button onClick={buscarRelatorioProdutos} disabled={loading}>
+                  {loading ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Search className="mr-2 h-4 w-4" />
+                  )}
+                  Gerar Relatório
+                </Button>
+                {produtos.length > 0 && (
+                  <Button
+                    variant="outline"
+                    onClick={() => exportarExcel(
+                      produtos.map(p => ({
+                        Codigo: p.codigo,
+                        Produto: p.nome,
+                        Estoque: p.estoque_atual,
+                        Minimo: p.estoque_minimo,
+                        Preco_Custo: p.preco_custo,
+                        Preco_Venda: p.preco_venda,
+                        Valor_Estoque: p.estoque_atual * p.preco_venda,
+                      })),
+                      'estoque'
+                    )}
+                  >
+                    <FileSpreadsheet className="mr-2 h-4 w-4" />
+                    Exportar
+                  </Button>
                 )}
-                Gerar Relatório
-              </Button>
+              </div>
 
               {resumoEstoque.totalProdutos > 0 && (
-                <div className="grid gap-4 md:grid-cols-3">
+                <div className="grid gap-4 md:grid-cols-4">
                   <Card>
                     <CardContent className="pt-6">
                       <div className="flex items-center gap-4">
@@ -392,8 +829,19 @@ export default function RelatoriosPage() {
                       <div className="flex items-center gap-4">
                         <DollarSign className="h-8 w-8 text-green-500" />
                         <div>
-                          <p className="text-sm text-muted-foreground">Valor em Estoque</p>
+                          <p className="text-sm text-muted-foreground">Valor Venda</p>
                           <p className="text-2xl font-bold">{formatCurrency(resumoEstoque.valorEstoque)}</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="pt-6">
+                      <div className="flex items-center gap-4">
+                        <DollarSign className="h-8 w-8 text-orange-500" />
+                        <div>
+                          <p className="text-sm text-muted-foreground">Valor Custo</p>
+                          <p className="text-2xl font-bold">{formatCurrency(resumoEstoque.valorCusto)}</p>
                         </div>
                       </div>
                     </CardContent>
@@ -421,7 +869,7 @@ export default function RelatoriosPage() {
                       <TableHead>Código</TableHead>
                       <TableHead>Produto</TableHead>
                       <TableHead className="text-right">Estoque</TableHead>
-                      <TableHead className="text-right">Est. Mínimo</TableHead>
+                      <TableHead className="text-right">Mínimo</TableHead>
                       <TableHead className="text-right">Preço Venda</TableHead>
                       <TableHead className="text-right">Valor Total</TableHead>
                       <TableHead>Status</TableHead>
@@ -463,36 +911,34 @@ export default function RelatoriosPage() {
           </Card>
         </TabsContent>
 
-        {/* Mais Vendidos */}
-        <TabsContent value="mais-vendidos" className="space-y-4">
+        {/* Resumo Financeiro */}
+        <TabsContent value="financeiro" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Produtos Mais Vendidos</CardTitle>
+              <CardTitle>Resumo Financeiro</CardTitle>
               <CardDescription>
-                Ranking dos produtos mais vendidos no período
+                Análise de faturamento, custos e lucratividade
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex flex-wrap gap-4 items-end">
                 <div className="space-y-2">
-                  <Label htmlFor="dataInicioMV">Data Início</Label>
+                  <Label>Data Início</Label>
                   <Input
-                    id="dataInicioMV"
                     type="date"
                     value={dataInicio}
                     onChange={(e) => setDataInicio(e.target.value)}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="dataFimMV">Data Fim</Label>
+                  <Label>Data Fim</Label>
                   <Input
-                    id="dataFimMV"
                     type="date"
                     value={dataFim}
                     onChange={(e) => setDataFim(e.target.value)}
                   />
                 </div>
-                <Button onClick={buscarRelatorioMaisVendidos} disabled={loading}>
+                <Button onClick={buscarResumoFinanceiro} disabled={loading}>
                   {loading ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   ) : (
@@ -502,47 +948,84 @@ export default function RelatoriosPage() {
                 </Button>
               </div>
 
-              {produtos.length > 0 && (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-16">Rank</TableHead>
-                      <TableHead>Código</TableHead>
-                      <TableHead>Produto</TableHead>
-                      <TableHead className="text-right">Qtd. Vendida</TableHead>
-                      <TableHead className="text-right">Preço Unit.</TableHead>
-                      <TableHead className="text-right">Total Faturado</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {produtos.map((produto, index) => (
-                      <TableRow key={produto.id}>
-                        <TableCell>
-                          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-medium">
-                            {index + 1}
+              {resumoFinanceiro && (
+                <>
+                  <div className="grid gap-4 md:grid-cols-3">
+                    <Card className="bg-green-50 dark:bg-green-900/20 border-green-200">
+                      <CardContent className="pt-6">
+                        <div className="space-y-2">
+                          <p className="text-sm text-green-700 dark:text-green-400">Total de Vendas</p>
+                          <p className="text-3xl font-bold text-green-700 dark:text-green-400">
+                            {formatCurrency(resumoFinanceiro.total_vendas)}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            {resumoFinanceiro.quantidade_vendas} vendas
+                          </p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                    <Card className="bg-orange-50 dark:bg-orange-900/20 border-orange-200">
+                      <CardContent className="pt-6">
+                        <div className="space-y-2">
+                          <p className="text-sm text-orange-700 dark:text-orange-400">Custo das Mercadorias</p>
+                          <p className="text-3xl font-bold text-orange-700 dark:text-orange-400">
+                            {formatCurrency(resumoFinanceiro.total_custo)}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            CMV (Custo Mercadoria Vendida)
+                          </p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                    <Card className="bg-blue-50 dark:bg-blue-900/20 border-blue-200">
+                      <CardContent className="pt-6">
+                        <div className="space-y-2">
+                          <p className="text-sm text-blue-700 dark:text-blue-400">Lucro Bruto</p>
+                          <p className="text-3xl font-bold text-blue-700 dark:text-blue-400">
+                            {formatCurrency(resumoFinanceiro.lucro_bruto)}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            Margem: {resumoFinanceiro.margem.toFixed(1)}%
+                          </p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <Card>
+                      <CardContent className="pt-6">
+                        <div className="flex items-center gap-4">
+                          <BarChart3 className="h-10 w-10 text-purple-500" />
+                          <div>
+                            <p className="text-sm text-muted-foreground">Ticket Médio</p>
+                            <p className="text-2xl font-bold">{formatCurrency(resumoFinanceiro.ticket_medio)}</p>
                           </div>
-                        </TableCell>
-                        <TableCell className="font-mono">{produto.codigo}</TableCell>
-                        <TableCell>{produto.nome}</TableCell>
-                        <TableCell className="text-right font-medium">
-                          {produto.total_vendido} {produto.unidade}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {formatCurrency(produto.preco_venda)}
-                        </TableCell>
-                        <TableCell className="text-right font-medium text-green-600">
-                          {formatCurrency((produto.total_vendido || 0) * produto.preco_venda)}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                        </div>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardContent className="pt-6">
+                        <div className="flex items-center gap-4">
+                          <TrendingUp className="h-10 w-10 text-green-500" />
+                          <div>
+                            <p className="text-sm text-muted-foreground">Margem de Lucro</p>
+                            <p className="text-2xl font-bold">{resumoFinanceiro.margem.toFixed(1)}%</p>
+                          </div>
+                        </div>
+                        <div className="mt-4">
+                          <Progress value={resumoFinanceiro.margem} className="h-3" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </>
               )}
 
-              {produtos.length === 0 && !loading && (
+              {!resumoFinanceiro && !loading && (
                 <div className="text-center py-12 text-muted-foreground">
-                  <TrendingUp className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>Clique em "Gerar Relatório" para visualizar os produtos mais vendidos</p>
+                  <DollarSign className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>Clique em "Gerar Relatório" para visualizar o resumo financeiro</p>
                 </div>
               )}
             </CardContent>
