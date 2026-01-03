@@ -68,12 +68,22 @@ function normalizarChavePix(chave: string): string {
   return limpa
 }
 
+// Remove acentos e caracteres especiais (EMV só aceita ASCII)
+function removerAcentos(texto: string): string {
+  return texto
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // Remove diacríticos
+    .replace(/[^a-zA-Z0-9 ]/g, '')   // Remove caracteres especiais
+    .trim()
+}
+
 // Gera o payload PIX no formato EMV
 export function gerarPayloadPix(dados: PixPayload): string {
-  // Limitar tamanhos conforme especificação
-  const beneficiario = dados.beneficiario.substring(0, 25).toUpperCase()
-  const cidade = dados.cidade.substring(0, 15).toUpperCase()
-  const txid = dados.txid?.substring(0, 25) || '***'
+  // Limitar tamanhos e remover acentos conforme especificação EMV
+  const beneficiario = removerAcentos(dados.beneficiario).substring(0, 25).toUpperCase()
+  const cidade = removerAcentos(dados.cidade).substring(0, 15).toUpperCase()
+  // TXID só pode ter letras e números, sem caracteres especiais
+  const txid = dados.txid?.replace(/[^a-zA-Z0-9]/g, '').substring(0, 25) || '***'
 
   // Normalizar a chave PIX (adiciona +55 para celulares)
   const chaveNormalizada = normalizarChavePix(dados.chavePix)
@@ -85,13 +95,13 @@ export function gerarPayloadPix(dados: PixPayload): string {
   }
 
   // Construir o Merchant Account Information (campo 26)
-  // 00 = GUI (br.gov.bcb.pix)
+  // 00 = GUI (BR.GOV.BCB.PIX) - DEVE SER MAIÚSCULO
   // 01 = Chave PIX
   // 02 = Descrição (opcional)
-  let merchantAccountInfo = emvField('00', 'br.gov.bcb.pix')
+  let merchantAccountInfo = emvField('00', 'BR.GOV.BCB.PIX')
   merchantAccountInfo += emvField('01', chaveNormalizada)
   if (dados.descricao) {
-    merchantAccountInfo += emvField('02', dados.descricao.substring(0, 72))
+    merchantAccountInfo += emvField('02', removerAcentos(dados.descricao).substring(0, 72))
   }
 
   // Construir Additional Data Field (campo 62)
@@ -103,6 +113,12 @@ export function gerarPayloadPix(dados: PixPayload): string {
 
   // 00 - Payload Format Indicator
   payload += emvField('00', '01')
+
+  // 01 - Point of Initiation Method (12 = QR dinâmico/com valor, 11 = estático)
+  // Campo obrigatório quando há valor definido
+  if (valorFormatado) {
+    payload += emvField('01', '12')
+  }
 
   // 26 - Merchant Account Information (PIX)
   payload += emvField('26', merchantAccountInfo)
