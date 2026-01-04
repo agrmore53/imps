@@ -60,7 +60,7 @@ export interface ProdutoNFe {
   quantidade: number
   valorUnitario: number
   valorTotal: number
-  // Impostos
+  // Impostos tradicionais
   icms: {
     origem: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8
     cst: string
@@ -77,6 +77,16 @@ export interface ProdutoNFe {
     cst: string
     aliquota?: number
     valor?: number
+  }
+  // Reforma Tributária - IBS/CBS (opcional até 2027 para Simples)
+  ibsCbs?: {
+    cst: string           // CST IBS/CBS (00, 10, 20, etc.)
+    cClassTrib?: string   // Código Classificação Tributária
+    vBC: number           // Base de cálculo
+    pIBS: number          // Alíquota IBS
+    pCBS: number          // Alíquota CBS
+    vIBS: number          // Valor IBS
+    vCBS: number          // Valor CBS
   }
 }
 
@@ -150,6 +160,13 @@ export interface ConfiguracaoFiscal {
   ultimoNumeroNFe: number
   idTokenNFCe: number
   cscNFCe: string
+  // Reforma Tributária - IBS/CBS
+  ibsCbs?: {
+    habilitado: boolean           // Habilita campos IBS/CBS no XML
+    aliquotaIBS: number           // Alíquota padrão IBS (0.1% em 2026)
+    aliquotaCBS: number           // Alíquota padrão CBS (0.9% em 2026)
+    incluirEmDevolucao: boolean   // Incluir em notas de devolução
+  }
 }
 
 // Códigos de UF do IBGE
@@ -208,4 +225,120 @@ export const FORMAS_PAGAMENTO: Record<string, string> = {
   '19': 'Cashback',
   '90': 'Sem Pagamento',
   '99': 'Outros',
+}
+
+// ============================================================
+// REFORMA TRIBUTÁRIA - IBS/CBS (NT 2025.002)
+// Obrigatório: Simples Nacional a partir de 2027
+//              Lucro Real/Presumido a partir de 2026
+// ============================================================
+
+/**
+ * Tributação IBS/CBS por item do produto
+ * Conforme Nota Técnica 2025.002 v1.34
+ */
+export interface TributacaoIBSCBS {
+  // Código de Situação Tributária IBS/CBS
+  cst: CstIbsCbs
+  // Código de Classificação Tributária (vinculado ao NCM)
+  cClassTrib?: string
+  // Base de cálculo
+  vBC: number
+  // Alíquota IBS (0.1% em 2026)
+  pIBS: number
+  // Alíquota CBS (0.9% em 2026)
+  pCBS: number
+  // Valor IBS calculado
+  vIBS: number
+  // Valor CBS calculado
+  vCBS: number
+  // Indicador de tributação diferenciada
+  indTribDif?: 0 | 1
+}
+
+/**
+ * CST IBS/CBS - Código de Situação Tributária
+ * Conforme LC 214/2025
+ */
+export type CstIbsCbs =
+  | '00'  // Tributação integral
+  | '10'  // Tributação com alíquota reduzida
+  | '20'  // Tributação com alíquota zero
+  | '30'  // Isenção
+  | '40'  // Imunidade
+  | '50'  // Suspensão
+  | '60'  // Diferimento
+  | '90'  // Outros
+
+/**
+ * Totais IBS/CBS da NF-e/NFC-e
+ * Grupo W03 conforme NT 2025.002
+ */
+export interface TotaisIBSCBS {
+  // Base de cálculo total IBS
+  vBCIBS: number
+  // Valor total IBS
+  vIBS: number
+  // Base de cálculo total CBS
+  vBCCBS: number
+  // Valor total CBS
+  vCBS: number
+  // Valor total IBS + CBS
+  vTotTrib: number
+}
+
+/**
+ * Configuração IBS/CBS da empresa
+ */
+export interface ConfiguracaoIBSCBS {
+  // Habilita campos IBS/CBS no XML
+  habilitado: boolean
+  // Ano de início da obrigatoriedade (2026 ou 2027)
+  anoObrigatoriedade: number
+  // Alíquota padrão IBS (0.1% em 2026)
+  aliquotaPadraoIBS: number
+  // Alíquota padrão CBS (0.9% em 2026)
+  aliquotaPadraoCBS: number
+  // Incluir em notas de devolução mesmo sendo Simples
+  incluirEmDevolucao: boolean
+}
+
+/**
+ * Alíquotas IBS/CBS por ano (período de transição)
+ */
+export const ALIQUOTAS_IBS_CBS: Record<number, { ibs: number; cbs: number }> = {
+  2026: { ibs: 0.1, cbs: 0.9 },     // Ano de teste
+  2027: { ibs: 0.1, cbs: 0.9 },     // Início Simples Nacional
+  2028: { ibs: 0.2, cbs: 1.8 },     // Transição
+  2029: { ibs: 0.4, cbs: 3.6 },     // Transição
+  2030: { ibs: 0.6, cbs: 5.4 },     // Transição
+  2031: { ibs: 0.8, cbs: 7.2 },     // Transição
+  2032: { ibs: 1.0, cbs: 9.0 },     // Transição
+  2033: { ibs: 1.0, cbs: 9.0 },     // Final (alíquotas cheias - valores estimados)
+}
+
+/**
+ * Descrição dos CSTs IBS/CBS
+ */
+export const CST_IBS_CBS_DESCRICAO: Record<CstIbsCbs, string> = {
+  '00': 'Tributação integral',
+  '10': 'Tributação com alíquota reduzida',
+  '20': 'Tributação com alíquota zero',
+  '30': 'Isenção',
+  '40': 'Imunidade',
+  '50': 'Suspensão',
+  '60': 'Diferimento',
+  '90': 'Outros',
+}
+
+/**
+ * Finalidades de NF-e incluindo novas da Reforma (NT 2025.002)
+ */
+export const FINALIDADES_NFE: Record<number, string> = {
+  1: 'NF-e Normal',
+  2: 'NF-e Complementar',
+  3: 'NF-e de Ajuste',
+  4: 'Devolução de Mercadoria',
+  5: 'Nota de Crédito',      // NOVA - Reforma Tributária
+  6: 'Nota de Débito',       // NOVA - Reforma Tributária
 }
