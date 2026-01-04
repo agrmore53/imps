@@ -157,22 +157,10 @@ export async function consultarStatusSEFAZ(params: {
   // Obtém código da UF
   const cUF = CODIGOS_UF[uf] || '42' // Default SC
 
-  // XML de consulta de status
-  const consStatServ = `<?xml version="1.0" encoding="UTF-8"?>
-<consStatServ xmlns="http://www.portalfiscal.inf.br/nfe" versao="4.00">
-  <tpAmb>${ambiente}</tpAmb>
-  <cUF>${cUF}</cUF>
-  <xServ>STATUS</xServ>
-</consStatServ>`
+  // XML de consulta de status (sem declaração XML pois será embutido no SOAP)
+  const consStatServ = `<consStatServ xmlns="http://www.portalfiscal.inf.br/nfe" versao="4.00"><tpAmb>${ambiente}</tpAmb><cUF>${cUF}</cUF><xServ>STATUS</xServ></consStatServ>`
 
-  const soapEnvelope = `<?xml version="1.0" encoding="UTF-8"?>
-<soap12:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap12="http://www.w3.org/2003/05/soap-envelope">
-  <soap12:Body>
-    <nfeDadosMsg xmlns="http://www.portalfiscal.inf.br/nfe/wsdl/NFeStatusServico4">
-      ${consStatServ}
-    </nfeDadosMsg>
-  </soap12:Body>
-</soap12:Envelope>`
+  const soapEnvelope = `<?xml version="1.0" encoding="UTF-8"?><soap12:Envelope xmlns:soap12="http://www.w3.org/2003/05/soap-envelope"><soap12:Body><nfeDadosMsg xmlns="http://www.portalfiscal.inf.br/nfe/wsdl/NFeStatusServico4">${consStatServ}</nfeDadosMsg></soap12:Body></soap12:Envelope>`
 
   try {
     // Configura agente HTTPS com certificado client-side (mTLS)
@@ -189,8 +177,9 @@ export async function consultarStatusSEFAZ(params: {
     const response = await axios.post(url, soapEnvelope, {
       httpsAgent,
       headers: {
-        'Content-Type': 'application/soap+xml; charset=utf-8',
-        'Accept': 'application/soap+xml',
+        'Content-Type': 'application/soap+xml; charset=utf-8; action="http://www.portalfiscal.inf.br/nfe/wsdl/NFeStatusServico4/nfeStatusServicoNF"',
+        'SOAPAction': 'http://www.portalfiscal.inf.br/nfe/wsdl/NFeStatusServico4/nfeStatusServicoNF',
+        'Accept': '*/*',
       },
       timeout: 30000,
       maxRedirects: 5,
