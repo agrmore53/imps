@@ -2,7 +2,7 @@ import axios, { AxiosError } from 'axios'
 import * as https from 'https'
 import { XMLParser } from 'fast-xml-parser'
 import { CertificadoA1 } from '../certificate'
-import { RetornoSEFAZ, WEBSERVICES_SEFAZ } from '../types'
+import { RetornoSEFAZ, WEBSERVICES_SEFAZ, CODIGOS_UF } from '../types'
 import { gerarLoteEnvio } from '../xml/generator'
 
 const parser = new XMLParser({
@@ -154,11 +154,14 @@ export async function consultarStatusSEFAZ(params: {
     return { online: false, mensagem: `Serviço ${servico} não encontrado` }
   }
 
+  // Obtém código da UF
+  const cUF = CODIGOS_UF[uf] || '42' // Default SC
+
   // XML de consulta de status
   const consStatServ = `<?xml version="1.0" encoding="UTF-8"?>
 <consStatServ xmlns="http://www.portalfiscal.inf.br/nfe" versao="4.00">
   <tpAmb>${ambiente}</tpAmb>
-  <cUF>42</cUF>
+  <cUF>${cUF}</cUF>
   <xServ>STATUS</xServ>
 </consStatServ>`
 
@@ -172,36 +175,63 @@ export async function consultarStatusSEFAZ(params: {
 </soap12:Envelope>`
 
   try {
+    // Configura agente HTTPS com certificado client-side (mTLS)
     const httpsAgent = new https.Agent({
       cert: certificado.pem.cert,
       key: certificado.pem.key,
-      rejectUnauthorized: true,
+      rejectUnauthorized: false, // Permite certificados auto-assinados da SEFAZ
+      secureProtocol: 'TLSv1_2_method',
     })
+
+    console.log(`[SEFAZ] Consultando status: ${url}`)
+    console.log(`[SEFAZ] Ambiente: ${ambiente === 1 ? 'Produção' : 'Homologação'}, UF: ${uf}, cUF: ${cUF}`)
 
     const response = await axios.post(url, soapEnvelope, {
       httpsAgent,
       headers: {
         'Content-Type': 'application/soap+xml; charset=utf-8',
+        'Accept': 'application/soap+xml',
       },
       timeout: 30000,
+      maxRedirects: 5,
     })
+
+    console.log(`[SEFAZ] Resposta recebida: ${response.status}`)
 
     const parsed = parser.parse(response.data)
     const retConsStatServ = parsed?.['soap:Envelope']?.['soap:Body']?.nfeResultMsg?.retConsStatServ ||
+                            parsed?.['soap12:Envelope']?.['soap12:Body']?.nfeResultMsg?.retConsStatServ ||
                             parsed?.Envelope?.Body?.nfeResultMsg?.retConsStatServ ||
                             {}
 
     const cStat = retConsStatServ.cStat
     const xMotivo = retConsStatServ.xMotivo
 
+    console.log(`[SEFAZ] Status: ${cStat} - ${xMotivo}`)
+
     return {
-      online: cStat === '107', // 107 = Serviço em operação
+      online: cStat === '107' || cStat === 107, // 107 = Serviço em operação
       mensagem: xMotivo || 'Status desconhecido',
     }
   } catch (error: any) {
+    console.error(`[SEFAZ] Erro:`, error.message)
+    if (error.code) console.error(`[SEFAZ] Código erro:`, error.code)
+    if (error.response) console.error(`[SEFAZ] Resposta:`, error.response.status, error.response.data)
+
+    let mensagem = error.message
+    if (error.code === 'ECONNREFUSED') {
+      mensagem = 'Conexão recusada pela SEFAZ'
+    } else if (error.code === 'ETIMEDOUT' || error.code === 'ESOCKETTIMEDOUT') {
+      mensagem = 'Timeout na conexão com SEFAZ'
+    } else if (error.code === 'UNABLE_TO_VERIFY_LEAF_SIGNATURE') {
+      mensagem = 'Erro de certificado SSL'
+    } else if (error.code === 'ERR_TLS_CERT_ALTNAME_INVALID') {
+      mensagem = 'Certificado SSL inválido'
+    }
+
     return {
       online: false,
-      mensagem: `Erro de conexão: ${error.message}`,
+      mensagem: `Erro: ${mensagem}`,
     }
   }
 }
