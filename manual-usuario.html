@@ -1,0 +1,2638 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual do Usuário - Império Sistemas</title>
+    <style>
+        /* ============================================
+           CONFIGURAÇÃO A4 - EPSON L3250 + CHROME
+           Folha: 210mm x 297mm
+           Margens impressora: mínimo 3mm
+           Margens seguras: 10mm
+           Área útil: 190mm x 277mm
+           ============================================ */
+
+        /* Configuração de Página A4 para Impressão */
+        @page {
+            size: 210mm 297mm;
+            margin: 10mm;
+        }
+
+        @page :first {
+            margin-top: 0;
+            margin-bottom: 0;
+            margin-left: 0;
+            margin-right: 0;
+        }
+
+        /* Reset */
+        *, *::before, *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Base - Tela */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f0f0f0;
+            font-size: 14px;
+        }
+
+        /* Container - Tela */
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 40px;
+            background: #fff;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        /* Capa - Tela */
+        .capa {
+            text-align: center;
+            padding: 80px 40px;
+            background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%);
+            color: white;
+            border-radius: 8px;
+            margin-bottom: 40px;
+        }
+
+        .capa h1 {
+            font-size: 42px;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .capa .subtitulo {
+            font-size: 24px;
+            opacity: 0.9;
+            margin-bottom: 40px;
+        }
+
+        .capa .versao {
+            font-size: 16px;
+            opacity: 0.8;
+            margin-top: 60px;
+        }
+
+        .capa .logo-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+
+        /* Índice - Tela */
+        .indice {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 8px;
+            margin-bottom: 40px;
+        }
+
+        .indice h2 {
+            color: #1e3a5f;
+            border-bottom: 3px solid #1e3a5f;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            font-size: 28px;
+        }
+
+        .indice ul {
+            list-style: none;
+        }
+
+        .indice li {
+            padding: 8px 0;
+            border-bottom: 1px dotted #ddd;
+        }
+
+        .indice li:last-child {
+            border-bottom: none;
+        }
+
+        .indice a {
+            color: #2d5a87;
+            text-decoration: none;
+            display: flex;
+            justify-content: space-between;
+            font-size: 15px;
+        }
+
+        .indice a:hover {
+            color: #1e3a5f;
+        }
+
+        .indice .capitulo-num {
+            font-weight: 600;
+            margin-right: 10px;
+        }
+
+        /* Capítulos */
+        .capitulo {
+            margin-bottom: 40px;
+            page-break-before: always;
+        }
+
+        .capitulo:first-of-type {
+            page-break-before: avoid;
+        }
+
+        .capitulo h2 {
+            color: #1e3a5f;
+            font-size: 28px;
+            border-bottom: 3px solid #1e3a5f;
+            padding-bottom: 10px;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .capitulo h3 {
+            color: #2d5a87;
+            font-size: 20px;
+            margin: 25px 0 15px 0;
+            padding-left: 15px;
+            border-left: 4px solid #2d5a87;
+        }
+
+        .capitulo h4 {
+            color: #444;
+            font-size: 16px;
+            margin: 20px 0 10px 0;
+            font-weight: 600;
+        }
+
+        .capitulo p {
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+
+        /* Listas */
+        ul, ol {
+            margin: 15px 0 15px 25px;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        /* Caixas de Destaque */
+        .dica {
+            background: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .dica::before {
+            content: "💡 DICA: ";
+            font-weight: 700;
+            color: #2e7d32;
+        }
+
+        .atencao {
+            background: #fff3e0;
+            border-left: 4px solid #ff9800;
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .atencao::before {
+            content: "⚠️ ATENÇÃO: ";
+            font-weight: 700;
+            color: #e65100;
+        }
+
+        .importante {
+            background: #ffebee;
+            border-left: 4px solid #f44336;
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .importante::before {
+            content: "❗ IMPORTANTE: ";
+            font-weight: 700;
+            color: #c62828;
+        }
+
+        .info {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .info::before {
+            content: "ℹ️ INFO: ";
+            font-weight: 700;
+            color: #1565c0;
+        }
+
+        /* Passo a Passo */
+        .passo-a-passo {
+            background: #fafafa;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .passo-a-passo h4 {
+            margin-top: 0;
+            color: #1e3a5f;
+        }
+
+        .passo {
+            display: flex;
+            align-items: flex-start;
+            margin: 15px 0;
+            gap: 15px;
+        }
+
+        .passo-numero {
+            background: #1e3a5f;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .passo-texto {
+            flex: 1;
+            padding-top: 3px;
+        }
+
+        /* Tabelas */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 13px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+
+        th {
+            background: #1e3a5f;
+            color: white;
+            font-weight: 600;
+        }
+
+        tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+
+        tr:hover {
+            background: #f0f0f0;
+        }
+
+        /* Ícones de Seção */
+        .icon {
+            font-size: 24px;
+        }
+
+        /* Teclas de Atalho */
+        kbd {
+            background: #eee;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 2px 6px;
+            font-family: monospace;
+            font-size: 12px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+
+        /* Código */
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+
+        /* Rodapé de Página */
+        .rodape-suporte {
+            background: #1e3a5f;
+            color: white;
+            padding: 30px;
+            border-radius: 8px;
+            text-align: center;
+            margin-top: 40px;
+        }
+
+        .rodape-suporte h3 {
+            border: none;
+            color: white;
+            padding: 0;
+            margin-bottom: 15px;
+        }
+
+        .rodape-suporte .telefone {
+            font-size: 28px;
+            font-weight: 700;
+            margin: 15px 0;
+        }
+
+        .rodape-suporte .aviso {
+            background: rgba(255,255,255,0.1);
+            padding: 10px 20px;
+            border-radius: 4px;
+            margin-top: 15px;
+            font-size: 13px;
+        }
+
+        /* ============================================
+           ESTILOS DE IMPRESSÃO - A4 + EPSON L3250
+           ============================================ */
+        @media print {
+            /* Forçar cores de fundo na impressão */
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
+            }
+
+            html, body {
+                width: 210mm;
+                height: 297mm;
+                margin: 0 !important;
+                padding: 0 !important;
+                background: #fff !important;
+                font-size: 11pt;
+                line-height: 1.5;
+            }
+
+            /* Container sem margens extras (já definido no @page) */
+            .container {
+                width: 190mm;
+                max-width: 190mm;
+                margin: 0 auto;
+                padding: 0;
+                background: #fff;
+                box-shadow: none;
+            }
+
+            /* ===== CAPA - PÁGINA INTEIRA ===== */
+            .capa {
+                width: 210mm;
+                height: 297mm;
+                margin: -10mm;
+                padding: 0;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                border-radius: 0;
+                page-break-after: always;
+            }
+
+            .capa h1 {
+                font-size: 36pt;
+            }
+
+            .capa .subtitulo {
+                font-size: 18pt;
+            }
+
+            .capa .logo-icon {
+                font-size: 72pt;
+            }
+
+            /* ===== ÍNDICE ===== */
+            .indice {
+                padding: 20px;
+                margin: 0 0 20px 0;
+                border-radius: 0;
+                page-break-after: always;
+            }
+
+            .indice h2 {
+                font-size: 18pt;
+            }
+
+            .indice a {
+                font-size: 11pt;
+            }
+
+            /* ===== CAPÍTULOS ===== */
+            .capitulo {
+                page-break-before: always;
+                margin-bottom: 0;
+            }
+
+            .capitulo:first-of-type {
+                page-break-before: auto;
+            }
+
+            .capitulo h2 {
+                font-size: 16pt;
+                margin-bottom: 15px;
+            }
+
+            .capitulo h3 {
+                font-size: 13pt;
+                margin: 20px 0 10px 0;
+            }
+
+            .capitulo h4 {
+                font-size: 11pt;
+                margin: 15px 0 8px 0;
+            }
+
+            .capitulo p {
+                font-size: 11pt;
+                margin-bottom: 10px;
+                orphans: 3;
+                widows: 3;
+            }
+
+            /* ===== CONTROLE DE QUEBRA DE PÁGINA ===== */
+            h2, h3, h4 {
+                page-break-after: avoid;
+            }
+
+            .passo-a-passo,
+            table,
+            .dica,
+            .atencao,
+            .importante,
+            .info,
+            .fluxo {
+                page-break-inside: avoid;
+            }
+
+            /* ===== TABELAS ===== */
+            table {
+                font-size: 10pt;
+                width: 100%;
+            }
+
+            th, td {
+                padding: 8px 10px;
+            }
+
+            /* ===== ELEMENTOS VISUAIS ===== */
+            .dica, .atencao, .importante, .info {
+                padding: 12px 15px;
+                margin: 15px 0;
+                font-size: 10pt;
+            }
+
+            .passo-a-passo {
+                padding: 15px;
+                margin: 15px 0;
+            }
+
+            .passo {
+                margin: 10px 0;
+            }
+
+            .passo-numero {
+                width: 24px;
+                height: 24px;
+                font-size: 11pt;
+            }
+
+            .fluxo {
+                padding: 15px;
+                margin: 15px 0;
+            }
+
+            .fluxo-item {
+                padding: 8px 15px;
+                font-size: 10pt;
+            }
+
+            .badge {
+                font-size: 9pt;
+                padding: 2px 8px;
+            }
+
+            /* ===== RODAPÉ SUPORTE ===== */
+            .rodape-suporte {
+                padding: 20px;
+                margin-top: 30px;
+            }
+
+            .rodape-suporte .telefone {
+                font-size: 20pt;
+            }
+
+            /* ===== LINKS ===== */
+            a {
+                text-decoration: none;
+                color: inherit;
+            }
+
+            /* ===== LISTAS ===== */
+            ul, ol {
+                margin: 10px 0 10px 20px;
+            }
+
+            li {
+                margin-bottom: 5px;
+                font-size: 11pt;
+            }
+        }
+
+        /* Separador */
+        hr {
+            border: none;
+            border-top: 2px solid #eee;
+            margin: 30px 0;
+        }
+
+        /* Fluxograma Simples */
+        .fluxo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 20px 0;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 8px;
+        }
+
+        .fluxo-item {
+            background: #2d5a87;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 13px;
+        }
+
+        .fluxo-seta {
+            color: #999;
+            font-size: 20px;
+        }
+
+        /* Badge */
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge-verde {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .badge-azul {
+            background: #e3f2fd;
+            color: #1565c0;
+        }
+
+        .badge-laranja {
+            background: #fff3e0;
+            color: #e65100;
+        }
+
+        .badge-vermelho {
+            background: #ffebee;
+            color: #c62828;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- CAPA -->
+        <div class="capa">
+            <div class="logo-icon">🏛️</div>
+            <h1>IMPÉRIO SISTEMAS</h1>
+            <div class="subtitulo">Manual Completo do Usuário</div>
+            <p>Sistema de Gestão Empresarial e Ponto de Venda</p>
+            <div class="versao">
+                Versão 1.0 | Janeiro 2026<br>
+                Este manual é válido para todas as versões do sistema
+            </div>
+        </div>
+
+        <!-- ÍNDICE -->
+        <div class="indice">
+            <h2>📑 Índice</h2>
+            <ul>
+                <li>
+                    <a href="#cap1">
+                        <span><span class="capitulo-num">01</span> Introdução ao Sistema</span>
+                        <span>3</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#cap2">
+                        <span><span class="capitulo-num">02</span> Dashboard - Visão Geral</span>
+                        <span>5</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#cap3">
+                        <span><span class="capitulo-num">03</span> PDV - Ponto de Venda</span>
+                        <span>7</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#cap4">
+                        <span><span class="capitulo-num">04</span> Controle de Caixa</span>
+                        <span>12</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#cap5">
+                        <span><span class="capitulo-num">05</span> Cadastro de Produtos</span>
+                        <span>15</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#cap6">
+                        <span><span class="capitulo-num">06</span> Controle de Estoque</span>
+                        <span>19</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#cap7">
+                        <span><span class="capitulo-num">07</span> Cadastro de Clientes</span>
+                        <span>24</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#cap8">
+                        <span><span class="capitulo-num">08</span> Cadastro de Fornecedores</span>
+                        <span>27</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#cap9">
+                        <span><span class="capitulo-num">09</span> Módulo Financeiro</span>
+                        <span>29</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#cap10">
+                        <span><span class="capitulo-num">10</span> Programa de Fidelidade</span>
+                        <span>35</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#cap11">
+                        <span><span class="capitulo-num">11</span> Módulo Fiscal (NFC-e / NF-e)</span>
+                        <span>38</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#cap12">
+                        <span><span class="capitulo-num">12</span> Relatórios</span>
+                        <span>43</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#cap13">
+                        <span><span class="capitulo-num">13</span> Configurações do Sistema</span>
+                        <span>46</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#cap14">
+                        <span><span class="capitulo-num">14</span> Modo Offline</span>
+                        <span>49</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#cap15">
+                        <span><span class="capitulo-num">15</span> Suporte Técnico</span>
+                        <span>51</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- CAPÍTULO 1 - INTRODUÇÃO -->
+        <div class="capitulo" id="cap1">
+            <h2><span class="icon">📖</span> 1. Introdução ao Sistema</h2>
+
+            <h3>1.1 O que é o Império Sistemas?</h3>
+            <p>
+                O <strong>Império Sistemas</strong> é um sistema completo de gestão empresarial (ERP) com Ponto de Venda (PDV) integrado,
+                desenvolvido especialmente para pequenas e médias empresas do varejo. Com ele, você pode gerenciar todas as operações
+                do seu negócio em um único lugar: vendas, estoque, financeiro, clientes, fornecedores e emissão de notas fiscais.
+            </p>
+
+            <p>O sistema funciona 100% na nuvem, ou seja, você pode acessar de qualquer lugar usando apenas um navegador de internet. Além disso, possui modo offline que permite continuar vendendo mesmo sem conexão com a internet.</p>
+
+            <h3>1.2 Principais Funcionalidades</h3>
+            <ul>
+                <li><strong>PDV Completo:</strong> Realize vendas rápidas com múltiplas formas de pagamento</li>
+                <li><strong>Controle de Estoque:</strong> Entradas, saídas, inventário e alertas de estoque baixo</li>
+                <li><strong>Gestão Financeira:</strong> Contas a pagar, contas a receber, crediário e fluxo de caixa</li>
+                <li><strong>Cadastros:</strong> Produtos, clientes e fornecedores</li>
+                <li><strong>Emissão Fiscal:</strong> NFC-e e NF-e integradas com a SEFAZ</li>
+                <li><strong>Programa de Fidelidade:</strong> Sistema de pontos para seus clientes</li>
+                <li><strong>Relatórios:</strong> Análises completas do seu negócio</li>
+                <li><strong>Modo Offline:</strong> Continue vendendo mesmo sem internet</li>
+            </ul>
+
+            <h3>1.3 Requisitos do Sistema</h3>
+            <table>
+                <tr>
+                    <th>Requisito</th>
+                    <th>Especificação</th>
+                </tr>
+                <tr>
+                    <td>Navegador</td>
+                    <td>Google Chrome, Microsoft Edge, Firefox ou Safari (versões atualizadas)</td>
+                </tr>
+                <tr>
+                    <td>Internet</td>
+                    <td>Conexão estável (mínimo 1 Mbps) - possui modo offline</td>
+                </tr>
+                <tr>
+                    <td>Dispositivo</td>
+                    <td>Computador, notebook ou tablet</td>
+                </tr>
+                <tr>
+                    <td>Resolução</td>
+                    <td>Mínimo 1024x768 pixels</td>
+                </tr>
+            </table>
+
+            <div class="dica">
+                Recomendamos o uso do Google Chrome para melhor experiência, especialmente para emissão de notas fiscais.
+            </div>
+
+            <h3>1.4 Primeiro Acesso</h3>
+            <div class="passo-a-passo">
+                <h4>Como fazer seu primeiro login:</h4>
+                <div class="passo">
+                    <div class="passo-numero">1</div>
+                    <div class="passo-texto">Abra seu navegador e acesse o endereço do sistema fornecido pelo suporte</div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">2</div>
+                    <div class="passo-texto">Na tela de login, digite seu <strong>e-mail</strong> cadastrado</div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">3</div>
+                    <div class="passo-texto">Digite sua <strong>senha</strong> provisória (fornecida pelo administrador)</div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">4</div>
+                    <div class="passo-texto">Clique em <strong>"Entrar"</strong></div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">5</div>
+                    <div class="passo-texto">No primeiro acesso, recomendamos alterar sua senha em Configurações</div>
+                </div>
+            </div>
+
+            <h3>1.5 Perfis de Usuário</h3>
+            <p>O sistema possui diferentes perfis com permissões específicas:</p>
+            <table>
+                <tr>
+                    <th>Perfil</th>
+                    <th>Permissões</th>
+                </tr>
+                <tr>
+                    <td><span class="badge badge-vermelho">Administrador</span></td>
+                    <td>Acesso total a todas as funcionalidades do sistema</td>
+                </tr>
+                <tr>
+                    <td><span class="badge badge-laranja">Gerente</span></td>
+                    <td>Dashboard, relatórios, cadastros e financeiro</td>
+                </tr>
+                <tr>
+                    <td><span class="badge badge-azul">Caixa</span></td>
+                    <td>Apenas PDV e controle de caixa</td>
+                </tr>
+                <tr>
+                    <td><span class="badge badge-verde">Estoque</span></td>
+                    <td>Apenas módulo de estoque e produtos</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- CAPÍTULO 2 - DASHBOARD -->
+        <div class="capitulo" id="cap2">
+            <h2><span class="icon">📊</span> 2. Dashboard - Visão Geral</h2>
+
+            <p>
+                O Dashboard é a tela inicial do sistema após o login. Ele apresenta um resumo completo do seu negócio
+                em tempo real, permitindo acompanhar as principais métricas de vendas, estoque e finanças.
+            </p>
+
+            <h3>2.1 Métricas de Vendas</h3>
+            <p>Na parte superior do Dashboard, você encontra os cards com informações das vendas:</p>
+            <ul>
+                <li><strong>Vendas de Hoje:</strong> Total vendido no dia atual</li>
+                <li><strong>Vendas de Ontem:</strong> Total vendido no dia anterior (para comparação)</li>
+                <li><strong>Vendas nos Últimos 7 Dias:</strong> Soma das vendas da semana</li>
+                <li><strong>Variação:</strong> Percentual de crescimento ou queda em relação ao período anterior</li>
+            </ul>
+
+            <div class="info">
+                Os valores são atualizados automaticamente. Se uma nova venda for registrada, os números se atualizam em tempo real.
+            </div>
+
+            <h3>2.2 Gráficos</h3>
+            <p>O Dashboard apresenta gráficos interativos que ajudam a visualizar a performance do negócio:</p>
+            <ul>
+                <li><strong>Gráfico de Vendas:</strong> Mostra a evolução das vendas por dia/semana/mês</li>
+                <li><strong>Formas de Pagamento:</strong> Percentual de vendas por tipo (dinheiro, cartão, PIX)</li>
+            </ul>
+
+            <h3>2.3 Alertas e Notificações</h3>
+            <p>O sistema gera alertas automáticos para situações que precisam de atenção:</p>
+            <table>
+                <tr>
+                    <th>Tipo de Alerta</th>
+                    <th>Descrição</th>
+                    <th>Cor</th>
+                </tr>
+                <tr>
+                    <td>🟠 Estoque Baixo</td>
+                    <td>Produtos com quantidade abaixo do mínimo definido</td>
+                    <td>Laranja</td>
+                </tr>
+                <tr>
+                    <td>🔴 Conta Vencida</td>
+                    <td>Contas a pagar que já passaram do vencimento</td>
+                    <td>Vermelho</td>
+                </tr>
+                <tr>
+                    <td>🟡 Conta Vencendo</td>
+                    <td>Contas a pagar que vencem nos próximos 7 dias</td>
+                    <td>Amarelo</td>
+                </tr>
+                <tr>
+                    <td>🔴 Recebimento Atrasado</td>
+                    <td>Valores a receber que estão em atraso</td>
+                    <td>Vermelho</td>
+                </tr>
+            </table>
+
+            <div class="atencao">
+                Verifique os alertas diariamente para evitar problemas com estoque e finanças!
+            </div>
+
+            <h3>2.4 Marcar Notificação como Lida</h3>
+            <p>
+                Para marcar uma notificação como lida, clique no botão <strong>"✓"</strong> ao lado dela.
+                Notificações lidas não aparecem mais no painel, mas podem ser consultadas no histórico.
+            </p>
+        </div>
+
+        <!-- CAPÍTULO 3 - PDV -->
+        <div class="capitulo" id="cap3">
+            <h2><span class="icon">🛒</span> 3. PDV - Ponto de Venda</h2>
+
+            <p>
+                O PDV (Ponto de Venda) é o módulo onde você realiza as vendas do dia a dia.
+                Ele foi desenvolvido para ser rápido e intuitivo, permitindo atender seus clientes com agilidade.
+            </p>
+
+            <h3>3.1 Acessando o PDV</h3>
+            <p>Para acessar o PDV, clique no botão <strong>"PDV"</strong> no menu lateral ou acesse diretamente pela URL do sistema seguida de <code>/pdv</code>.</p>
+
+            <div class="importante">
+                Antes de iniciar as vendas, é necessário <strong>abrir o caixa</strong>. Veja o Capítulo 4 para instruções.
+            </div>
+
+            <h3>3.2 Tela Principal do PDV</h3>
+            <p>A tela do PDV é dividida em três áreas principais:</p>
+            <ul>
+                <li><strong>Área de Busca (topo):</strong> Campo para buscar produtos por código, nome ou código de barras</li>
+                <li><strong>Lista de Produtos (esquerda):</strong> Exibe os produtos encontrados na busca</li>
+                <li><strong>Carrinho (direita):</strong> Mostra os itens adicionados à venda atual</li>
+            </ul>
+
+            <h3>3.3 Adicionando Produtos</h3>
+            <div class="passo-a-passo">
+                <h4>Método 1: Busca por Nome ou Código</h4>
+                <div class="passo">
+                    <div class="passo-numero">1</div>
+                    <div class="passo-texto">Digite o nome ou código do produto no campo de busca</div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">2</div>
+                    <div class="passo-texto">Clique no produto desejado na lista que aparece</div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">3</div>
+                    <div class="passo-texto">O produto será adicionado ao carrinho automaticamente</div>
+                </div>
+            </div>
+
+            <div class="passo-a-passo">
+                <h4>Método 2: Leitor de Código de Barras</h4>
+                <div class="passo">
+                    <div class="passo-numero">1</div>
+                    <div class="passo-texto">Clique no campo de busca para ativá-lo</div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">2</div>
+                    <div class="passo-texto">Passe o produto pelo leitor de código de barras</div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">3</div>
+                    <div class="passo-texto">O produto é identificado e adicionado automaticamente</div>
+                </div>
+            </div>
+
+            <h3>3.4 Produtos Vendidos por Peso</h3>
+            <p>
+                Para produtos vendidos por peso (KG, gramas, litros), como ração a granel, o sistema abre automaticamente
+                uma janela para você digitar a quantidade.
+            </p>
+            <div class="passo-a-passo">
+                <h4>Vendendo produto por peso:</h4>
+                <div class="passo">
+                    <div class="passo-numero">1</div>
+                    <div class="passo-texto">Busque e clique no produto (ex: "Ração Premium - Granel")</div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">2</div>
+                    <div class="passo-texto">Uma janela aparecerá perguntando o peso/quantidade</div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">3</div>
+                    <div class="passo-texto">Digite o peso (ex: 2.5 para 2,5 kg) ou use os botões rápidos</div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">4</div>
+                    <div class="passo-texto">O sistema calcula o valor automaticamente e adiciona ao carrinho</div>
+                </div>
+            </div>
+
+            <div class="dica">
+                Use os botões rápidos (0.5, 1, 2, 5) para agilizar a digitação de quantidades comuns.
+            </div>
+
+            <h3>3.5 Gerenciando o Carrinho</h3>
+            <table>
+                <tr>
+                    <th>Ação</th>
+                    <th>Como Fazer</th>
+                </tr>
+                <tr>
+                    <td>Aumentar quantidade</td>
+                    <td>Clique no botão <strong>"+"</strong> ao lado do item</td>
+                </tr>
+                <tr>
+                    <td>Diminuir quantidade</td>
+                    <td>Clique no botão <strong>"-"</strong> ao lado do item</td>
+                </tr>
+                <tr>
+                    <td>Remover item</td>
+                    <td>Clique no botão <strong>"🗑️"</strong> (lixeira)</td>
+                </tr>
+                <tr>
+                    <td>Aplicar desconto</td>
+                    <td>Digite o valor no campo "Desconto" abaixo do carrinho</td>
+                </tr>
+                <tr>
+                    <td>Limpar carrinho</td>
+                    <td>Clique em <strong>"Limpar"</strong> para remover todos os itens</td>
+                </tr>
+            </table>
+
+            <h3>3.6 Finalizando a Venda</h3>
+            <div class="passo-a-passo">
+                <h4>Passo a passo para finalizar:</h4>
+                <div class="passo">
+                    <div class="passo-numero">1</div>
+                    <div class="passo-texto">Confira os itens e o valor total no carrinho</div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">2</div>
+                    <div class="passo-texto">Clique no botão <strong>"Finalizar Venda"</strong></div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">3</div>
+                    <div class="passo-texto">Selecione a forma de pagamento (próxima seção)</div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">4</div>
+                    <div class="passo-texto">Confirme a venda</div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">5</div>
+                    <div class="passo-texto">O recibo será exibido para impressão (opcional)</div>
+                </div>
+            </div>
+
+            <h3>3.7 Formas de Pagamento</h3>
+            <p>O sistema aceita as seguintes formas de pagamento:</p>
+
+            <h4>💵 Dinheiro</h4>
+            <ul>
+                <li>Selecione "Dinheiro" como forma de pagamento</li>
+                <li>Digite o valor recebido do cliente</li>
+                <li>O sistema calcula o troco automaticamente</li>
+            </ul>
+
+            <h4>💳 Cartão de Crédito / Débito</h4>
+            <ul>
+                <li>Selecione "Cartão Crédito" ou "Cartão Débito"</li>
+                <li>Passe o cartão na maquininha</li>
+                <li>Confirme a venda após aprovação</li>
+            </ul>
+
+            <h4>📱 PIX</h4>
+            <ul>
+                <li>Selecione "PIX" como forma de pagamento</li>
+                <li>Um QR Code será gerado na tela</li>
+                <li>O cliente escaneia o QR Code com o celular</li>
+                <li>Após o pagamento, confirme a venda</li>
+            </ul>
+
+            <div class="info">
+                O QR Code PIX é gerado automaticamente com o valor exato da venda. Basta o cliente escanear e pagar.
+            </div>
+
+            <h4>📝 Crediário (Fiado)</h4>
+            <ul>
+                <li>Selecione "Crediário" como forma de pagamento</li>
+                <li>É obrigatório selecionar um cliente cadastrado</li>
+                <li>A venda será registrada como conta a receber do cliente</li>
+            </ul>
+
+            <div class="atencao">
+                Vendas em crediário só podem ser feitas para clientes cadastrados e com limite de crédito disponível.
+            </div>
+
+            <h3>3.8 Pagamento Misto</h3>
+            <p>
+                É possível dividir o pagamento em mais de uma forma. Por exemplo: parte em dinheiro e parte no cartão.
+            </p>
+            <div class="passo-a-passo">
+                <h4>Como fazer pagamento misto:</h4>
+                <div class="passo">
+                    <div class="passo-numero">1</div>
+                    <div class="passo-texto">Selecione a primeira forma de pagamento</div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">2</div>
+                    <div class="passo-texto">Digite o valor parcial (ex: R$ 50,00 em dinheiro)</div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">3</div>
+                    <div class="passo-texto">Clique em "Adicionar Pagamento"</div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">4</div>
+                    <div class="passo-texto">Selecione a segunda forma e digite o valor restante</div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">5</div>
+                    <div class="passo-texto">Finalize quando o total dos pagamentos igualar o valor da venda</div>
+                </div>
+            </div>
+
+            <h3>3.9 Imprimindo o Recibo</h3>
+            <p>
+                Após finalizar a venda, o sistema exibe o recibo na tela. Clique em <strong>"Imprimir"</strong>
+                para enviar para a impressora. O recibo é formatado para impressoras térmicas (58mm ou 80mm).
+            </p>
+        </div>
+
+        <!-- CAPÍTULO 4 - CAIXA -->
+        <div class="capitulo" id="cap4">
+            <h2><span class="icon">💰</span> 4. Controle de Caixa</h2>
+
+            <p>
+                O controle de caixa permite gerenciar todo o dinheiro que entra e sai durante o expediente.
+                É fundamental abrir o caixa antes de iniciar as vendas e fechá-lo ao final do dia.
+            </p>
+
+            <h3>4.1 Abrindo o Caixa</h3>
+            <div class="passo-a-passo">
+                <h4>Passo a passo:</h4>
+                <div class="passo">
+                    <div class="passo-numero">1</div>
+                    <div class="passo-texto">Acesse <strong>PDV → Caixa</strong> no menu</div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">2</div>
+                    <div class="passo-texto">Clique no botão <strong>"Abrir Caixa"</strong></div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">3</div>
+                    <div class="passo-texto">Digite o <strong>valor inicial</strong> em dinheiro (troco)</div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">4</div>
+                    <div class="passo-texto">Confirme a abertura</div>
+                </div>
+            </div>
+
+            <div class="importante">
+                Você só pode ter um caixa aberto por vez. Se tentar abrir outro, o sistema informará que já existe um caixa aberto.
+            </div>
+
+            <h3>4.2 Movimentos de Caixa</h3>
+            <p>Durante o expediente, você pode registrar movimentos além das vendas:</p>
+
+            <table>
+                <tr>
+                    <th>Movimento</th>
+                    <th>Descrição</th>
+                    <th>Exemplo</th>
+                </tr>
+                <tr>
+                    <td><span class="badge badge-verde">Suprimento</span></td>
+                    <td>Entrada de dinheiro no caixa (não é venda)</td>
+                    <td>Reforço de troco</td>
+                </tr>
+                <tr>
+                    <td><span class="badge badge-vermelho">Sangria</span></td>
+                    <td>Retirada de dinheiro do caixa</td>
+                    <td>Enviar dinheiro ao cofre</td>
+                </tr>
+                <tr>
+                    <td><span class="badge badge-azul">Entrada</span></td>
+                    <td>Recebimento registrado manualmente</td>
+                    <td>Recebimento de conta</td>
+                </tr>
+                <tr>
+                    <td><span class="badge badge-laranja">Saída</span></td>
+                    <td>Pagamento registrado manualmente</td>
+                    <td>Pagamento de despesa pequena</td>
+                </tr>
+            </table>
+
+            <h4>Registrando uma Sangria:</h4>
+            <div class="passo-a-passo">
+                <div class="passo">
+                    <div class="passo-numero">1</div>
+                    <div class="passo-texto">Na tela de Caixa, clique em <strong>"Sangria"</strong></div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">2</div>
+                    <div class="passo-texto">Digite o valor a ser retirado</div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">3</div>
+                    <div class="passo-texto">Informe o motivo (ex: "Envio ao cofre")</div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">4</div>
+                    <div class="passo-texto">Confirme a operação</div>
+                </div>
+            </div>
+
+            <div class="dica">
+                Faça sangrias periodicamente para não acumular muito dinheiro em caixa. Isso aumenta a segurança.
+            </div>
+
+            <h3>4.3 Resumo do Caixa</h3>
+            <p>A tela de caixa exibe um resumo em tempo real:</p>
+            <ul>
+                <li><strong>Valor Inicial:</strong> Quanto tinha ao abrir o caixa</li>
+                <li><strong>Total Vendas:</strong> Soma de todas as vendas (por forma de pagamento)</li>
+                <li><strong>Suprimentos:</strong> Total de entradas extras</li>
+                <li><strong>Sangrias:</strong> Total de retiradas</li>
+                <li><strong>Saldo Esperado:</strong> Quanto deveria ter no caixa</li>
+            </ul>
+
+            <h3>4.4 Fechando o Caixa</h3>
+            <div class="passo-a-passo">
+                <h4>Passo a passo:</h4>
+                <div class="passo">
+                    <div class="passo-numero">1</div>
+                    <div class="passo-texto">Conte todo o dinheiro físico do caixa</div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">2</div>
+                    <div class="passo-texto">Acesse <strong>PDV → Caixa</strong></div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">3</div>
+                    <div class="passo-texto">Clique em <strong>"Fechar Caixa"</strong></div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">4</div>
+                    <div class="passo-texto">Digite o <strong>valor contado</strong> em dinheiro</div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">5</div>
+                    <div class="passo-texto">O sistema mostrará se há diferença (sobra ou falta)</div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">6</div>
+                    <div class="passo-texto">Confirme o fechamento</div>
+                </div>
+            </div>
+
+            <div class="atencao">
+                Diferenças no caixa (sobras ou faltas) ficam registradas no histórico. Investigue sempre que houver diferenças significativas.
+            </div>
+
+            <h3>4.5 Relatório de Caixa</h3>
+            <p>
+                Ao fechar o caixa, um relatório completo é gerado com todas as movimentações do dia.
+                Este relatório pode ser impresso para conferência e arquivamento.
+            </p>
+        </div>
+
+        <!-- CAPÍTULO 5 - PRODUTOS -->
+        <div class="capitulo" id="cap5">
+            <h2><span class="icon">📦</span> 5. Cadastro de Produtos</h2>
+
+            <p>
+                O cadastro de produtos é onde você registra todos os itens que sua empresa comercializa.
+                Um cadastro completo e correto é fundamental para o bom funcionamento do sistema.
+            </p>
+
+            <h3>5.1 Acessando o Cadastro</h3>
+            <p>No menu lateral, clique em <strong>Produtos</strong>. A lista de produtos cadastrados será exibida.</p>
+
+            <h3>5.2 Cadastrando um Novo Produto</h3>
+            <div class="passo-a-passo">
+                <h4>Passo a passo:</h4>
+                <div class="passo">
+                    <div class="passo-numero">1</div>
+                    <div class="passo-texto">Clique no botão <strong>"Novo Produto"</strong></div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">2</div>
+                    <div class="passo-texto">Preencha os campos obrigatórios (marcados com *)</div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">3</div>
+                    <div class="passo-texto">Preencha os campos opcionais conforme necessário</div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">4</div>
+                    <div class="passo-texto">Clique em <strong>"Salvar"</strong></div>
+                </div>
+            </div>
+
+            <h3>5.3 Campos do Produto</h3>
+            <table>
+                <tr>
+                    <th>Campo</th>
+                    <th>Obrigatório</th>
+                    <th>Descrição</th>
+                </tr>
+                <tr>
+                    <td>Código</td>
+                    <td>Sim</td>
+                    <td>Código interno do produto (único)</td>
+                </tr>
+                <tr>
+                    <td>Código de Barras</td>
+                    <td>Não</td>
+                    <td>EAN/GTIN do produto para leitura com scanner</td>
+                </tr>
+                <tr>
+                    <td>Nome</td>
+                    <td>Sim</td>
+                    <td>Nome do produto que aparecerá nas vendas</td>
+                </tr>
+                <tr>
+                    <td>Descrição</td>
+                    <td>Não</td>
+                    <td>Descrição detalhada (opcional)</td>
+                </tr>
+                <tr>
+                    <td>Unidade</td>
+                    <td>Sim</td>
+                    <td>UN (unidade), KG, L, M, etc.</td>
+                </tr>
+                <tr>
+                    <td>Preço de Custo</td>
+                    <td>Não</td>
+                    <td>Quanto você paga pelo produto</td>
+                </tr>
+                <tr>
+                    <td>Preço de Venda</td>
+                    <td>Sim</td>
+                    <td>Preço cobrado do cliente</td>
+                </tr>
+                <tr>
+                    <td>Estoque Atual</td>
+                    <td>Sim</td>
+                    <td>Quantidade disponível no momento</td>
+                </tr>
+                <tr>
+                    <td>Estoque Mínimo</td>
+                    <td>Não</td>
+                    <td>Quantidade mínima (gera alerta quando atingir)</td>
+                </tr>
+                <tr>
+                    <td>NCM</td>
+                    <td>Para NF</td>
+                    <td>Código fiscal do produto (8 dígitos)</td>
+                </tr>
+            </table>
+
+            <h3>5.4 Unidades de Medida</h3>
+            <p>O sistema suporta diferentes unidades de medida:</p>
+            <table>
+                <tr>
+                    <th>Código</th>
+                    <th>Descrição</th>
+                    <th>Exemplo de Uso</th>
+                </tr>
+                <tr>
+                    <td>UN</td>
+                    <td>Unidade</td>
+                    <td>Produtos vendidos por peça</td>
+                </tr>
+                <tr>
+                    <td>KG</td>
+                    <td>Quilograma</td>
+                    <td>Ração a granel, carnes</td>
+                </tr>
+                <tr>
+                    <td>G</td>
+                    <td>Grama</td>
+                    <td>Produtos leves vendidos por peso</td>
+                </tr>
+                <tr>
+                    <td>L</td>
+                    <td>Litro</td>
+                    <td>Líquidos, shampoo a granel</td>
+                </tr>
+                <tr>
+                    <td>ML</td>
+                    <td>Mililitro</td>
+                    <td>Pequenas quantidades de líquido</td>
+                </tr>
+                <tr>
+                    <td>M</td>
+                    <td>Metro</td>
+                    <td>Tecidos, cordas</td>
+                </tr>
+                <tr>
+                    <td>M2</td>
+                    <td>Metro quadrado</td>
+                    <td>Pisos, revestimentos</td>
+                </tr>
+            </table>
+
+            <div class="info">
+                Produtos com unidade KG, G, L, ML, M são considerados "pesáveis" e abrem automaticamente a janela de quantidade no PDV.
+            </div>
+
+            <h3>5.5 Margem de Lucro</h3>
+            <p>
+                Ao preencher o preço de custo e o preço de venda, o sistema calcula automaticamente a margem de lucro.
+                Isso ajuda você a entender a rentabilidade de cada produto.
+            </p>
+            <p><strong>Fórmula:</strong> Margem = ((Preço Venda - Preço Custo) / Preço Custo) × 100</p>
+
+            <div class="dica">
+                Mantenha o preço de custo sempre atualizado para ter uma visão real da sua margem de lucro.
+            </div>
+
+            <h3>5.6 Editando um Produto</h3>
+            <p>Na lista de produtos, clique no produto que deseja editar. A tela de edição será aberta com todos os dados preenchidos. Faça as alterações necessárias e clique em <strong>"Salvar"</strong>.</p>
+
+            <h3>5.7 Desativando um Produto</h3>
+            <p>
+                Se um produto não é mais vendido, você pode desativá-lo em vez de excluí-lo.
+                Produtos desativados não aparecem no PDV, mas permanecem no histórico de vendas.
+            </p>
+            <p>Para desativar: edite o produto e desmarque a opção <strong>"Ativo"</strong>.</p>
+        </div>
+
+        <!-- CAPÍTULO 6 - ESTOQUE -->
+        <div class="capitulo" id="cap6">
+            <h2><span class="icon">📋</span> 6. Controle de Estoque</h2>
+
+            <p>
+                O módulo de estoque permite controlar todas as entradas e saídas de produtos,
+                realizar inventários físicos e importar notas fiscais de compra.
+            </p>
+
+            <h3>6.1 Visão Geral do Estoque</h3>
+            <p>
+                Acesse <strong>Estoque</strong> no menu lateral. A tela principal mostra a posição atual de todos os produtos
+                com quantidade em estoque, estoque mínimo e valor total.
+            </p>
+
+            <div class="fluxo">
+                <span class="fluxo-item">Compra/Entrada</span>
+                <span class="fluxo-seta">→</span>
+                <span class="fluxo-item">Estoque</span>
+                <span class="fluxo-seta">→</span>
+                <span class="fluxo-item">Venda/Saída</span>
+            </div>
+
+            <h3>6.2 Entrada de Estoque</h3>
+            <p>Use a entrada de estoque quando receber mercadorias de fornecedores.</p>
+
+            <div class="passo-a-passo">
+                <h4>Registrando uma entrada:</h4>
+                <div class="passo">
+                    <div class="passo-numero">1</div>
+                    <div class="passo-texto">Clique em <strong>"Entrada"</strong> na tela de estoque</div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">2</div>
+                    <div class="passo-texto">Busque o produto pelo código ou nome</div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">3</div>
+                    <div class="passo-texto">Informe a <strong>quantidade</strong> recebida</div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">4</div>
+                    <div class="passo-texto">Informe o <strong>custo unitário</strong> (opcional - atualiza o preço de custo)</div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">5</div>
+                    <div class="passo-texto">Informe o <strong>documento de origem</strong> (número da NF, por exemplo)</div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">6</div>
+                    <div class="passo-texto">Clique em <strong>"Confirmar Entrada"</strong></div>
+                </div>
+            </div>
+
+            <h3>6.3 Saída de Estoque</h3>
+            <p>Use a saída de estoque para registrar perdas, avarias, consumo interno ou ajustes.</p>
+
+            <div class="atencao">
+                As vendas já geram saída de estoque automaticamente. Use esta função apenas para situações que não envolvem venda.
+            </div>
+
+            <div class="passo-a-passo">
+                <h4>Registrando uma saída:</h4>
+                <div class="passo">
+                    <div class="passo-numero">1</div>
+                    <div class="passo-texto">Clique em <strong>"Saída"</strong> na tela de estoque</div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">2</div>
+                    <div class="passo-texto">Busque o produto</div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">3</div>
+                    <div class="passo-texto">Informe a <strong>quantidade</strong> a dar baixa</div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">4</div>
+                    <div class="passo-texto">Informe o <strong>motivo</strong> da saída (perda, avaria, etc.)</div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">5</div>
+                    <div class="passo-texto">Clique em <strong>"Confirmar Saída"</strong></div>
+                </div>
+            </div>
+
+            <h3>6.4 Importar XML de Nota Fiscal</h3>
+            <p>
+                Você pode importar o arquivo XML de notas fiscais de compra para dar entrada automática no estoque.
+                Isso economiza tempo e evita erros de digitação.
+            </p>
+
+            <div class="passo-a-passo">
+                <h4>Importando XML:</h4>
+                <div class="passo">
+                    <div class="passo-numero">1</div>
+                    <div class="passo-texto">Clique em <strong>"Importar XML"</strong></div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">2</div>
+                    <div class="passo-texto">Selecione o arquivo XML da nota fiscal</div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">3</div>
+                    <div class="passo-texto">O sistema lê os produtos da nota e exibe uma lista</div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">4</div>
+                    <div class="passo-texto">Vincule cada produto da nota a um produto do seu cadastro</div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">5</div>
+                    <div class="passo-texto">Confirme a importação</div>
+                </div>
+            </div>
+
+            <div class="dica">
+                Guarde os arquivos XML das suas notas fiscais de compra. Eles são úteis para dar entrada no estoque e também servem como comprovante fiscal.
+            </div>
+
+            <h3>6.5 Inventário</h3>
+            <p>
+                O inventário é o processo de contar fisicamente todos os produtos e comparar com o que está registrado no sistema.
+                Recomendamos fazer inventário pelo menos uma vez por mês.
+            </p>
+
+            <h4>Criando um Inventário:</h4>
+            <div class="passo-a-passo">
+                <div class="passo">
+                    <div class="passo-numero">1</div>
+                    <div class="passo-texto">Acesse <strong>Estoque → Inventário</strong></div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">2</div>
+                    <div class="passo-texto">Clique em <strong>"Novo Inventário"</strong></div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">3</div>
+                    <div class="passo-texto">Dê um nome ao inventário (ex: "Inventário Janeiro 2026")</div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">4</div>
+                    <div class="passo-texto">Clique em <strong>"Iniciar Contagem"</strong></div>
+                </div>
+            </div>
+
+            <h4>Fazendo a Contagem:</h4>
+            <div class="passo-a-passo">
+                <div class="passo">
+                    <div class="passo-numero">1</div>
+                    <div class="passo-texto">Na tela de contagem, vá de produto em produto</div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">2</div>
+                    <div class="passo-texto">Conte a quantidade física na prateleira</div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">3</div>
+                    <div class="passo-texto">Digite a quantidade no campo correspondente</div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">4</div>
+                    <div class="passo-texto">O sistema compara com o estoque do sistema e mostra a diferença</div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">5</div>
+                    <div class="passo-texto">Ao terminar, clique em <strong>"Finalizar Inventário"</strong></div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">6</div>
+                    <div class="passo-texto">Escolha se deseja <strong>ajustar</strong> o estoque automaticamente</div>
+                </div>
+            </div>
+
+            <div class="importante">
+                Ao ajustar o estoque pelo inventário, as divergências serão registradas como movimentos de ajuste. Isso mantém o histórico para auditoria.
+            </div>
+
+            <h3>6.6 Histórico de Movimentos</h3>
+            <p>
+                Na aba <strong>"Movimentações"</strong> da tela de estoque, você pode ver todo o histórico de entradas e saídas
+                de cada produto, incluindo vendas, ajustes e importações.
+            </p>
+        </div>
+
+        <!-- CAPÍTULO 7 - CLIENTES -->
+        <div class="capitulo" id="cap7">
+            <h2><span class="icon">👥</span> 7. Cadastro de Clientes</h2>
+
+            <p>
+                O cadastro de clientes permite registrar as informações dos seus clientes para vendas em crediário,
+                emissão de notas fiscais e programa de fidelidade.
+            </p>
+
+            <h3>7.1 Acessando o Cadastro</h3>
+            <p>No menu lateral, clique em <strong>Clientes</strong>.</p>
+
+            <h3>7.2 Cadastrando um Novo Cliente</h3>
+            <div class="passo-a-passo">
+                <div class="passo">
+                    <div class="passo-numero">1</div>
+                    <div class="passo-texto">Clique em <strong>"Novo Cliente"</strong></div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">2</div>
+                    <div class="passo-texto">Selecione o tipo: <strong>Pessoa Física</strong> ou <strong>Pessoa Jurídica</strong></div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">3</div>
+                    <div class="passo-texto">Preencha os dados solicitados</div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">4</div>
+                    <div class="passo-texto">Clique em <strong>"Salvar"</strong></div>
+                </div>
+            </div>
+
+            <h3>7.3 Campos do Cliente</h3>
+            <table>
+                <tr>
+                    <th>Campo</th>
+                    <th>PF</th>
+                    <th>PJ</th>
+                    <th>Descrição</th>
+                </tr>
+                <tr>
+                    <td>CPF / CNPJ</td>
+                    <td>CPF</td>
+                    <td>CNPJ</td>
+                    <td>Documento do cliente (validado automaticamente)</td>
+                </tr>
+                <tr>
+                    <td>Nome / Razão Social</td>
+                    <td>Nome</td>
+                    <td>Razão Social</td>
+                    <td>Nome completo ou razão social</td>
+                </tr>
+                <tr>
+                    <td>E-mail</td>
+                    <td>Sim</td>
+                    <td>Sim</td>
+                    <td>E-mail para contato</td>
+                </tr>
+                <tr>
+                    <td>Telefone</td>
+                    <td>Sim</td>
+                    <td>Sim</td>
+                    <td>Telefone/WhatsApp</td>
+                </tr>
+                <tr>
+                    <td>Endereço</td>
+                    <td>Sim</td>
+                    <td>Sim</td>
+                    <td>CEP, rua, número, bairro, cidade, UF</td>
+                </tr>
+                <tr>
+                    <td>Limite de Crédito</td>
+                    <td>Sim</td>
+                    <td>Sim</td>
+                    <td>Valor máximo para vendas em crediário</td>
+                </tr>
+            </table>
+
+            <div class="info">
+                Ao digitar o CEP, o sistema busca automaticamente o endereço completo. Você só precisa completar o número e complemento.
+            </div>
+
+            <h3>7.4 Limite de Crédito</h3>
+            <p>
+                O limite de crédito define quanto o cliente pode comprar no crediário (fiado).
+                O sistema bloqueia vendas que ultrapassem esse limite.
+            </p>
+            <ul>
+                <li><strong>Limite:</strong> Valor máximo permitido</li>
+                <li><strong>Saldo Devedor:</strong> Quanto o cliente está devendo atualmente</li>
+                <li><strong>Disponível:</strong> Limite - Saldo Devedor</li>
+            </ul>
+
+            <div class="atencao">
+                Se um cliente atingir o limite de crédito, ele não poderá fazer novas compras em crediário até pagar parte da dívida.
+            </div>
+
+            <h3>7.5 Histórico do Cliente</h3>
+            <p>
+                Ao acessar o cadastro de um cliente, você pode ver:
+            </p>
+            <ul>
+                <li>Todas as compras realizadas</li>
+                <li>Valores a receber (parcelas em aberto)</li>
+                <li>Saldo de pontos de fidelidade</li>
+            </ul>
+        </div>
+
+        <!-- CAPÍTULO 8 - FORNECEDORES -->
+        <div class="capitulo" id="cap8">
+            <h2><span class="icon">🏭</span> 8. Cadastro de Fornecedores</h2>
+
+            <p>
+                O cadastro de fornecedores permite registrar as empresas que fornecem produtos para seu negócio.
+                Esses cadastros podem ser vinculados às contas a pagar.
+            </p>
+
+            <h3>8.1 Cadastrando um Fornecedor</h3>
+            <div class="passo-a-passo">
+                <div class="passo">
+                    <div class="passo-numero">1</div>
+                    <div class="passo-texto">Acesse <strong>Fornecedores</strong> no menu</div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">2</div>
+                    <div class="passo-texto">Clique em <strong>"Novo Fornecedor"</strong></div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">3</div>
+                    <div class="passo-texto">Preencha CNPJ, Razão Social e Nome Fantasia</div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">4</div>
+                    <div class="passo-texto">Adicione dados de contato (telefone, e-mail)</div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">5</div>
+                    <div class="passo-texto">Preencha o endereço (opcional)</div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">6</div>
+                    <div class="passo-texto">Clique em <strong>"Salvar"</strong></div>
+                </div>
+            </div>
+
+            <h3>8.2 Campos do Fornecedor</h3>
+            <table>
+                <tr>
+                    <th>Campo</th>
+                    <th>Obrigatório</th>
+                    <th>Descrição</th>
+                </tr>
+                <tr>
+                    <td>CNPJ</td>
+                    <td>Sim</td>
+                    <td>CNPJ do fornecedor</td>
+                </tr>
+                <tr>
+                    <td>Razão Social</td>
+                    <td>Sim</td>
+                    <td>Nome oficial da empresa</td>
+                </tr>
+                <tr>
+                    <td>Nome Fantasia</td>
+                    <td>Não</td>
+                    <td>Nome comercial</td>
+                </tr>
+                <tr>
+                    <td>Contato</td>
+                    <td>Não</td>
+                    <td>Nome da pessoa de contato</td>
+                </tr>
+                <tr>
+                    <td>Telefone</td>
+                    <td>Não</td>
+                    <td>Telefone comercial</td>
+                </tr>
+                <tr>
+                    <td>E-mail</td>
+                    <td>Não</td>
+                    <td>E-mail para pedidos/contato</td>
+                </tr>
+            </table>
+
+            <div class="dica">
+                Mantenha os dados de contato dos fornecedores sempre atualizados. Isso facilita na hora de fazer novos pedidos ou resolver problemas.
+            </div>
+        </div>
+
+        <!-- CAPÍTULO 9 - FINANCEIRO -->
+        <div class="capitulo" id="cap9">
+            <h2><span class="icon">💵</span> 9. Módulo Financeiro</h2>
+
+            <p>
+                O módulo financeiro permite gerenciar todas as entradas e saídas de dinheiro do seu negócio:
+                contas a pagar, contas a receber, crediário e fluxo de caixa.
+            </p>
+
+            <h3>9.1 Contas a Pagar</h3>
+            <p>
+                Registre todas as despesas e compromissos financeiros da empresa: aluguel, fornecedores,
+                contas de consumo, etc.
+            </p>
+
+            <h4>Cadastrando uma Conta a Pagar:</h4>
+            <div class="passo-a-passo">
+                <div class="passo">
+                    <div class="passo-numero">1</div>
+                    <div class="passo-texto">Acesse <strong>Financeiro → Contas a Pagar</strong></div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">2</div>
+                    <div class="passo-texto">Clique em <strong>"Nova Conta"</strong></div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">3</div>
+                    <div class="passo-texto">Selecione o fornecedor (opcional)</div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">4</div>
+                    <div class="passo-texto">Informe a descrição (ex: "Aluguel Janeiro")</div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">5</div>
+                    <div class="passo-texto">Informe o valor e a data de vencimento</div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">6</div>
+                    <div class="passo-texto">Clique em <strong>"Salvar"</strong></div>
+                </div>
+            </div>
+
+            <h4>Baixando uma Conta (Marcando como Paga):</h4>
+            <div class="passo-a-passo">
+                <div class="passo">
+                    <div class="passo-numero">1</div>
+                    <div class="passo-texto">Localize a conta na lista</div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">2</div>
+                    <div class="passo-texto">Clique no botão <strong>"Pagar"</strong></div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">3</div>
+                    <div class="passo-texto">Confirme a data e valor do pagamento</div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">4</div>
+                    <div class="passo-texto">A conta será marcada como <span class="badge badge-verde">Pago</span></div>
+                </div>
+            </div>
+
+            <h3>9.2 Contas a Receber</h3>
+            <p>
+                As contas a receber são geradas automaticamente pelas vendas em crediário ou podem ser
+                cadastradas manualmente para outros recebimentos.
+            </p>
+
+            <h4>Baixando um Recebimento:</h4>
+            <div class="passo-a-passo">
+                <div class="passo">
+                    <div class="passo-numero">1</div>
+                    <div class="passo-texto">Acesse <strong>Financeiro → Contas a Receber</strong></div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">2</div>
+                    <div class="passo-texto">Localize a conta do cliente</div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">3</div>
+                    <div class="passo-texto">Clique em <strong>"Receber"</strong></div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">4</div>
+                    <div class="passo-texto">Confirme a data e valor recebido</div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">5</div>
+                    <div class="passo-texto">O saldo devedor do cliente será atualizado</div>
+                </div>
+            </div>
+
+            <h3>9.3 Crediário (Fiado)</h3>
+            <p>
+                O módulo de crediário permite gerenciar todas as vendas feitas a prazo para seus clientes.
+                Acesse em <strong>Financeiro → Crediário</strong>.
+            </p>
+
+            <p>Na tela de crediário você pode:</p>
+            <ul>
+                <li>Ver todos os clientes com saldo devedor</li>
+                <li>Consultar as parcelas em aberto de cada cliente</li>
+                <li>Registrar pagamentos parciais ou totais</li>
+                <li>Emitir extrato para o cliente</li>
+            </ul>
+
+            <div class="atencao">
+                Acompanhe o crediário regularmente e entre em contato com clientes que estão com parcelas atrasadas.
+            </div>
+
+            <h3>9.4 Fluxo de Caixa</h3>
+            <p>
+                O fluxo de caixa mostra uma projeção das entradas e saídas de dinheiro nos próximos 30 dias,
+                ajudando você a planejar as finanças do negócio.
+            </p>
+
+            <h4>Entendendo o Fluxo de Caixa:</h4>
+            <table>
+                <tr>
+                    <th>Coluna</th>
+                    <th>Descrição</th>
+                </tr>
+                <tr>
+                    <td>Data</td>
+                    <td>Dia da movimentação (passado ou futuro)</td>
+                </tr>
+                <tr>
+                    <td>Entradas</td>
+                    <td>Valores a receber naquele dia (contas a receber)</td>
+                </tr>
+                <tr>
+                    <td>Saídas</td>
+                    <td>Valores a pagar naquele dia (contas a pagar)</td>
+                </tr>
+                <tr>
+                    <td>Saldo</td>
+                    <td>Diferença entre entradas e saídas</td>
+                </tr>
+                <tr>
+                    <td>Saldo Acumulado</td>
+                    <td>Saldo total considerando os dias anteriores</td>
+                </tr>
+            </table>
+
+            <div class="dica">
+                Use o fluxo de caixa para identificar dias em que você pode ter dificuldade financeira e se planeje com antecedência.
+            </div>
+
+            <h3>9.5 Resumo Financeiro</h3>
+            <p>Em cada tela do módulo financeiro, você encontra um resumo rápido:</p>
+            <ul>
+                <li><strong>Total a Pagar:</strong> Soma de todas as contas pendentes</li>
+                <li><strong>Vencidas:</strong> Contas que já passaram do vencimento</li>
+                <li><strong>A Vencer:</strong> Contas que vencem nos próximos dias</li>
+                <li><strong>Total a Receber:</strong> Soma de todos os valores a receber</li>
+            </ul>
+        </div>
+
+        <!-- CAPÍTULO 10 - FIDELIDADE -->
+        <div class="capitulo" id="cap10">
+            <h2><span class="icon">⭐</span> 10. Programa de Fidelidade</h2>
+
+            <p>
+                O programa de fidelidade permite criar um sistema de pontos para recompensar seus clientes
+                mais frequentes e incentivar novas compras.
+            </p>
+
+            <h3>10.1 Como Funciona</h3>
+            <div class="fluxo">
+                <span class="fluxo-item">Cliente Compra</span>
+                <span class="fluxo-seta">→</span>
+                <span class="fluxo-item">Ganha Pontos</span>
+                <span class="fluxo-seta">→</span>
+                <span class="fluxo-item">Acumula</span>
+                <span class="fluxo-seta">→</span>
+                <span class="fluxo-item">Troca por Desconto</span>
+            </div>
+
+            <h3>10.2 Configurando o Programa</h3>
+            <p>Acesse <strong>Fidelidade</strong> no menu e configure as regras:</p>
+
+            <table>
+                <tr>
+                    <th>Configuração</th>
+                    <th>Descrição</th>
+                    <th>Exemplo</th>
+                </tr>
+                <tr>
+                    <td>Pontos por Real</td>
+                    <td>Quantos pontos o cliente ganha a cada R$ 1 gasto</td>
+                    <td>1 ponto por R$ 1</td>
+                </tr>
+                <tr>
+                    <td>Valor do Ponto</td>
+                    <td>Quanto vale cada ponto em reais para resgate</td>
+                    <td>R$ 0,10 por ponto</td>
+                </tr>
+                <tr>
+                    <td>Validade</td>
+                    <td>Em quantos dias os pontos expiram</td>
+                    <td>365 dias (1 ano)</td>
+                </tr>
+                <tr>
+                    <td>Ativo</td>
+                    <td>Se o programa está funcionando ou não</td>
+                    <td>Sim/Não</td>
+                </tr>
+            </table>
+
+            <div class="info">
+                <strong>Exemplo prático:</strong> Se o cliente gastar R$ 100 e você configurou 1 ponto por real, ele ganha 100 pontos.
+                Se cada ponto vale R$ 0,10, ele pode trocar esses 100 pontos por R$ 10 de desconto na próxima compra.
+            </div>
+
+            <h3>10.3 Acúmulo de Pontos</h3>
+            <p>
+                Os pontos são acumulados automaticamente quando uma venda é finalizada para um cliente cadastrado.
+                O cliente precisa estar identificado na venda para ganhar pontos.
+            </p>
+
+            <h4>Verificando Pontos de um Cliente:</h4>
+            <div class="passo-a-passo">
+                <div class="passo">
+                    <div class="passo-numero">1</div>
+                    <div class="passo-texto">Acesse <strong>Fidelidade</strong></div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">2</div>
+                    <div class="passo-texto">A lista mostra todos os clientes com pontos</div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">3</div>
+                    <div class="passo-texto">Clique no cliente para ver o histórico detalhado</div>
+                </div>
+            </div>
+
+            <h3>10.4 Resgate de Pontos</h3>
+            <p>
+                O cliente pode usar seus pontos para obter desconto em uma compra.
+                O resgate é feito no momento da venda no PDV.
+            </p>
+
+            <div class="passo-a-passo">
+                <h4>Como resgatar pontos no PDV:</h4>
+                <div class="passo">
+                    <div class="passo-numero">1</div>
+                    <div class="passo-texto">Selecione o cliente na venda</div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">2</div>
+                    <div class="passo-texto">O sistema mostra o saldo de pontos disponível</div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">3</div>
+                    <div class="passo-texto">Clique em <strong>"Usar Pontos"</strong></div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">4</div>
+                    <div class="passo-texto">Escolha quantos pontos usar (ou todos)</div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">5</div>
+                    <div class="passo-texto">O desconto é aplicado automaticamente na venda</div>
+                </div>
+            </div>
+
+            <div class="dica">
+                Divulgue o programa de fidelidade para seus clientes! Clientes fidelizados compram mais e indicam seu negócio para outros.
+            </div>
+        </div>
+
+        <!-- CAPÍTULO 11 - FISCAL -->
+        <div class="capitulo" id="cap11">
+            <h2><span class="icon">📄</span> 11. Módulo Fiscal (NFC-e / NF-e)</h2>
+
+            <p>
+                O módulo fiscal permite emitir Notas Fiscais Eletrônicas diretamente pelo sistema,
+                com integração automática com a SEFAZ (Secretaria da Fazenda).
+            </p>
+
+            <h3>11.1 Tipos de Nota Fiscal</h3>
+            <table>
+                <tr>
+                    <th>Tipo</th>
+                    <th>Nome Completo</th>
+                    <th>Uso</th>
+                </tr>
+                <tr>
+                    <td><strong>NFC-e</strong></td>
+                    <td>Nota Fiscal de Consumidor Eletrônica</td>
+                    <td>Vendas para consumidor final no balcão (substitui o cupom fiscal)</td>
+                </tr>
+                <tr>
+                    <td><strong>NF-e</strong></td>
+                    <td>Nota Fiscal Eletrônica</td>
+                    <td>Vendas para empresas (PJ) ou quando o cliente solicita nota completa</td>
+                </tr>
+            </table>
+
+            <h3>11.2 Requisitos para Emissão</h3>
+            <p>Para emitir notas fiscais, você precisa:</p>
+            <ul>
+                <li><strong>Certificado Digital A1:</strong> Arquivo .PFX válido e não vencido</li>
+                <li><strong>Cadastro completo da empresa:</strong> CNPJ, IE, endereço</li>
+                <li><strong>Credenciamento na SEFAZ:</strong> Seu contador deve solicitar</li>
+                <li><strong>Token/CSC:</strong> Código de segurança para NFC-e (obtido na SEFAZ do seu estado)</li>
+            </ul>
+
+            <div class="importante">
+                O certificado digital é obrigatório para emissão de notas fiscais. Consulte seu contador para obter um certificado válido.
+            </div>
+
+            <h3>11.3 Configuração Inicial</h3>
+            <div class="passo-a-passo">
+                <h4>Configurando o módulo fiscal:</h4>
+                <div class="passo">
+                    <div class="passo-numero">1</div>
+                    <div class="passo-texto">Acesse <strong>Fiscal → Configurações</strong></div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">2</div>
+                    <div class="passo-texto">Clique em <strong>"Enviar Certificado"</strong> e selecione o arquivo .PFX</div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">3</div>
+                    <div class="passo-texto">Digite a <strong>senha do certificado</strong></div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">4</div>
+                    <div class="passo-texto">Selecione o <strong>ambiente</strong>: Homologação (testes) ou Produção (real)</div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">5</div>
+                    <div class="passo-texto">Informe a <strong>série</strong> das notas (geralmente 1)</div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">6</div>
+                    <div class="passo-texto">Para NFC-e: informe o <strong>ID Token</strong> e <strong>CSC</strong></div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">7</div>
+                    <div class="passo-texto">Clique em <strong>"Salvar"</strong></div>
+                </div>
+            </div>
+
+            <div class="atencao">
+                Comece sempre em ambiente de <strong>Homologação</strong> para fazer testes. Só mude para Produção quando tudo estiver funcionando corretamente.
+            </div>
+
+            <h3>11.4 Emitindo NFC-e</h3>
+            <p>
+                A NFC-e é emitida automaticamente ao finalizar uma venda no PDV, se a opção estiver habilitada.
+                Você também pode emitir manualmente:
+            </p>
+            <div class="passo-a-passo">
+                <div class="passo">
+                    <div class="passo-numero">1</div>
+                    <div class="passo-texto">Finalize a venda normalmente no PDV</div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">2</div>
+                    <div class="passo-texto">Na confirmação, marque <strong>"Emitir NFC-e"</strong></div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">3</div>
+                    <div class="passo-texto">O sistema envia a nota para a SEFAZ</div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">4</div>
+                    <div class="passo-texto">Se autorizada, a nota fica disponível para impressão</div>
+                </div>
+            </div>
+
+            <h3>11.5 Status das Notas</h3>
+            <table>
+                <tr>
+                    <th>Status</th>
+                    <th>Significado</th>
+                    <th>Ação</th>
+                </tr>
+                <tr>
+                    <td><span class="badge badge-laranja">Pendente</span></td>
+                    <td>Aguardando envio à SEFAZ</td>
+                    <td>Aguardar ou reenviar</td>
+                </tr>
+                <tr>
+                    <td><span class="badge badge-verde">Autorizada</span></td>
+                    <td>Nota aprovada pela SEFAZ</td>
+                    <td>Pode imprimir/enviar</td>
+                </tr>
+                <tr>
+                    <td><span class="badge badge-vermelho">Rejeitada</span></td>
+                    <td>SEFAZ recusou a nota</td>
+                    <td>Verificar erro e corrigir</td>
+                </tr>
+                <tr>
+                    <td><span class="badge badge-azul">Cancelada</span></td>
+                    <td>Nota foi cancelada</td>
+                    <td>Nenhuma</td>
+                </tr>
+            </table>
+
+            <h3>11.6 Cancelando uma Nota</h3>
+            <p>
+                É possível cancelar uma nota em até 24 horas (para NFC-e) ou 24-720 horas (para NF-e, depende do estado)
+                após a autorização.
+            </p>
+            <div class="passo-a-passo">
+                <div class="passo">
+                    <div class="passo-numero">1</div>
+                    <div class="passo-texto">Acesse <strong>Fiscal → NFC-e</strong> ou <strong>NF-e</strong></div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">2</div>
+                    <div class="passo-texto">Localize a nota que deseja cancelar</div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">3</div>
+                    <div class="passo-texto">Clique em <strong>"Cancelar"</strong></div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">4</div>
+                    <div class="passo-texto">Informe o <strong>motivo do cancelamento</strong></div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">5</div>
+                    <div class="passo-texto">Confirme a operação</div>
+                </div>
+            </div>
+
+            <div class="importante">
+                O cancelamento é enviado à SEFAZ e fica registrado. Não abuse deste recurso.
+            </div>
+
+            <h3>11.7 Download de XML</h3>
+            <p>
+                Você pode baixar o arquivo XML de qualquer nota autorizada.
+                Esses arquivos devem ser guardados por 5 anos conforme legislação fiscal.
+            </p>
+
+            <div class="dica">
+                Configure um backup automático dos XMLs das notas fiscais. Seu contador também pode precisar desses arquivos.
+            </div>
+        </div>
+
+        <!-- CAPÍTULO 12 - RELATÓRIOS -->
+        <div class="capitulo" id="cap12">
+            <h2><span class="icon">📈</span> 12. Relatórios</h2>
+
+            <p>
+                O módulo de relatórios permite analisar os dados do seu negócio de forma visual e exportar
+                informações para planilhas e outros formatos.
+            </p>
+
+            <h3>12.1 Tipos de Relatórios Disponíveis</h3>
+
+            <h4>Relatório de Vendas</h4>
+            <p>Analise suas vendas por período, cliente, operador ou forma de pagamento.</p>
+            <ul>
+                <li>Total de vendas por dia/semana/mês</li>
+                <li>Ranking de produtos mais vendidos</li>
+                <li>Vendas por operador de caixa</li>
+                <li>Distribuição por forma de pagamento</li>
+            </ul>
+
+            <h4>Relatório de Estoque</h4>
+            <p>Visualize a situação do seu estoque:</p>
+            <ul>
+                <li>Posição atual de estoque</li>
+                <li>Produtos abaixo do mínimo</li>
+                <li>Valor total em estoque</li>
+                <li>Movimentações por período</li>
+            </ul>
+
+            <h4>Relatório Financeiro</h4>
+            <p>Acompanhe a saúde financeira do negócio:</p>
+            <ul>
+                <li>Contas a pagar/receber por período</li>
+                <li>Fluxo de caixa projetado</li>
+                <li>Inadimplência de clientes</li>
+                <li>Despesas por categoria</li>
+            </ul>
+
+            <h4>Relatório de Margem</h4>
+            <p>Entenda a lucratividade dos seus produtos:</p>
+            <ul>
+                <li>Margem de lucro por produto</li>
+                <li>Produtos com menor/maior margem</li>
+                <li>Lucro bruto por período</li>
+            </ul>
+
+            <h3>12.2 Gerando um Relatório</h3>
+            <div class="passo-a-passo">
+                <div class="passo">
+                    <div class="passo-numero">1</div>
+                    <div class="passo-texto">Acesse <strong>Relatórios</strong> no menu</div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">2</div>
+                    <div class="passo-texto">Selecione o tipo de relatório desejado</div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">3</div>
+                    <div class="passo-texto">Defina o <strong>período</strong> (data inicial e final)</div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">4</div>
+                    <div class="passo-texto">Aplique filtros adicionais se necessário</div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">5</div>
+                    <div class="passo-texto">Clique em <strong>"Gerar Relatório"</strong></div>
+                </div>
+            </div>
+
+            <h3>12.3 Exportando Relatórios</h3>
+            <p>Todos os relatórios podem ser exportados nos seguintes formatos:</p>
+            <ul>
+                <li><strong>PDF:</strong> Para impressão ou envio por e-mail</li>
+                <li><strong>CSV:</strong> Para abrir no Excel ou Google Sheets</li>
+            </ul>
+
+            <div class="dica">
+                Exporte relatórios mensais em CSV para criar suas próprias análises no Excel com gráficos personalizados.
+            </div>
+        </div>
+
+        <!-- CAPÍTULO 13 - CONFIGURAÇÕES -->
+        <div class="capitulo" id="cap13">
+            <h2><span class="icon">⚙️</span> 13. Configurações do Sistema</h2>
+
+            <p>
+                O módulo de configurações permite personalizar o sistema de acordo com as necessidades
+                da sua empresa.
+            </p>
+
+            <h3>13.1 Dados da Empresa</h3>
+            <p>Acesse <strong>Configurações</strong> no menu para editar os dados da empresa:</p>
+            <table>
+                <tr>
+                    <th>Campo</th>
+                    <th>Descrição</th>
+                </tr>
+                <tr>
+                    <td>Razão Social</td>
+                    <td>Nome oficial da empresa conforme CNPJ</td>
+                </tr>
+                <tr>
+                    <td>Nome Fantasia</td>
+                    <td>Nome comercial da empresa</td>
+                </tr>
+                <tr>
+                    <td>CNPJ</td>
+                    <td>Cadastro Nacional de Pessoa Jurídica</td>
+                </tr>
+                <tr>
+                    <td>Inscrição Estadual</td>
+                    <td>IE para emissão de notas fiscais</td>
+                </tr>
+                <tr>
+                    <td>Endereço</td>
+                    <td>Endereço completo (aparece nas notas)</td>
+                </tr>
+                <tr>
+                    <td>Telefone</td>
+                    <td>Telefone de contato</td>
+                </tr>
+                <tr>
+                    <td>E-mail</td>
+                    <td>E-mail da empresa</td>
+                </tr>
+                <tr>
+                    <td>Logo</td>
+                    <td>Imagem que aparece nos recibos e notas</td>
+                </tr>
+            </table>
+
+            <div class="atencao">
+                Os dados da empresa são usados na emissão de notas fiscais. Certifique-se de que estão corretos.
+            </div>
+
+            <h3>13.2 Regime Tributário</h3>
+            <p>Configure o regime tributário da empresa:</p>
+            <ul>
+                <li><strong>Simples Nacional:</strong> Micro e pequenas empresas</li>
+                <li><strong>Lucro Presumido:</strong> Empresas de médio porte</li>
+                <li><strong>Lucro Real:</strong> Grandes empresas</li>
+            </ul>
+
+            <div class="info">
+                Se não souber qual é o regime da sua empresa, consulte seu contador.
+            </div>
+
+            <h3>13.3 Configurações do PDV</h3>
+            <p>Personalize o comportamento do ponto de venda:</p>
+            <ul>
+                <li>Impressora padrão para recibos</li>
+                <li>Emitir NFC-e automaticamente</li>
+                <li>Exigir identificação do cliente</li>
+                <li>Permitir venda com estoque negativo</li>
+            </ul>
+
+            <h3>13.4 Usuários</h3>
+            <p>
+                Gerencie os usuários que têm acesso ao sistema.
+                Apenas administradores podem criar novos usuários.
+            </p>
+
+            <h4>Criando um Novo Usuário:</h4>
+            <div class="passo-a-passo">
+                <div class="passo">
+                    <div class="passo-numero">1</div>
+                    <div class="passo-texto">Acesse <strong>Configurações → Usuários</strong></div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">2</div>
+                    <div class="passo-texto">Clique em <strong>"Novo Usuário"</strong></div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">3</div>
+                    <div class="passo-texto">Informe nome, e-mail e senha inicial</div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">4</div>
+                    <div class="passo-texto">Selecione o <strong>perfil</strong> (Admin, Gerente, Caixa, Estoque)</div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">5</div>
+                    <div class="passo-texto">Clique em <strong>"Salvar"</strong></div>
+                </div>
+            </div>
+
+            <div class="importante">
+                Cada usuário deve ter seu próprio login. Nunca compartilhe senhas entre funcionários.
+            </div>
+        </div>
+
+        <!-- CAPÍTULO 14 - MODO OFFLINE -->
+        <div class="capitulo" id="cap14">
+            <h2><span class="icon">📡</span> 14. Modo Offline</h2>
+
+            <p>
+                O Império Sistemas possui modo offline que permite continuar vendendo mesmo quando a
+                internet cair. As vendas são salvas localmente e sincronizadas automaticamente quando
+                a conexão voltar.
+            </p>
+
+            <h3>14.1 Como Funciona</h3>
+            <div class="fluxo">
+                <span class="fluxo-item">Internet Cai</span>
+                <span class="fluxo-seta">→</span>
+                <span class="fluxo-item">Sistema Detecta</span>
+                <span class="fluxo-seta">→</span>
+                <span class="fluxo-item">Modo Offline Ativa</span>
+                <span class="fluxo-seta">→</span>
+                <span class="fluxo-item">Vendas Salvas Local</span>
+            </div>
+
+            <p>Quando a internet retorna:</p>
+            <div class="fluxo">
+                <span class="fluxo-item">Internet Volta</span>
+                <span class="fluxo-seta">→</span>
+                <span class="fluxo-item">Sistema Detecta</span>
+                <span class="fluxo-seta">→</span>
+                <span class="fluxo-item">Sincroniza Vendas</span>
+                <span class="fluxo-seta">→</span>
+                <span class="fluxo-item">Tudo Atualizado</span>
+            </div>
+
+            <h3>14.2 O que Funciona Offline</h3>
+            <table>
+                <tr>
+                    <th>Funcionalidade</th>
+                    <th>Funciona Offline?</th>
+                </tr>
+                <tr>
+                    <td>Realizar vendas</td>
+                    <td><span class="badge badge-verde">Sim</span></td>
+                </tr>
+                <tr>
+                    <td>Buscar produtos (em cache)</td>
+                    <td><span class="badge badge-verde">Sim</span></td>
+                </tr>
+                <tr>
+                    <td>Adicionar itens ao carrinho</td>
+                    <td><span class="badge badge-verde">Sim</span></td>
+                </tr>
+                <tr>
+                    <td>Finalizar venda</td>
+                    <td><span class="badge badge-verde">Sim</span></td>
+                </tr>
+                <tr>
+                    <td>Emitir NFC-e</td>
+                    <td><span class="badge badge-vermelho">Não*</span></td>
+                </tr>
+                <tr>
+                    <td>Cadastrar novos produtos</td>
+                    <td><span class="badge badge-vermelho">Não</span></td>
+                </tr>
+                <tr>
+                    <td>Acessar relatórios</td>
+                    <td><span class="badge badge-vermelho">Não</span></td>
+                </tr>
+            </table>
+
+            <p><small>* As notas fiscais pendentes serão emitidas automaticamente quando a internet voltar.</small></p>
+
+            <h3>14.3 Indicador de Status</h3>
+            <p>
+                O sistema exibe um indicador no canto da tela mostrando o status da conexão:
+            </p>
+            <ul>
+                <li><span class="badge badge-verde">Online</span> - Sistema conectado normalmente</li>
+                <li><span class="badge badge-vermelho">Offline</span> - Sem conexão, modo offline ativo</li>
+                <li><span class="badge badge-laranja">Sincronizando</span> - Enviando dados pendentes</li>
+            </ul>
+
+            <div class="atencao">
+                Não desligue o computador enquanto houver vendas pendentes de sincronização. Aguarde a conclusão.
+            </div>
+
+            <h3>14.4 Instalando como Aplicativo (PWA)</h3>
+            <p>
+                Você pode instalar o sistema como um aplicativo no seu computador ou celular para
+                acesso mais rápido:
+            </p>
+            <div class="passo-a-passo">
+                <div class="passo">
+                    <div class="passo-numero">1</div>
+                    <div class="passo-texto">Acesse o sistema pelo navegador Chrome</div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">2</div>
+                    <div class="passo-texto">Clique no ícone de instalação na barra de endereços</div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">3</div>
+                    <div class="passo-texto">Confirme a instalação</div>
+                </div>
+                <div class="passo">
+                    <div class="passo-numero">4</div>
+                    <div class="passo-texto">Um atalho será criado na área de trabalho</div>
+                </div>
+            </div>
+
+            <div class="dica">
+                Instalar como aplicativo melhora a experiência de uso e permite acesso mais rápido ao sistema.
+            </div>
+        </div>
+
+        <!-- CAPÍTULO 15 - SUPORTE -->
+        <div class="capitulo" id="cap15">
+            <h2><span class="icon">🆘</span> 15. Suporte Técnico</h2>
+
+            <p>
+                Se você tiver dúvidas, problemas ou sugestões sobre o sistema, entre em contato com nosso suporte técnico.
+            </p>
+
+            <div class="rodape-suporte">
+                <h3>Central de Suporte</h3>
+                <p>WhatsApp / Telefone:</p>
+                <div class="telefone">📱 (48) 99864-9898</div>
+                <p>Horário de Atendimento: Segunda a Sexta, das 8h às 18h</p>
+                <div class="aviso">
+                    ⚠️ <strong>IMPORTANTE:</strong> Este contato de suporte é válido por <strong>3 meses</strong> a partir da data de implantação.
+                    Após este período, é necessário contratar o <strong>Suporte Premium</strong> para continuar recebendo assistência técnica.
+                </div>
+            </div>
+
+            <h3>15.1 Antes de Entrar em Contato</h3>
+            <p>Para agilizar o atendimento, tenha em mãos:</p>
+            <ul>
+                <li>Nome da sua empresa</li>
+                <li>Descrição detalhada do problema</li>
+                <li>Prints de tela do erro (se houver)</li>
+                <li>Passos que você fez antes do erro acontecer</li>
+            </ul>
+
+            <h3>15.2 Problemas Comuns</h3>
+            <table>
+                <tr>
+                    <th>Problema</th>
+                    <th>Possível Solução</th>
+                </tr>
+                <tr>
+                    <td>Não consigo fazer login</td>
+                    <td>Verifique se e-mail e senha estão corretos. Use "Esqueci a senha" se necessário.</td>
+                </tr>
+                <tr>
+                    <td>Sistema lento</td>
+                    <td>Verifique sua conexão de internet. Tente limpar o cache do navegador.</td>
+                </tr>
+                <tr>
+                    <td>Produto não aparece no PDV</td>
+                    <td>Verifique se o produto está com status "Ativo" no cadastro.</td>
+                </tr>
+                <tr>
+                    <td>Erro ao emitir nota fiscal</td>
+                    <td>Verifique se o certificado digital está válido e se os dados fiscais estão corretos.</td>
+                </tr>
+                <tr>
+                    <td>Impressora não funciona</td>
+                    <td>Verifique se a impressora está ligada, conectada e configurada no sistema.</td>
+                </tr>
+            </table>
+
+            <h3>15.3 Suporte Premium</h3>
+            <p>
+                Após o período de suporte gratuito (3 meses), você pode contratar o <strong>Suporte Premium</strong>
+                que inclui:
+            </p>
+            <ul>
+                <li>Atendimento prioritário</li>
+                <li>Suporte por telefone e WhatsApp</li>
+                <li>Acesso remoto para resolução de problemas</li>
+                <li>Treinamento de novos funcionários</li>
+                <li>Atualizações do sistema</li>
+                <li>Backup assistido</li>
+            </ul>
+
+            <p>Entre em contato pelo número acima para saber mais sobre os planos de suporte disponíveis.</p>
+
+            <hr>
+
+            <div style="text-align: center; margin-top: 40px; padding: 20px; background: #f5f5f5; border-radius: 8px;">
+                <h3 style="color: #1e3a5f; border: none; padding: 0;">Obrigado por escolher o Império Sistemas!</h3>
+                <p style="margin-bottom: 0;">
+                    Esperamos que este manual tenha sido útil. Estamos à disposição para ajudá-lo a
+                    aproveitar ao máximo todas as funcionalidades do sistema.
+                </p>
+            </div>
+        </div>
+
+        <!-- RODAPÉ -->
+        <div style="text-align: center; margin-top: 60px; padding-top: 20px; border-top: 2px solid #eee; color: #666; font-size: 12px;">
+            <p>
+                <strong>Império Sistemas</strong> - Manual do Usuário v1.0<br>
+                © 2026 - Todos os direitos reservados<br>
+                Documento gerado em Janeiro de 2026
+            </p>
+        </div>
+    </div>
+</body>
+</html>
