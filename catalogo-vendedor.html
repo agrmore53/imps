@@ -1,0 +1,1755 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catálogo do Vendedor - Império Sistemas</title>
+    <style>
+        /* Reset e Base */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 17px;
+            line-height: 1.8;
+            color: #2c3e50;
+            background: #fff;
+        }
+
+        /* Container principal */
+        .container {
+            max-width: 210mm;
+            margin: 0 auto;
+            padding: 15mm;
+        }
+
+        /* Títulos */
+        h1 {
+            font-size: 32px;
+            color: #1a5f7a;
+            text-align: center;
+            margin-bottom: 20px;
+            border-bottom: 4px solid #f9a825;
+            padding-bottom: 15px;
+        }
+
+        h2 {
+            font-size: 26px;
+            color: #1a5f7a;
+            margin: 30px 0 20px 0;
+            padding: 10px 15px;
+            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+            border-left: 6px solid #1a5f7a;
+            border-radius: 0 8px 8px 0;
+        }
+
+        h3 {
+            font-size: 22px;
+            color: #2e7d32;
+            margin: 25px 0 15px 0;
+        }
+
+        h4 {
+            font-size: 19px;
+            color: #ef6c00;
+            margin: 20px 0 10px 0;
+        }
+
+        /* Parágrafos */
+        p {
+            font-size: 17px;
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+
+        /* Listas */
+        ul, ol {
+            margin: 15px 0 15px 30px;
+        }
+
+        li {
+            font-size: 17px;
+            margin-bottom: 10px;
+        }
+
+        /* Caixas de destaque */
+        .destaque {
+            background: #fff3e0;
+            border: 3px solid #ff9800;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .destaque-verde {
+            background: #e8f5e9;
+            border: 3px solid #4caf50;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .destaque-azul {
+            background: #e3f2fd;
+            border: 3px solid #2196f3;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .destaque-vermelho {
+            background: #ffebee;
+            border: 3px solid #f44336;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .destaque-roxo {
+            background: #f3e5f5;
+            border: 3px solid #9c27b0;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        /* Tabelas */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 16px;
+        }
+
+        th {
+            background: #1a5f7a;
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-size: 17px;
+        }
+
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #ddd;
+            font-size: 16px;
+        }
+
+        tr:nth-child(even) {
+            background: #f5f5f5;
+        }
+
+        tr:hover {
+            background: #e3f2fd;
+        }
+
+        /* Cards de ramo */
+        .ramo-card {
+            background: white;
+            border: 2px solid #1a5f7a;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 25px 0;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .ramo-card h3 {
+            background: #1a5f7a;
+            color: white;
+            margin: -25px -25px 20px -25px;
+            padding: 15px 25px;
+            border-radius: 12px 12px 0 0;
+            font-size: 22px;
+        }
+
+        /* Diálogos de venda */
+        .dialogo {
+            background: #fafafa;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+
+        .cliente {
+            background: #ffcdd2;
+            border-left: 5px solid #f44336;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 0 10px 10px 0;
+            font-size: 17px;
+        }
+
+        .cliente::before {
+            content: "🙍 CLIENTE: ";
+            font-weight: bold;
+        }
+
+        .vendedor {
+            background: #c8e6c9;
+            border-left: 5px solid #4caf50;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 0 10px 10px 0;
+            font-size: 17px;
+        }
+
+        .vendedor::before {
+            content: "😊 VOCÊ: ";
+            font-weight: bold;
+        }
+
+        /* Dica do vendedor */
+        .dica {
+            background: #fffde7;
+            border: 2px dashed #fbc02d;
+            border-radius: 10px;
+            padding: 15px 20px;
+            margin: 15px 0;
+            font-size: 17px;
+        }
+
+        .dica::before {
+            content: "💡 DICA: ";
+            font-weight: bold;
+            color: #f57f17;
+        }
+
+        /* Checklist */
+        .checklist {
+            background: #e8f5e9;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+
+        .checklist li {
+            list-style: none;
+            padding-left: 35px;
+            position: relative;
+        }
+
+        .checklist li::before {
+            content: "☐";
+            position: absolute;
+            left: 0;
+            font-size: 22px;
+            color: #4caf50;
+        }
+
+        /* Emojis grandes */
+        .emoji {
+            font-size: 40px;
+            text-align: center;
+            margin: 10px 0;
+        }
+
+        /* Capa */
+        .capa {
+            text-align: center;
+            padding: 50px 20px;
+            background: linear-gradient(135deg, #1a5f7a, #2e86ab);
+            color: white;
+            border-radius: 20px;
+            margin-bottom: 30px;
+        }
+
+        .capa h1 {
+            font-size: 42px;
+            color: white;
+            border: none;
+            margin-bottom: 10px;
+        }
+
+        .capa .subtitulo {
+            font-size: 24px;
+            color: #f9a825;
+            margin-bottom: 20px;
+        }
+
+        .capa .slogan {
+            font-size: 20px;
+            font-style: italic;
+            opacity: 0.9;
+        }
+
+        /* Numeração de passos */
+        .passo {
+            display: flex;
+            align-items: flex-start;
+            margin: 20px 0;
+        }
+
+        .passo-numero {
+            background: #1a5f7a;
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            margin-right: 20px;
+            flex-shrink: 0;
+        }
+
+        .passo-conteudo {
+            flex: 1;
+        }
+
+        /* Aviso importante */
+        .aviso {
+            background: #fff3e0;
+            border: 3px solid #ff5722;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .aviso::before {
+            content: "⚠️ IMPORTANTE";
+            display: block;
+            font-size: 20px;
+            font-weight: bold;
+            color: #e64a19;
+            margin-bottom: 10px;
+        }
+
+        /* Script pronto */
+        .script {
+            background: #263238;
+            color: #a5d6a7;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 16px;
+        }
+
+        .script-titulo {
+            color: #81d4fa;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        /* Separador */
+        .separador {
+            text-align: center;
+            margin: 40px 0;
+            font-size: 30px;
+            color: #1a5f7a;
+        }
+
+        /* Impressão */
+        @media print {
+            body {
+                font-size: 16px;
+            }
+
+            .container {
+                max-width: 100%;
+                padding: 10mm;
+            }
+
+            .capa {
+                page-break-after: always;
+            }
+
+            h2 {
+                page-break-before: always;
+            }
+
+            .ramo-card, .destaque, .dialogo {
+                page-break-inside: avoid;
+            }
+
+            @page {
+                size: A4;
+                margin: 15mm;
+            }
+        }
+
+        /* Índice */
+        .indice {
+            background: #f5f5f5;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 30px 0;
+        }
+
+        .indice ul {
+            list-style: none;
+            margin: 0;
+        }
+
+        .indice li {
+            padding: 8px 0;
+            border-bottom: 1px dotted #999;
+        }
+
+        .indice a {
+            color: #1a5f7a;
+            text-decoration: none;
+            font-size: 18px;
+        }
+
+        /* Resultado/Benefício */
+        .beneficio {
+            display: flex;
+            align-items: center;
+            background: #e8f5e9;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+        }
+
+        .beneficio-icone {
+            font-size: 35px;
+            margin-right: 15px;
+        }
+
+        .beneficio-texto {
+            font-size: 17px;
+        }
+
+        /* Comparação Antes x Depois */
+        .comparacao {
+            display: flex;
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .antes {
+            flex: 1;
+            background: #ffebee;
+            border: 2px solid #f44336;
+            border-radius: 10px;
+            padding: 20px;
+        }
+
+        .antes h4 {
+            color: #c62828;
+            text-align: center;
+        }
+
+        .depois {
+            flex: 1;
+            background: #e8f5e9;
+            border: 2px solid #4caf50;
+            border-radius: 10px;
+            padding: 20px;
+        }
+
+        .depois h4 {
+            color: #2e7d32;
+            text-align: center;
+        }
+
+        /* Preço */
+        .preco-box {
+            background: linear-gradient(135deg, #4caf50, #2e7d32);
+            color: white;
+            text-align: center;
+            padding: 30px;
+            border-radius: 15px;
+            margin: 20px 0;
+        }
+
+        .preco-valor {
+            font-size: 48px;
+            font-weight: bold;
+        }
+
+        .preco-descricao {
+            font-size: 18px;
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+
+        <!-- CAPA -->
+        <div class="capa">
+            <div style="font-size: 80px; margin-bottom: 20px;">👑</div>
+            <h1>IMPÉRIO SISTEMAS</h1>
+            <div class="subtitulo">Catálogo Completo do Vendedor</div>
+            <div class="slogan">"Transformando qualquer pessoa em um vendedor de alto nível"</div>
+            <div style="margin-top: 30px; font-size: 18px;">
+                Suporte: (48) 99864-9898
+            </div>
+        </div>
+
+        <!-- ÍNDICE -->
+        <div class="indice">
+            <h2 style="background: none; border: none; padding: 0; margin: 0 0 20px 0;">📚 ÍNDICE</h2>
+            <ul>
+                <li>1. O Que é o Império Sistemas?</li>
+                <li>2. As 10 Dores do Empresário</li>
+                <li>3. Para Quais Negócios Serve?</li>
+                <li>4. Todas as Funcionalidades</li>
+                <li>5. Guia por Ramo de Negócio</li>
+                <li>6. Quebrando Objeções</li>
+                <li>7. Técnicas de Venda</li>
+                <li>8. Roteiro de Demonstração</li>
+                <li>9. Fechando a Venda</li>
+                <li>10. Perguntas Frequentes</li>
+                <li>11. Glossário de Termos</li>
+            </ul>
+        </div>
+
+        <div class="separador">═══════════════════════════════</div>
+
+        <!-- SEÇÃO 1: O QUE É -->
+        <h2>1. 👑 O Que é o Império Sistemas?</h2>
+
+        <div class="destaque-azul">
+            <p style="font-size: 20px; text-align: center;">
+                <strong>Imagine uma ferramenta mágica que controla TUDO do seu negócio!</strong>
+            </p>
+        </div>
+
+        <p>
+            O <strong>Império Sistemas</strong> é como um <strong>assistente super inteligente</strong> que ajuda o dono de uma loja ou empresa a:
+        </p>
+
+        <ul>
+            <li>📦 Saber <strong>exatamente</strong> quantos produtos tem na loja</li>
+            <li>💰 Controlar <strong>todo o dinheiro</strong> que entra e sai</li>
+            <li>👥 Lembrar de <strong>todos os clientes</strong> e o que eles compraram</li>
+            <li>🧾 Fazer <strong>notas fiscais</strong> sem dor de cabeça</li>
+            <li>📊 Ver <strong>relatórios bonitos</strong> que mostram se o negócio vai bem</li>
+        </ul>
+
+        <div class="dica">
+            Pense assim: é como ter um <strong>gerente, um contador e um secretário</strong> trabalhando 24 horas por dia, mas você paga <strong>muito menos</strong>!
+        </div>
+
+        <h3>Por que o nome "Império"?</h3>
+        <p>
+            Porque queremos que cada cliente <strong>construa seu próprio império</strong>! Um negócio forte, organizado e lucrativo. O sistema é a <strong>fundação</strong> desse império.
+        </p>
+
+        <div class="separador">═══════════════════════════════</div>
+
+        <!-- SEÇÃO 2: DORES -->
+        <h2>2. 😰 As 10 Dores do Empresário</h2>
+
+        <p>
+            Todo empresário tem <strong>problemas</strong>. São como <strong>dores de cabeça</strong> que não passam. Nosso sistema é o <strong>remédio</strong> para essas dores!
+        </p>
+
+        <div class="aviso">
+            Quando você visitar um cliente, <strong>pergunte sobre essas dores</strong>. Se ele tiver pelo menos UMA, você já tem uma venda!
+        </div>
+
+        <!-- DOR 1 -->
+        <div class="ramo-card">
+            <h3>😫 DOR 1: "Não sei quanto tenho em estoque"</h3>
+            <p><strong>O problema:</strong> O empresário não sabe quantos produtos tem. Às vezes vende algo que já acabou. Ou compra demais e o dinheiro fica parado.</p>
+
+            <div class="comparacao">
+                <div class="antes">
+                    <h4>❌ SEM SISTEMA</h4>
+                    <ul>
+                        <li>Conta produtos na mão</li>
+                        <li>Usa caderninho</li>
+                        <li>Perde vendas</li>
+                        <li>Compra errado</li>
+                    </ul>
+                </div>
+                <div class="depois">
+                    <h4>✅ COM IMPÉRIO</h4>
+                    <ul>
+                        <li>Estoque automático</li>
+                        <li>Alerta quando acaba</li>
+                        <li>Nunca perde venda</li>
+                        <li>Compra certo</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="script">
+                <div class="script-titulo">📝 FRASE PARA USAR:</div>
+                "Você já perdeu venda porque o produto tinha acabado e você não sabia? Com o Império isso NUNCA mais acontece!"
+            </div>
+        </div>
+
+        <!-- DOR 2 -->
+        <div class="ramo-card">
+            <h3>😫 DOR 2: "Não sei se estou tendo lucro"</h3>
+            <p><strong>O problema:</strong> O empresário vende, vende, vende... mas no final do mês não sobra dinheiro. Ele não sabe para onde foi o lucro.</p>
+
+            <div class="comparacao">
+                <div class="antes">
+                    <h4>❌ SEM SISTEMA</h4>
+                    <ul>
+                        <li>Mistura dinheiro pessoal e da empresa</li>
+                        <li>Não sabe o custo real</li>
+                        <li>Trabalha muito e ganha pouco</li>
+                    </ul>
+                </div>
+                <div class="depois">
+                    <h4>✅ COM IMPÉRIO</h4>
+                    <ul>
+                        <li>Relatório de lucro por produto</li>
+                        <li>Custo e margem claros</li>
+                        <li>Vê onde está ganhando e perdendo</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="script">
+                <div class="script-titulo">📝 FRASE PARA USAR:</div>
+                "Você sabe exatamente quanto lucrou esse mês? E qual produto dá mais lucro? O Império mostra tudo isso em segundos!"
+            </div>
+        </div>
+
+        <!-- DOR 3 -->
+        <div class="ramo-card">
+            <h3>😫 DOR 3: "Perco vendas por falta de produto"</h3>
+            <p><strong>O problema:</strong> Cliente quer comprar, mas o produto acabou. A venda vai para o concorrente.</p>
+
+            <div class="beneficio">
+                <div class="beneficio-icone">🔔</div>
+                <div class="beneficio-texto">
+                    <strong>REMÉDIO:</strong> O sistema avisa ANTES do produto acabar. Você define a quantidade mínima e ele te alerta!
+                </div>
+            </div>
+
+            <div class="script">
+                <div class="script-titulo">📝 FRASE PARA USAR:</div>
+                "Quantas vendas você perdeu esse mês porque o produto tinha acabado? Uma? Duas? Dez? Com nosso sistema, isso vira ZERO!"
+            </div>
+        </div>
+
+        <!-- DOR 4 -->
+        <div class="ramo-card">
+            <h3>😫 DOR 4: "Não sei quem me deve"</h3>
+            <p><strong>O problema:</strong> O empresário vende fiado, anota em caderninho, e depois esquece de cobrar. Ou o cliente diz que já pagou.</p>
+
+            <div class="beneficio">
+                <div class="beneficio-icone">📒</div>
+                <div class="beneficio-texto">
+                    <strong>REMÉDIO:</strong> Sistema de crediário completo! Sabe quanto cada cliente deve, há quantos dias, e você nunca mais esquece de cobrar.
+                </div>
+            </div>
+
+            <div class="script">
+                <div class="script-titulo">📝 FRASE PARA USAR:</div>
+                "Você vende fiado? E como controla isso? No caderninho? E se o cliente disser que já pagou, como você prova? Nosso sistema registra TUDO!"
+            </div>
+        </div>
+
+        <!-- DOR 5 -->
+        <div class="ramo-card">
+            <h3>😫 DOR 5: "Esqueço de pagar contas"</h3>
+            <p><strong>O problema:</strong> O empresário esquece de pagar fornecedor, paga juros, e ainda fica com nome sujo.</p>
+
+            <div class="beneficio">
+                <div class="beneficio-icone">📅</div>
+                <div class="beneficio-texto">
+                    <strong>REMÉDIO:</strong> Contas a pagar com alertas! O sistema avisa 7 dias antes do vencimento. Nunca mais pague multa!
+                </div>
+            </div>
+
+            <div class="script">
+                <div class="script-titulo">📝 FRASE PARA USAR:</div>
+                "Quanto você já perdeu em juros por esquecer de pagar contas? Com o Império, ele te avisa ANTES de vencer!"
+            </div>
+        </div>
+
+        <!-- DOR 6 -->
+        <div class="ramo-card">
+            <h3>😫 DOR 6: "Demoro muito para fazer uma venda"</h3>
+            <p><strong>O problema:</strong> A fila cresce, clientes vão embora, funcionário demora para achar preço e fazer conta.</p>
+
+            <div class="beneficio">
+                <div class="beneficio-icone">⚡</div>
+                <div class="beneficio-texto">
+                    <strong>REMÉDIO:</strong> PDV rápido e intuitivo! Digita o código, aparece o produto. Calcula troco automático. Aceita PIX, cartão, dinheiro. Imprime cupom em segundos!
+                </div>
+            </div>
+
+            <div class="script">
+                <div class="script-titulo">📝 FRASE PARA USAR:</div>
+                "Quanto tempo você leva para fazer uma venda? 5 minutos? Com nosso sistema, você faz em 30 segundos! Imagina atender o DOBRO de clientes!"
+            </div>
+        </div>
+
+        <!-- DOR 7 -->
+        <div class="ramo-card">
+            <h3>😫 DOR 7: "Não consigo fidelizar clientes"</h3>
+            <p><strong>O problema:</strong> Cliente compra uma vez e nunca mais volta. Vai no concorrente. O empresário não tem como premiar quem é fiel.</p>
+
+            <div class="beneficio">
+                <div class="beneficio-icone">⭐</div>
+                <div class="beneficio-texto">
+                    <strong>REMÉDIO:</strong> Programa de Fidelidade com pontos! Cliente compra R$100 e ganha 100 pontos. Junta pontos e troca por produtos ou desconto!
+                </div>
+            </div>
+
+            <div class="script">
+                <div class="script-titulo">📝 FRASE PARA USAR:</div>
+                "Seus clientes voltam sempre ou vão no concorrente? Com nosso programa de pontos, eles TÊM MOTIVO para voltar!"
+            </div>
+        </div>
+
+        <!-- DOR 8 -->
+        <div class="ramo-card">
+            <h3>😫 DOR 8: "Tenho medo da fiscalização"</h3>
+            <p><strong>O problema:</strong> Fiscal pode aparecer a qualquer momento. Se não tiver nota fiscal, multa pesada. Empresário vive com medo.</p>
+
+            <div class="beneficio">
+                <div class="beneficio-icone">📋</div>
+                <div class="beneficio-texto">
+                    <strong>REMÉDIO:</strong> Emissão de NFC-e (cupom fiscal) e NF-e automática! Com certificado digital, tudo direitinho, sem medo de fiscal!
+                </div>
+            </div>
+
+            <div class="script">
+                <div class="script-titulo">📝 FRASE PARA USAR:</div>
+                "Você emite nota fiscal? Sabe que a multa por não emitir pode ser de até R$50.000? Nosso sistema emite nota automático!"
+            </div>
+        </div>
+
+        <!-- DOR 9 -->
+        <div class="ramo-card">
+            <h3>😫 DOR 9: "Não sei quais produtos vendem mais"</h3>
+            <p><strong>O problema:</strong> O empresário compra de tudo um pouco, sem saber o que vende mais. Dinheiro parado em produtos que não giram.</p>
+
+            <div class="beneficio">
+                <div class="beneficio-icone">📊</div>
+                <div class="beneficio-texto">
+                    <strong>REMÉDIO:</strong> Relatório de vendas por produto! Mostra os TOP 10 mais vendidos e os que estão parados. Você compra CERTO!
+                </div>
+            </div>
+
+            <div class="script">
+                <div class="script-titulo">📝 FRASE PARA USAR:</div>
+                "Você sabe qual é o seu produto CAMPEÃO de vendas? E qual está parado há meses? Nosso sistema mostra tudo isso!"
+            </div>
+        </div>
+
+        <!-- DOR 10 -->
+        <div class="ramo-card">
+            <h3>😫 DOR 10: "Funcionário rouba e não sei"</h3>
+            <p><strong>O problema:</strong> Funcionário dá desconto para amigo, não registra venda, some com dinheiro. Empresário não tem como provar.</p>
+
+            <div class="beneficio">
+                <div class="beneficio-icone">🔒</div>
+                <div class="beneficio-texto">
+                    <strong>REMÉDIO:</strong> Controle por usuário! Cada funcionário tem login. O sistema registra TUDO que ele faz. Abertura e fechamento de caixa conferido!
+                </div>
+            </div>
+
+            <div class="script">
+                <div class="script-titulo">📝 FRASE PARA USAR:</div>
+                "Você confia 100% em todos os seus funcionários? E se eu te disser que o sistema registra cada venda, cada desconto, cada cancelamento que ele faz?"
+            </div>
+        </div>
+
+        <div class="separador">═══════════════════════════════</div>
+
+        <!-- SEÇÃO 3: PARA QUEM SERVE -->
+        <h2>3. 🏪 Para Quais Negócios Serve?</h2>
+
+        <div class="destaque-verde">
+            <p style="font-size: 20px; text-align: center;">
+                O Império Sistemas serve para <strong>QUALQUER negócio</strong> que venda produtos ou serviços!
+            </p>
+        </div>
+
+        <table>
+            <tr>
+                <th>Ramo</th>
+                <th>Exemplos</th>
+                <th>Funcionalidades Principais</th>
+            </tr>
+            <tr>
+                <td>🐕 <strong>Pet Shops</strong></td>
+                <td>Rações, acessórios, banho/tosa</td>
+                <td>Estoque por peso, agendamento</td>
+            </tr>
+            <tr>
+                <td>🛒 <strong>Mercadinhos</strong></td>
+                <td>Minimercados, armazéns</td>
+                <td>PDV rápido, código de barras</td>
+            </tr>
+            <tr>
+                <td>👗 <strong>Lojas de Roupas</strong></td>
+                <td>Moda, calçados, acessórios</td>
+                <td>Controle por grade (cor/tamanho)</td>
+            </tr>
+            <tr>
+                <td>💊 <strong>Farmácias</strong></td>
+                <td>Medicamentos, perfumaria</td>
+                <td>Validade, lote, receituário</td>
+            </tr>
+            <tr>
+                <td>🍞 <strong>Padarias</strong></td>
+                <td>Pães, bolos, salgados</td>
+                <td>Venda por peso, produção</td>
+            </tr>
+            <tr>
+                <td>🍔 <strong>Lanchonetes</strong></td>
+                <td>Fast-food, restaurantes</td>
+                <td>Comanda, mesa, delivery</td>
+            </tr>
+            <tr>
+                <td>🧱 <strong>Materiais de Construção</strong></td>
+                <td>Ferragens, tintas, elétrica</td>
+                <td>Orçamento, venda por m²</td>
+            </tr>
+            <tr>
+                <td>📚 <strong>Papelarias</strong></td>
+                <td>Material escolar, escritório</td>
+                <td>Sazonalidade, kits</td>
+            </tr>
+            <tr>
+                <td>💄 <strong>Cosméticos</strong></td>
+                <td>Maquiagem, perfumes</td>
+                <td>Validade, fidelidade</td>
+            </tr>
+            <tr>
+                <td>🔧 <strong>Oficinas/Autopeças</strong></td>
+                <td>Peças, serviços</td>
+                <td>Ordem de serviço, garantia</td>
+            </tr>
+            <tr>
+                <td>🥩 <strong>Açougues</strong></td>
+                <td>Carnes, embutidos</td>
+                <td>Venda por peso, kg</td>
+            </tr>
+            <tr>
+                <td>🥬 <strong>Hortifrutis</strong></td>
+                <td>Frutas, verduras, grãos</td>
+                <td>Pesagem, venda a granel</td>
+            </tr>
+            <tr>
+                <td>🏪 <strong>Conveniências</strong></td>
+                <td>Lojas 24h, postos</td>
+                <td>PDV rápido, turnos</td>
+            </tr>
+            <tr>
+                <td>📦 <strong>Distribuidoras</strong></td>
+                <td>Atacado, semi-atacado</td>
+                <td>Tabela de preços, volumes</td>
+            </tr>
+        </table>
+
+        <div class="dica">
+            <strong>DICA DE OURO:</strong> Quando visitar um cliente, diga: "Nosso sistema já atende mais de 50 empresas do seu ramo aqui na região!" (Mesmo que ainda não atenda, você está plantando a semente!)
+        </div>
+
+        <div class="separador">═══════════════════════════════</div>
+
+        <!-- SEÇÃO 4: FUNCIONALIDADES -->
+        <h2>4. ⚙️ Todas as Funcionalidades</h2>
+
+        <p>Aqui está <strong>tudo</strong> que o sistema faz. Decore esta lista como se fosse a tabuada!</p>
+
+        <div class="ramo-card">
+            <h3>🛒 PDV - Ponto de Venda</h3>
+            <ul>
+                <li>✅ Venda rápida com código de barras</li>
+                <li>✅ Busca por nome ou código do produto</li>
+                <li>✅ Calcula troco automático</li>
+                <li>✅ Aceita múltiplas formas de pagamento (dinheiro + cartão)</li>
+                <li>✅ PIX com QR Code automático</li>
+                <li>✅ Desconto por item ou total</li>
+                <li>✅ Venda por peso (kg, g, litro)</li>
+                <li>✅ Identificação de cliente na venda</li>
+                <li>✅ Impressão de cupom fiscal (NFC-e)</li>
+            </ul>
+        </div>
+
+        <div class="ramo-card">
+            <h3>📦 Controle de Estoque</h3>
+            <ul>
+                <li>✅ Cadastro ilimitado de produtos</li>
+                <li>✅ Foto do produto</li>
+                <li>✅ Código de barras próprio ou do fabricante</li>
+                <li>✅ Estoque mínimo com alerta</li>
+                <li>✅ Entrada e saída de estoque</li>
+                <li>✅ Histórico de movimentações</li>
+                <li>✅ Inventário (contagem)</li>
+                <li>✅ Custo médio automático</li>
+            </ul>
+        </div>
+
+        <div class="ramo-card">
+            <h3>👥 Cadastro de Clientes</h3>
+            <ul>
+                <li>✅ Nome, CPF/CNPJ, telefone, email</li>
+                <li>✅ Endereço completo</li>
+                <li>✅ Histórico de compras</li>
+                <li>✅ Limite de crédito (crediário)</li>
+                <li>✅ Pontos de fidelidade</li>
+                <li>✅ Aniversário (para promoções)</li>
+            </ul>
+        </div>
+
+        <div class="ramo-card">
+            <h3>💰 Financeiro</h3>
+            <ul>
+                <li>✅ Contas a pagar (fornecedores, despesas)</li>
+                <li>✅ Contas a receber (crediário)</li>
+                <li>✅ Alerta de vencimentos</li>
+                <li>✅ Fluxo de caixa</li>
+                <li>✅ Controle de caixa (abertura/fechamento)</li>
+                <li>✅ Relatório de receitas e despesas</li>
+            </ul>
+        </div>
+
+        <div class="ramo-card">
+            <h3>⭐ Programa de Fidelidade</h3>
+            <ul>
+                <li>✅ Cliente acumula pontos por compra</li>
+                <li>✅ Configurar quantos pontos por real</li>
+                <li>✅ Troca de pontos por produtos ou desconto</li>
+                <li>✅ Extrato de pontos por cliente</li>
+                <li>✅ Validade dos pontos</li>
+            </ul>
+        </div>
+
+        <div class="ramo-card">
+            <h3>📋 Fiscal (NFC-e / NF-e)</h3>
+            <ul>
+                <li>✅ Emissão de NFC-e (cupom fiscal)</li>
+                <li>✅ Emissão de NF-e (nota fiscal)</li>
+                <li>✅ Cancelamento de nota</li>
+                <li>✅ Consulta de notas emitidas</li>
+                <li>✅ Integração com certificado digital A1</li>
+                <li>✅ Envio automático para SEFAZ</li>
+            </ul>
+        </div>
+
+        <div class="ramo-card">
+            <h3>📊 Relatórios</h3>
+            <ul>
+                <li>✅ Vendas por período</li>
+                <li>✅ Vendas por produto (top 10)</li>
+                <li>✅ Vendas por vendedor</li>
+                <li>✅ Vendas por cliente</li>
+                <li>✅ Lucro por produto</li>
+                <li>✅ Estoque atual</li>
+                <li>✅ Produtos abaixo do mínimo</li>
+                <li>✅ Contas a pagar/receber</li>
+            </ul>
+        </div>
+
+        <div class="ramo-card">
+            <h3>🔔 Notificações</h3>
+            <ul>
+                <li>✅ Alerta de estoque baixo</li>
+                <li>✅ Contas a pagar vencendo</li>
+                <li>✅ Contas a pagar vencidas</li>
+                <li>✅ Crediário em atraso</li>
+            </ul>
+        </div>
+
+        <div class="separador">═══════════════════════════════</div>
+
+        <!-- SEÇÃO 5: GUIA POR RAMO -->
+        <h2>5. 📖 Guia por Ramo de Negócio</h2>
+
+        <p>Agora vamos ver <strong>como abordar</strong> cada tipo de cliente. Cada ramo tem suas <strong>dores específicas</strong>!</p>
+
+        <!-- PET SHOP -->
+        <div class="ramo-card">
+            <h3>🐕 PET SHOP</h3>
+
+            <h4>Dores específicas:</h4>
+            <ul>
+                <li>Venda de ração a granel (kg) é difícil de controlar</li>
+                <li>Clientes esquecem de vacinar o pet</li>
+                <li>Agendamento de banho/tosa no papel</li>
+                <li>Não sabe qual ração vende mais</li>
+            </ul>
+
+            <h4>Como nosso sistema resolve:</h4>
+            <ul>
+                <li>✅ Venda por peso (kg, g) automática</li>
+                <li>✅ Cadastro do pet com data de vacina</li>
+                <li>✅ Histórico de serviços por animal</li>
+                <li>✅ Relatório de vendas por categoria</li>
+            </ul>
+
+            <div class="dialogo">
+                <div class="cliente">"Ah, mas vendo ração a granel, sistema não funciona pra mim."</div>
+                <div class="vendedor">"Funciona sim! Nosso sistema tem venda por peso. Você digita quantos kg e ele calcula o valor. Igual balança, só que integrado com estoque!"</div>
+            </div>
+
+            <div class="dica">
+                Pet shops costumam ter clientes fiéis. Fale do programa de fidelidade: "Imagina seu cliente juntando pontos e trocando por um banho grátis?"
+            </div>
+        </div>
+
+        <!-- MERCADINHO -->
+        <div class="ramo-card">
+            <h3>🛒 MERCADINHO / MINIMERCADO</h3>
+
+            <h4>Dores específicas:</h4>
+            <ul>
+                <li>Muitos produtos, difícil controlar estoque</li>
+                <li>Venda fiada sem controle</li>
+                <li>Fila grande demora a atender</li>
+                <li>Não sabe o lucro de cada produto</li>
+            </ul>
+
+            <h4>Como nosso sistema resolve:</h4>
+            <ul>
+                <li>✅ Leitor de código de barras acelera venda</li>
+                <li>✅ Crediário com limite por cliente</li>
+                <li>✅ Alerta de estoque mínimo</li>
+                <li>✅ Margem de lucro por produto</li>
+            </ul>
+
+            <div class="dialogo">
+                <div class="cliente">"Minha clientela é humilde, paga fiado. Sistema não serve."</div>
+                <div class="vendedor">"Serve sim! Nosso crediário controla quem te deve. Você define limite, e o sistema avisa quando o cliente passou do limite. Nunca mais leva calote!"</div>
+            </div>
+
+            <div class="dica">
+                Mercadinhos de bairro adoram vender fiado. O crediário do Império é um BAITA diferencial!
+            </div>
+        </div>
+
+        <!-- LOJA DE ROUPAS -->
+        <div class="ramo-card">
+            <h3>👗 LOJA DE ROUPAS / CALÇADOS</h3>
+
+            <h4>Dores específicas:</h4>
+            <ul>
+                <li>Controle de tamanho/cor é complicado</li>
+                <li>Troca de mercadoria sem controle</li>
+                <li>Sazonalidade (inverno/verão)</li>
+                <li>Cliente experimenta e não compra</li>
+            </ul>
+
+            <h4>Como nosso sistema resolve:</h4>
+            <ul>
+                <li>✅ Grade de tamanhos (P, M, G, GG)</li>
+                <li>✅ Variação por cor</li>
+                <li>✅ Histórico de trocas</li>
+                <li>✅ Relatório de produtos parados</li>
+            </ul>
+
+            <div class="dialogo">
+                <div class="cliente">"Tenho muitos tamanhos e cores, fica difícil de controlar."</div>
+                <div class="vendedor">"Nosso sistema tem GRADE! Você cadastra a blusa uma vez, e adiciona todas as cores e tamanhos. Cada um com estoque separado!"</div>
+            </div>
+
+            <div class="dica">
+                Lojas de roupa têm muito produto parado. Mostre o relatório de "produtos sem venda há 30 dias" - isso impressiona!
+            </div>
+        </div>
+
+        <!-- PADARIA -->
+        <div class="ramo-card">
+            <h3>🍞 PADARIA / CONFEITARIA</h3>
+
+            <h4>Dores específicas:</h4>
+            <ul>
+                <li>Produção própria difícil de precificar</li>
+                <li>Venda de pão por kg</li>
+                <li>Desperdício de produtos que não venderam</li>
+                <li>Fila grande no horário de pico</li>
+            </ul>
+
+            <h4>Como nosso sistema resolve:</h4>
+            <ul>
+                <li>✅ Venda por peso integrada</li>
+                <li>✅ PDV rápido com atalhos</li>
+                <li>✅ Relatório de vendas por período</li>
+                <li>✅ Controle de produção</li>
+            </ul>
+
+            <div class="dialogo">
+                <div class="cliente">"Mas eu faço meus próprios produtos, como vou colocar no sistema?"</div>
+                <div class="vendedor">"Você cadastra o produto final e coloca o custo de produção. O sistema calcula sua margem. Assim você sabe se está ganhando dinheiro com cada pão!"</div>
+            </div>
+        </div>
+
+        <!-- FARMÁCIA -->
+        <div class="ramo-card">
+            <h3>💊 FARMÁCIA / DROGARIA</h3>
+
+            <h4>Dores específicas:</h4>
+            <ul>
+                <li>Controle de validade obrigatório</li>
+                <li>Medicamentos controlados (receita)</li>
+                <li>SNGPC (controle de psicotrópicos)</li>
+                <li>Muitos produtos similares</li>
+            </ul>
+
+            <h4>Como nosso sistema resolve:</h4>
+            <ul>
+                <li>✅ Alerta de produtos vencendo</li>
+                <li>✅ Controle de lote</li>
+                <li>✅ Código de barras EAN</li>
+                <li>✅ Busca por princípio ativo</li>
+            </ul>
+
+            <div class="dica">
+                Farmácias têm muita regulamentação. Foque no controle de validade e na emissão de NF-e correta!
+            </div>
+        </div>
+
+        <!-- LANCHONETE -->
+        <div class="ramo-card">
+            <h3>🍔 LANCHONETE / RESTAURANTE</h3>
+
+            <h4>Dores específicas:</h4>
+            <ul>
+                <li>Controle de mesas e comandas</li>
+                <li>Divisão de conta</li>
+                <li>Delivery desorganizado</li>
+                <li>Desperdício na cozinha</li>
+            </ul>
+
+            <h4>Como nosso sistema resolve:</h4>
+            <ul>
+                <li>✅ Sistema de comandas por mesa</li>
+                <li>✅ Divisão de conta automática</li>
+                <li>✅ Impressão na cozinha</li>
+                <li>✅ Relatório de vendas por prato</li>
+            </ul>
+
+            <div class="dialogo">
+                <div class="cliente">"Meu negócio é corrido, não dá tempo de usar sistema."</div>
+                <div class="vendedor">"É JUSTAMENTE por ser corrido que você precisa! O sistema agiliza. Imagina: o garçom anota no tablet, já vai pra cozinha. Nada de papel perdido!"</div>
+            </div>
+        </div>
+
+        <!-- MATERIAL DE CONSTRUÇÃO -->
+        <div class="ramo-card">
+            <h3>🧱 MATERIAL DE CONSTRUÇÃO</h3>
+
+            <h4>Dores específicas:</h4>
+            <ul>
+                <li>Orçamento demorado</li>
+                <li>Produtos pesados e volumosos</li>
+                <li>Venda por m², m³, kg</li>
+                <li>Cliente quer desconto em tudo</li>
+            </ul>
+
+            <h4>Como nosso sistema resolve:</h4>
+            <ul>
+                <li>✅ Orçamento rápido com impressão</li>
+                <li>✅ Venda por unidades especiais (m², kg)</li>
+                <li>✅ Tabela de preços por quantidade</li>
+                <li>✅ Margem mínima de desconto</li>
+            </ul>
+
+            <div class="dialogo">
+                <div class="cliente">"Meus produtos são pesados, vendo por metro."</div>
+                <div class="vendedor">"Perfeito! Nosso sistema tem venda por M², M³, kg, litro... Você digita a quantidade e ele calcula!"</div>
+            </div>
+        </div>
+
+        <div class="separador">═══════════════════════════════</div>
+
+        <!-- SEÇÃO 6: QUEBRANDO OBJEÇÕES -->
+        <h2>6. 🛡️ Quebrando Objeções</h2>
+
+        <div class="aviso">
+            Objeção NÃO é rejeição! É só uma <strong>dúvida</strong> que o cliente tem. Quando você responde bem, a venda acontece!
+        </div>
+
+        <p>Aqui estão as objeções mais comuns e <strong>exatamente</strong> o que você deve responder:</p>
+
+        <!-- Objeção 1 -->
+        <div class="ramo-card">
+            <h3>💸 "É MUITO CARO"</h3>
+
+            <div class="dialogo">
+                <div class="cliente">"Achei caro. Não tenho dinheiro pra isso agora."</div>
+                <div class="vendedor">"Entendo. Mas deixa eu te perguntar: quanto você perde por mês por não ter controle de estoque? E quanto perde com cliente que não paga o fiado? E multa por não emitir nota fiscal? Some tudo isso. Aposto que é MUITO mais do que o valor do sistema!"</div>
+            </div>
+
+            <div class="script">
+                <div class="script-titulo">📝 FRASE MATADORA:</div>
+                "O sistema não é um GASTO. É um INVESTIMENTO que se paga em menos de 3 meses!"
+            </div>
+        </div>
+
+        <!-- Objeção 2 -->
+        <div class="ramo-card">
+            <h3>🖥️ "JÁ TENHO UM SISTEMA"</h3>
+
+            <div class="dialogo">
+                <div class="cliente">"Já uso outro sistema."</div>
+                <div class="vendedor">"Ótimo! Isso mostra que você valoriza organização. Me conta: o que você mais gosta nele? E o que te incomoda? (Deixe o cliente falar. Ele vai reclamar de algo. Aí você mostra que o Império resolve!)"</div>
+            </div>
+
+            <div class="script">
+                <div class="script-titulo">📝 FRASE MATADORA:</div>
+                "A gente não quer que você troque por trocar. Queremos que você tenha o MELHOR. Posso te mostrar as diferenças?"
+            </div>
+        </div>
+
+        <!-- Objeção 3 -->
+        <div class="ramo-card">
+            <h3>🤷 "NÃO ENTENDO DE COMPUTADOR"</h3>
+
+            <div class="dialogo">
+                <div class="cliente">"Sou ruim com tecnologia. Não vou conseguir usar."</div>
+                <div class="vendedor">"Você sabe usar WhatsApp? Então sabe usar nosso sistema! É tudo em botões grandes, com cores. Se uma criança de 10 anos consegue, você também consegue! E a gente dá treinamento COMPLETO."</div>
+            </div>
+
+            <div class="script">
+                <div class="script-titulo">📝 FRASE MATADORA:</div>
+                "Nosso sistema foi feito para pessoas comuns, não para engenheiros da NASA!"
+            </div>
+        </div>
+
+        <!-- Objeção 4 -->
+        <div class="ramo-card">
+            <h3>📏 "MEU NEGÓCIO É PEQUENO"</h3>
+
+            <div class="dialogo">
+                <div class="cliente">"Minha lojinha é muito pequena pra ter sistema."</div>
+                <div class="vendedor">"Na verdade, negócio pequeno é o que MAIS precisa! Grande empresa tem contador, gerente, assistente... Você faz tudo sozinho! O sistema é seu ajudante 24 horas!"</div>
+            </div>
+
+            <div class="script">
+                <div class="script-titulo">📝 FRASE MATADORA:</div>
+                "Negócio pequeno que se organiza, VIRA negócio grande!"
+            </div>
+        </div>
+
+        <!-- Objeção 5 -->
+        <div class="ramo-card">
+            <h3>🤔 "VOU PENSAR"</h3>
+
+            <div class="dialogo">
+                <div class="cliente">"Gostei, mas vou pensar e te ligo depois."</div>
+                <div class="vendedor">"Claro, é uma decisão importante! Mas me ajuda a entender: o que exatamente você precisa pensar? É sobre o preço, as funcionalidades ou outra coisa? (Descubra a objeção REAL e resolva na hora!)"</div>
+            </div>
+
+            <div class="script">
+                <div class="script-titulo">📝 FRASE MATADORA:</div>
+                "Enquanto você pensa, seu concorrente age. Vamos resolver suas dúvidas agora?"
+            </div>
+        </div>
+
+        <!-- Objeção 6 -->
+        <div class="ramo-card">
+            <h3>👥 "PRECISO FALAR COM MEU SÓCIO"</h3>
+
+            <div class="dialogo">
+                <div class="cliente">"Tenho sócio, preciso falar com ele primeiro."</div>
+                <div class="vendedor">"Perfeito! Podemos marcar uma apresentação com os dois? Assim eu explico tudo direitinho e vocês decidem juntos. Qual o melhor horário?"</div>
+            </div>
+
+            <div class="dica">
+                Nunca deixe o cliente "levar a ideia" pro sócio. ELE não vai conseguir explicar tão bem quanto você. Marque reunião com os dois!
+            </div>
+        </div>
+
+        <!-- Objeção 7 -->
+        <div class="ramo-card">
+            <h3>😵 "SISTEMA É COMPLICADO"</h3>
+
+            <div class="dialogo">
+                <div class="cliente">"Sistemas são muito complicados, dão muito trabalho."</div>
+                <div class="vendedor">"Posso te mostrar agora em 5 minutos? Você vai ver que é mais fácil do que passar mensagem no WhatsApp! Olha aqui... (mostra o PDV na prática)"</div>
+            </div>
+
+            <div class="script">
+                <div class="script-titulo">📝 FRASE MATADORA:</div>
+                "Se seu filho de 12 anos consegue usar, você também consegue!"
+            </div>
+        </div>
+
+        <!-- Objeção 8 -->
+        <div class="ramo-card">
+            <h3>🆘 "E SE DER PROBLEMA?"</h3>
+
+            <div class="dialogo">
+                <div class="cliente">"E se parar de funcionar? Fico na mão?"</div>
+                <div class="vendedor">"Excelente pergunta! Temos suporte via WhatsApp no número (48) 99864-9898. Respondemos em minutos! E o sistema é na nuvem: se seu computador queimar, seus dados estão seguros!"</div>
+            </div>
+
+            <div class="script">
+                <div class="script-titulo">📝 FRASE MATADORA:</div>
+                "Seus dados ficam na NUVEM. Pode pegar fogo na loja que seu estoque continua lá!"
+            </div>
+        </div>
+
+        <div class="separador">═══════════════════════════════</div>
+
+        <!-- SEÇÃO 7: TÉCNICAS DE VENDA -->
+        <h2>7. 🎯 Técnicas de Venda</h2>
+
+        <p>Agora você vai aprender o <strong>passo a passo</strong> de uma venda perfeita!</p>
+
+        <!-- Passo 1 -->
+        <div class="passo">
+            <div class="passo-numero">1</div>
+            <div class="passo-conteudo">
+                <h3>ABORDAGEM</h3>
+                <p>O primeiro contato é crucial. Você tem <strong>7 segundos</strong> para causar boa impressão!</p>
+
+                <div class="destaque-verde">
+                    <strong>O que fazer:</strong>
+                    <ul>
+                        <li>Sorria genuinamente</li>
+                        <li>Olhe nos olhos</li>
+                        <li>Aperto de mão firme (não mole!)</li>
+                        <li>Vista-se adequadamente (camisa social ou polo)</li>
+                        <li>Chegue no horário marcado</li>
+                    </ul>
+                </div>
+
+                <div class="script">
+                    <div class="script-titulo">📝 SCRIPT DE ABERTURA:</div>
+                    "Bom dia, [nome]! Tudo bem? Sou [seu nome], da Império Sistemas. Muito prazer! Antes de falar do sistema, posso conhecer um pouco do seu negócio?"
+                </div>
+            </div>
+        </div>
+
+        <!-- Passo 2 -->
+        <div class="passo">
+            <div class="passo-numero">2</div>
+            <div class="passo-conteudo">
+                <h3>SONDAGEM (Descobrir as Dores)</h3>
+                <p>Faça <strong>perguntas</strong> para descobrir os problemas do cliente. Quem fala mais é o cliente!</p>
+
+                <div class="destaque-azul">
+                    <strong>Perguntas poderosas:</strong>
+                    <ul>
+                        <li>"Como você controla seu estoque hoje?"</li>
+                        <li>"Você sabe exatamente quanto tem de cada produto?"</li>
+                        <li>"Já perdeu venda por não ter o produto?"</li>
+                        <li>"Vende fiado? Como controla isso?"</li>
+                        <li>"Emite nota fiscal? Tem medo de fiscalização?"</li>
+                        <li>"Sabe quais produtos dão mais lucro?"</li>
+                        <li>"O que mais te incomoda no dia a dia da loja?"</li>
+                    </ul>
+                </div>
+
+                <div class="dica">
+                    OUÇA mais do que fala! Cada problema que o cliente conta é uma oportunidade de mostrar a solução.
+                </div>
+            </div>
+        </div>
+
+        <!-- Passo 3 -->
+        <div class="passo">
+            <div class="passo-numero">3</div>
+            <div class="passo-conteudo">
+                <h3>APRESENTAÇÃO (Mostrar a Solução)</h3>
+                <p>Agora você conecta os <strong>problemas</strong> que descobriu com as <strong>soluções</strong> do sistema!</p>
+
+                <div class="destaque">
+                    <strong>A fórmula mágica:</strong>
+                    <p style="font-size: 20px; text-align: center; margin: 15px 0;">
+                        PROBLEMA → SOLUÇÃO → BENEFÍCIO
+                    </p>
+                </div>
+
+                <div class="dialogo">
+                    <div class="vendedor">"Você me disse que já perdeu vendas por não ter o produto. (PROBLEMA) Nosso sistema avisa quando o estoque está baixo. (SOLUÇÃO) Assim você nunca mais perde venda e ainda economiza porque compra só o necessário! (BENEFÍCIO)"</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Passo 4 -->
+        <div class="passo">
+            <div class="passo-numero">4</div>
+            <div class="passo-conteudo">
+                <h3>DEMONSTRAÇÃO (Mostrar Funcionando)</h3>
+                <p>Ver é acreditar! Mostre o sistema <strong>funcionando de verdade</strong>.</p>
+
+                <div class="checklist">
+                    <strong>Roteiro de demonstração (5 minutos):</strong>
+                    <ul>
+                        <li>Abrir o PDV e fazer uma venda rápida</li>
+                        <li>Mostrar a busca de produto por nome</li>
+                        <li>Mostrar o cálculo automático de troco</li>
+                        <li>Mostrar o PIX com QR Code</li>
+                        <li>Mostrar o alerta de estoque baixo</li>
+                        <li>Mostrar um relatório de vendas</li>
+                    </ul>
+                </div>
+
+                <div class="dica">
+                    Deixe o cliente CLICAR! Quando ele mexe no sistema, ele já se imagina usando.
+                </div>
+            </div>
+        </div>
+
+        <!-- Passo 5 -->
+        <div class="passo">
+            <div class="passo-numero">5</div>
+            <div class="passo-conteudo">
+                <h3>NEGOCIAÇÃO (Lidar com Objeções)</h3>
+                <p>Quando o cliente disser algo negativo, <strong>não discuta</strong>. Use a técnica SENTE-SENTIU-ENCONTROU:</p>
+
+                <div class="dialogo">
+                    <div class="cliente">"Achei caro."</div>
+                    <div class="vendedor">"Entendo como você se SENTE. Outros clientes também SENTIRAM isso no início. Mas eles ENCONTRARAM que o sistema se paga em 3 meses, porque pararam de perder dinheiro com estoque errado e fiado não pago."</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Passo 6 -->
+        <div class="passo">
+            <div class="passo-numero">6</div>
+            <div class="passo-conteudo">
+                <h3>FECHAMENTO (Pedir a Venda)</h3>
+                <p>Muitos vendedores têm MEDO de pedir a venda. Não tenha! Use estas técnicas:</p>
+
+                <div class="destaque-verde">
+                    <strong>Técnicas de fechamento:</strong>
+
+                    <p><strong>1. Fechamento por Alternativa:</strong></p>
+                    <p>"Você prefere começar essa semana ou semana que vem?"</p>
+
+                    <p><strong>2. Fechamento por Resumo:</strong></p>
+                    <p>"Então, resolvemos seu problema de estoque, de fiado e de nota fiscal. Vamos começar?"</p>
+
+                    <p><strong>3. Fechamento por Urgência:</strong></p>
+                    <p>"Essa condição especial é só até sexta. Podemos fechar hoje?"</p>
+
+                    <p><strong>4. Fechamento Direto:</strong></p>
+                    <p>"Gostou? Vamos fazer o cadastro?"</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Passo 7 -->
+        <div class="passo">
+            <div class="passo-numero">7</div>
+            <div class="passo-conteudo">
+                <h3>PÓS-VENDA (Garantir Satisfação)</h3>
+                <p>A venda não acaba quando o cliente paga. O pós-venda <strong>gera indicações</strong>!</p>
+
+                <div class="checklist">
+                    <ul>
+                        <li>Ligar no dia seguinte: "Tudo funcionando bem?"</li>
+                        <li>Ligar após 1 semana: "Alguma dúvida?"</li>
+                        <li>Ligar após 1 mês: "O sistema está ajudando?"</li>
+                        <li>Pedir indicações: "Conhece alguém que também precisa?"</li>
+                    </ul>
+                </div>
+
+                <div class="script">
+                    <div class="script-titulo">📝 SCRIPT PARA PEDIR INDICAÇÃO:</div>
+                    "Fico feliz que está gostando! Olha, você conhece outros empresários que também poderiam se beneficiar? Posso dar um desconto especial pra indicação sua!"
+                </div>
+            </div>
+        </div>
+
+        <div class="separador">═══════════════════════════════</div>
+
+        <!-- SEÇÃO 8: ROTEIRO DE DEMO -->
+        <h2>8. 🖥️ Roteiro de Demonstração</h2>
+
+        <p>Use este roteiro para mostrar o sistema de forma <strong>organizada e impactante</strong>:</p>
+
+        <div class="ramo-card">
+            <h3>⏱️ DEMO DE 10 MINUTOS</h3>
+
+            <div class="passo">
+                <div class="passo-numero">1</div>
+                <div class="passo-conteudo">
+                    <h4>Login (30 segundos)</h4>
+                    <p>"Veja como é simples entrar: só digitar email e senha. Cada funcionário tem o seu login, assim você sabe quem fez cada venda."</p>
+                </div>
+            </div>
+
+            <div class="passo">
+                <div class="passo-numero">2</div>
+                <div class="passo-conteudo">
+                    <h4>Dashboard (1 minuto)</h4>
+                    <p>"Essa é a tela principal. Olha só: já mostra as vendas de hoje, o estoque baixo, e as contas que estão vencendo. Tudo num olhar só!"</p>
+                </div>
+            </div>
+
+            <div class="passo">
+                <div class="passo-numero">3</div>
+                <div class="passo-conteudo">
+                    <h4>PDV - Fazer uma Venda (3 minutos)</h4>
+                    <p>"Agora o mais importante: vender! Olha como é rápido..."</p>
+                    <ul>
+                        <li>Digite o código ou nome do produto</li>
+                        <li>Adicione ao carrinho</li>
+                        <li>Adicione mais produtos</li>
+                        <li>Dê um desconto (se quiser)</li>
+                        <li>Escolha a forma de pagamento</li>
+                        <li>Mostre o PIX com QR Code</li>
+                        <li>Finalize a venda</li>
+                    </ul>
+                    <p>"Viu? Menos de 1 minuto e a venda está feita!"</p>
+                </div>
+            </div>
+
+            <div class="passo">
+                <div class="passo-numero">4</div>
+                <div class="passo-conteudo">
+                    <h4>Produtos (2 minutos)</h4>
+                    <p>"Vamos ver os produtos cadastrados..."</p>
+                    <ul>
+                        <li>Mostre a lista de produtos</li>
+                        <li>Mostre a busca rápida</li>
+                        <li>Mostre o estoque de cada um</li>
+                        <li>Mostre um produto com estoque baixo (alerta)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="passo">
+                <div class="passo-numero">5</div>
+                <div class="passo-conteudo">
+                    <h4>Clientes e Crediário (2 minutos)</h4>
+                    <p>"Agora vamos ver os clientes..."</p>
+                    <ul>
+                        <li>Mostre o cadastro de um cliente</li>
+                        <li>Mostre o histórico de compras</li>
+                        <li>Mostre o saldo devedor (crediário)</li>
+                        <li>Mostre os pontos de fidelidade</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="passo">
+                <div class="passo-numero">6</div>
+                <div class="passo-conteudo">
+                    <h4>Relatórios (1 minuto)</h4>
+                    <p>"Por último, os relatórios..."</p>
+                    <ul>
+                        <li>Mostre o relatório de vendas do dia</li>
+                        <li>Mostre o gráfico de vendas do mês</li>
+                        <li>Mostre o TOP 10 produtos mais vendidos</li>
+                    </ul>
+                    <p>"Com isso você sabe EXATAMENTE como seu negócio está!"</p>
+                </div>
+            </div>
+
+            <div class="passo">
+                <div class="passo-numero">7</div>
+                <div class="passo-conteudo">
+                    <h4>Fechamento (30 segundos)</h4>
+                    <p>"Viu como é simples? Isso tudo você teria que fazer na mão, em cadernos, planilhas... E ainda correndo risco de errar. Com o Império, é tudo automático!"</p>
+                    <p><strong>"Vamos começar?"</strong></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="separador">═══════════════════════════════</div>
+
+        <!-- SEÇÃO 9: FECHANDO A VENDA -->
+        <h2>9. 🏆 Fechando a Venda</h2>
+
+        <div class="destaque-verde">
+            <p style="font-size: 20px; text-align: center;">
+                O fechamento não é um momento único. É o <strong>resultado natural</strong> de uma boa apresentação!
+            </p>
+        </div>
+
+        <h3>Sinais de que o cliente quer comprar:</h3>
+        <ul>
+            <li>✅ Faz perguntas sobre preço, prazo, instalação</li>
+            <li>✅ Imagina usando: "E se eu precisar de..."</li>
+            <li>✅ Pergunta sobre garantia e suporte</li>
+            <li>✅ Pede para ver de novo alguma função</li>
+            <li>✅ Inclina o corpo para frente</li>
+            <li>✅ Balança a cabeça concordando</li>
+        </ul>
+
+        <h3>Quando você vir esses sinais, FECHE!</h3>
+
+        <div class="dialogo">
+            <div class="vendedor">"Pelo que conversamos, o Império resolve exatamente o que você precisa: controle de estoque, crediário e nota fiscal. Vamos fazer seu cadastro agora?"</div>
+        </div>
+
+        <h3>Se ele disser SIM:</h3>
+        <div class="destaque-verde">
+            <ul>
+                <li>Parabenize: "Excelente decisão!"</li>
+                <li>Faça o cadastro na hora</li>
+                <li>Agende a instalação/treinamento</li>
+                <li>Pegue a forma de pagamento</li>
+                <li>Deixe seu contato para suporte</li>
+            </ul>
+        </div>
+
+        <h3>Se ele disser NÃO ou VOU PENSAR:</h3>
+        <div class="destaque">
+            <ul>
+                <li>Pergunte: "O que está te fazendo hesitar?"</li>
+                <li>Resolva a objeção (volte à seção 6)</li>
+                <li>Tente novamente</li>
+                <li>Se não fechar, deixe material e agende retorno</li>
+            </ul>
+        </div>
+
+        <div class="separador">═══════════════════════════════</div>
+
+        <!-- SEÇÃO 10: FAQ -->
+        <h2>10. ❓ Perguntas Frequentes</h2>
+
+        <div class="ramo-card">
+            <h3>Quanto custa o sistema?</h3>
+            <p>O investimento varia conforme o plano. Entre em contato pelo (48) 99864-9898 para valores atualizados.</p>
+        </div>
+
+        <div class="ramo-card">
+            <h3>Funciona offline?</h3>
+            <p>O sistema é online (na nuvem), então precisa de internet. Mas com qualquer internet, mesmo 4G do celular, funciona perfeitamente!</p>
+        </div>
+
+        <div class="ramo-card">
+            <h3>Precisa instalar algo?</h3>
+            <p>Não! Funciona no navegador (Chrome, Edge). Só precisa de computador com internet.</p>
+        </div>
+
+        <div class="ramo-card">
+            <h3>E se meu computador estragar?</h3>
+            <p>Seus dados estão na nuvem! É só acessar de outro computador e tudo continua lá.</p>
+        </div>
+
+        <div class="ramo-card">
+            <h3>Tem suporte?</h3>
+            <p>Sim! WhatsApp (48) 99864-9898. Atendimento rápido e humanizado.</p>
+        </div>
+
+        <div class="ramo-card">
+            <h3>Quantos produtos posso cadastrar?</h3>
+            <p>Ilimitado! Pode cadastrar quantos produtos quiser.</p>
+        </div>
+
+        <div class="ramo-card">
+            <h3>Funciona com código de barras?</h3>
+            <p>Sim! É só comprar um leitor de código de barras USB (custa uns R$50) e conectar.</p>
+        </div>
+
+        <div class="ramo-card">
+            <h3>Emite nota fiscal?</h3>
+            <p>Sim! NFC-e (cupom) e NF-e. Precisa de certificado digital A1 (a gente ajuda a conseguir).</p>
+        </div>
+
+        <div class="ramo-card">
+            <h3>Tem treinamento?</h3>
+            <p>Sim! Treinamento completo incluído. Ensinamos tudo passo a passo.</p>
+        </div>
+
+        <div class="ramo-card">
+            <h3>Posso testar antes?</h3>
+            <p>Sim! Fazemos demonstração completa sem compromisso.</p>
+        </div>
+
+        <div class="separador">═══════════════════════════════</div>
+
+        <!-- SEÇÃO 11: GLOSSÁRIO -->
+        <h2>11. 📚 Glossário de Termos</h2>
+
+        <p>Aqui estão os termos técnicos explicados de forma <strong>simples</strong>:</p>
+
+        <table>
+            <tr>
+                <th>Termo</th>
+                <th>O que significa</th>
+            </tr>
+            <tr>
+                <td><strong>PDV</strong></td>
+                <td>Ponto de Venda. É a tela onde você faz as vendas. O "caixa" do sistema.</td>
+            </tr>
+            <tr>
+                <td><strong>NFC-e</strong></td>
+                <td>Nota Fiscal do Consumidor Eletrônica. O "cupom fiscal" que sai na impressora.</td>
+            </tr>
+            <tr>
+                <td><strong>NF-e</strong></td>
+                <td>Nota Fiscal Eletrônica. A nota completa, usada para empresas.</td>
+            </tr>
+            <tr>
+                <td><strong>Certificado Digital A1</strong></td>
+                <td>Um arquivo que funciona como sua "assinatura digital". Necessário para emitir notas.</td>
+            </tr>
+            <tr>
+                <td><strong>SEFAZ</strong></td>
+                <td>Secretaria da Fazenda. O órgão do governo que recebe as notas fiscais.</td>
+            </tr>
+            <tr>
+                <td><strong>Crediário</strong></td>
+                <td>Venda fiada. O cliente leva o produto e paga depois.</td>
+            </tr>
+            <tr>
+                <td><strong>Estoque Mínimo</strong></td>
+                <td>A quantidade mínima que você quer ter de um produto. Quando chega nesse número, o sistema avisa.</td>
+            </tr>
+            <tr>
+                <td><strong>Custo Médio</strong></td>
+                <td>O preço médio que você pagou pelo produto (média de todas as compras).</td>
+            </tr>
+            <tr>
+                <td><strong>Margem de Lucro</strong></td>
+                <td>Quanto você ganha em cada venda. É o preço de venda menos o custo.</td>
+            </tr>
+            <tr>
+                <td><strong>NCM</strong></td>
+                <td>Código do produto para fins fiscais. Todo produto tem um.</td>
+            </tr>
+            <tr>
+                <td><strong>CFOP</strong></td>
+                <td>Código que diz o tipo de operação (venda, devolução, etc.).</td>
+            </tr>
+            <tr>
+                <td><strong>PIX</strong></td>
+                <td>Pagamento instantâneo. O sistema gera o QR Code automático.</td>
+            </tr>
+            <tr>
+                <td><strong>Dashboard</strong></td>
+                <td>Painel de controle. A tela inicial com resumo de tudo.</td>
+            </tr>
+            <tr>
+                <td><strong>Nuvem</strong></td>
+                <td>Significa que seus dados ficam na internet, seguros, e você acessa de qualquer lugar.</td>
+            </tr>
+            <tr>
+                <td><strong>RLS</strong></td>
+                <td>Segurança que garante que cada empresa só vê seus próprios dados.</td>
+            </tr>
+        </table>
+
+        <div class="separador">═══════════════════════════════</div>
+
+        <!-- ENCERRAMENTO -->
+        <div class="capa" style="background: linear-gradient(135deg, #2e7d32, #43a047);">
+            <div style="font-size: 60px;">🏆</div>
+            <h1 style="font-size: 32px;">VOCÊ ESTÁ PRONTO!</h1>
+            <p style="font-size: 20px; margin-top: 20px;">
+                Agora você tem todas as ferramentas para se tornar um <strong>vendedor de alto nível</strong>!
+            </p>
+            <p style="font-size: 18px; margin-top: 30px;">
+                Lembre-se: <strong>prática leva à perfeição!</strong><br>
+                Quanto mais você praticar, melhor ficará.
+            </p>
+            <div style="margin-top: 30px; padding: 20px; background: rgba(255,255,255,0.2); border-radius: 10px;">
+                <p style="font-size: 18px; margin: 0;">
+                    <strong>Suporte:</strong> (48) 99864-9898<br>
+                    <strong>WhatsApp:</strong> (48) 99864-9898
+                </p>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 30px; color: #666; font-size: 14px;">
+            <p>Catálogo do Vendedor - Império Sistemas</p>
+            <p>Versão 1.0 - Janeiro 2026</p>
+            <p>© Todos os direitos reservados</p>
+        </div>
+
+    </div>
+</body>
+</html>
