@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     // Buscar empresa e perfil do usuário
     const { data: userData, error: userError } = await supabase
       .from('usuarios')
-      .select('empresa_id, perfil, nome')
+      .select('id, empresa_id, perfil, nome')
       .eq('auth_id', user.id)
       .single()
 
@@ -151,6 +151,35 @@ export async function POST(request: NextRequest) {
 
     // Verificar se houve erros críticos
     const errosCriticos = resultados.filter(r => r.erro && !r.erro.includes('does not exist'))
+
+    // Registrar log de auditoria
+    const ipAddress = request.headers.get('x-forwarded-for') ||
+                      request.headers.get('x-real-ip') ||
+                      'unknown'
+    const userAgent = request.headers.get('user-agent') || 'unknown'
+
+    // Calcular totais para o log
+    const totalExcluidos = resultados.reduce((acc, r) => acc + r.excluidos, 0)
+
+    await supabase
+      .from('logs_auditoria')
+      .insert({
+        empresa_id: empresaId,
+        usuario_id: userData.id,
+        usuario_nome: userData.nome,
+        acao: 'RESTAURAR_PADRAO',
+        detalhes: {
+          total_registros_excluidos: totalExcluidos,
+          tabelas_afetadas: resultados.map(r => ({
+            tabela: r.tabela,
+            excluidos: r.excluidos,
+          })),
+          erros: errosCriticos.length > 0 ? errosCriticos : undefined,
+          sucesso: errosCriticos.length === 0,
+        },
+        ip_address: ipAddress,
+        user_agent: userAgent,
+      })
 
     return NextResponse.json({
       success: errosCriticos.length === 0,

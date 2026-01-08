@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
     // Buscar dados do usuário
     const { data: userData, error: userError } = await supabase
       .from('usuarios')
-      .select('empresa_id, perfil')
+      .select('id, empresa_id, perfil, nome')
       .eq('auth_id', user.id)
       .single()
 
@@ -77,6 +77,27 @@ export async function POST(request: NextRequest) {
     if (updateError) {
       return NextResponse.json({ error: 'Erro ao salvar senha mestre' }, { status: 500 })
     }
+
+    // Registrar log de auditoria
+    const ipAddress = request.headers.get('x-forwarded-for') ||
+                      request.headers.get('x-real-ip') ||
+                      'unknown'
+    const userAgent = request.headers.get('user-agent') || 'unknown'
+    const acao = empresa.senha_mestre_hash ? 'ALTERAR_SENHA_MESTRE' : 'DEFINIR_SENHA_MESTRE'
+
+    await supabase
+      .from('logs_auditoria')
+      .insert({
+        empresa_id: userData.empresa_id,
+        usuario_id: userData.id,
+        usuario_nome: userData.nome,
+        acao,
+        detalhes: {
+          tipo: empresa.senha_mestre_hash ? 'alteracao' : 'criacao',
+        },
+        ip_address: ipAddress,
+        user_agent: userAgent,
+      })
 
     return NextResponse.json({
       success: true,
