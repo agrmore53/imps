@@ -169,7 +169,6 @@ export async function POST(request: NextRequest) {
       updateData.razao_social = 'Empresa'
       updateData.nome_fantasia = null
       updateData.ie = null
-      updateData.im = null
       updateData.telefone = null
       updateData.email = null
       updateData.endereco = null
