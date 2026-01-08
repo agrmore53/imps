@@ -143,6 +143,7 @@ export async function POST(request: NextRequest) {
     await deletarTabela('contas_receber', { coluna: 'empresa_id', valor: empresaId })
     await deletarTabela('produtos', { coluna: 'empresa_id', valor: empresaId })
     await deletarTabela('clientes', { coluna: 'empresa_id', valor: empresaId })
+    await deletarTabela('fornecedores', { coluna: 'empresa_id', valor: empresaId })
     await deletarTabela('notificacoes', { coluna: 'empresa_id', valor: empresaId })
 
     // Resetar configurações fiscais para padrão
