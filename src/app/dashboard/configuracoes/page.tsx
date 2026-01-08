@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { toast } from 'sonner'
 import { Loader2, Building2, MapPin, FileText, Save, Search, Settings, AlertTriangle, RotateCcw, Key, Eye, EyeOff, CheckCircle2 } from 'lucide-react'
+import { Checkbox } from '@/components/ui/checkbox'
 import { validarCNPJ, formatarCNPJ, formatarTelefone, formatarCEP } from '@/lib/utils/validators'
 import {
   AlertDialog,
@@ -60,6 +61,7 @@ export default function ConfiguracoesPage() {
   const [confirmacaoTexto, setConfirmacaoTexto] = useState('')
   const [senhaConfirmacao, setSenhaConfirmacao] = useState('')
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [limparDadosEmpresa, setLimparDadosEmpresa] = useState(false)
 
   // Estados para senha mestre
   const [temSenhaMestre, setTemSenhaMestre] = useState(false)
@@ -344,7 +346,11 @@ export default function ConfiguracoesPage() {
       const response = await fetch('/api/restaurar-padrao', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ confirmacao: 'CONFIRMAR', senhaMestre: senhaConfirmacao }),
+        body: JSON.stringify({
+          confirmacao: 'CONFIRMAR',
+          senhaMestre: senhaConfirmacao,
+          limparDadosEmpresa: limparDadosEmpresa,
+        }),
       })
 
       const data = await response.json()
@@ -938,6 +944,7 @@ export default function ConfiguracoesPage() {
                             onClick={() => {
                               setConfirmacaoTexto('')
                               setSenhaConfirmacao('')
+                              setLimparDadosEmpresa(false)
                             }}
                           >
                             <RotateCcw className="mr-2 h-4 w-4" />
@@ -996,6 +1003,25 @@ export default function ConfiguracoesPage() {
                                       className="text-center"
                                       disabled={restaurando || !temSenhaMestre}
                                     />
+                                  </div>
+                                  <div className="flex items-center space-x-2 p-3 border rounded-md bg-orange-50 dark:bg-orange-950/20 border-orange-200 dark:border-orange-800">
+                                    <Checkbox
+                                      id="limpar-empresa"
+                                      checked={limparDadosEmpresa}
+                                      onCheckedChange={(checked) => setLimparDadosEmpresa(checked === true)}
+                                      disabled={restaurando || !temSenhaMestre}
+                                    />
+                                    <div className="grid gap-1.5 leading-none">
+                                      <label
+                                        htmlFor="limpar-empresa"
+                                        className="text-sm font-medium text-orange-800 dark:text-orange-200 cursor-pointer"
+                                      >
+                                        Limpar dados cadastrais da empresa
+                                      </label>
+                                      <p className="text-xs text-orange-600 dark:text-orange-400">
+                                        Reseta razão social, endereço, telefone, email (mantém CNPJ)
+                                      </p>
+                                    </div>
                                   </div>
                                 </div>
                               </div>

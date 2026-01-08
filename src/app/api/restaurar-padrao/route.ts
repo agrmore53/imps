@@ -160,9 +160,23 @@ export async function POST(request: NextRequest) {
       certificado_validade: null,
     }
 
+    // Preparar dados para atualização
+    const updateData: any = { config_fiscal: configPadrao }
+
+    // Se marcou para limpar dados da empresa
+    if (body.limparDadosEmpresa) {
+      updateData.razao_social = 'Empresa'
+      updateData.nome_fantasia = null
+      updateData.ie = null
+      updateData.im = null
+      updateData.telefone = null
+      updateData.email = null
+      updateData.endereco = null
+    }
+
     const { error: updateError } = await supabase
       .from('empresas')
-      .update({ config_fiscal: configPadrao })
+      .update(updateData)
       .eq('id', empresaId)
 
     if (updateError) {
@@ -177,6 +191,13 @@ export async function POST(request: NextRequest) {
         excluidos: 1,
         erro: undefined,
       })
+      if (body.limparDadosEmpresa) {
+        resultados.push({
+          tabela: 'dados_empresa',
+          excluidos: 1,
+          erro: undefined,
+        })
+      }
     }
 
     // Verificar se houve erros críticos
@@ -206,6 +227,7 @@ export async function POST(request: NextRequest) {
           })),
           erros: errosCriticos.length > 0 ? errosCriticos : undefined,
           sucesso: errosCriticos.length === 0,
+          limpar_dados_empresa: body.limparDadosEmpresa || false,
         },
         ip_address: ipAddress,
         user_agent: userAgent,
