@@ -56,6 +56,7 @@ export default function ConfiguracoesPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [buscandoCep, setBuscandoCep] = useState(false)
+  const [buscandoCnpj, setBuscandoCnpj] = useState(false)
   const [empresa, setEmpresa] = useState<Empresa | null>(null)
   const [restaurando, setRestaurando] = useState(false)
   const [confirmacaoTexto, setConfirmacaoTexto] = useState('')
@@ -231,6 +232,52 @@ export default function ConfiguracoesPage() {
       setFormData(prev => ({ ...prev, [name]: formatarCEP(value) }))
     } else {
       setFormData(prev => ({ ...prev, [name]: value }))
+    }
+  }
+
+  async function buscarCNPJ() {
+    const cnpj = formData.cnpj.replace(/\D/g, '')
+    if (cnpj.length !== 14) {
+      toast.error('CNPJ inválido')
+      return
+    }
+
+    if (!validarCNPJ(cnpj)) {
+      toast.error('CNPJ inválido')
+      return
+    }
+
+    setBuscandoCnpj(true)
+    try {
+      const response = await fetch(`https://receitaws.com.br/v1/cnpj/${cnpj}`)
+      const data = await response.json()
+
+      if (data.status === 'ERROR') {
+        toast.error('CNPJ não encontrado')
+        return
+      }
+
+      setFormData(prev => ({
+        ...prev,
+        razao_social: data.nome || prev.razao_social,
+        nome_fantasia: data.fantasia || '',
+        telefone: formatarTelefone(data.telefone?.replace(/\D/g, '') || ''),
+        email: data.email?.toLowerCase() || '',
+        cep: formatarCEP(data.cep?.replace(/\D/g, '') || ''),
+        logradouro: data.logradouro || '',
+        numero: data.numero || '',
+        complemento: data.complemento || '',
+        bairro: data.bairro || '',
+        cidade: data.municipio || '',
+        uf: data.uf || '',
+      }))
+      toast.success('Dados do CNPJ encontrados!')
+    } catch (error) {
+      toast.error('Erro ao buscar CNPJ', {
+        description: 'Tente novamente mais tarde',
+      })
+    } finally {
+      setBuscandoCnpj(false)
     }
   }
 
@@ -434,16 +481,33 @@ export default function ConfiguracoesPage() {
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="cnpj">CNPJ *</Label>
-                    <Input
-                      id="cnpj"
-                      name="cnpj"
-                      placeholder="00.000.000/0001-00"
-                      value={formData.cnpj}
-                      onChange={handleChange}
-                      maxLength={18}
-                      required
-                      disabled={saving}
-                    />
+                    <div className="flex gap-2">
+                      <Input
+                        id="cnpj"
+                        name="cnpj"
+                        placeholder="00.000.000/0001-00"
+                        value={formData.cnpj}
+                        onChange={handleChange}
+                        maxLength={18}
+                        required
+                        disabled={saving || buscandoCnpj}
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={buscarCNPJ}
+                        disabled={saving || buscandoCnpj}
+                      >
+                        {buscandoCnpj ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <>
+                            <Search className="mr-2 h-4 w-4" />
+                            Buscar
+                          </>
+                        )}
+                      </Button>
+                    </div>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="ie">Inscrição Estadual</Label>
