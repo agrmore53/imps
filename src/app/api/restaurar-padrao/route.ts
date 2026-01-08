@@ -172,11 +172,11 @@ export async function POST(request: NextRequest) {
     if (body.limparDadosEmpresa) {
       updateData.cnpj = null
       updateData.razao_social = 'Empresa'
-      updateData.nome_fantasia = null
+      updateData.nome_fantasia = ''  // NOT NULL no banco, usar string vazia
       updateData.ie = null
       updateData.telefone = null
       updateData.email = null
-      updateData.endereco = null
+      updateData.endereco = {}
     }
 
     const { error: updateError } = await supabase
