@@ -29,7 +29,6 @@ interface Empresa {
   nome_fantasia: string | null
   cnpj: string
   ie: string | null
-  im: string | null
   telefone: string | null
   email: string | null
   endereco: {
@@ -78,7 +77,6 @@ export default function ConfiguracoesPage() {
     nome_fantasia: '',
     cnpj: '',
     ie: '',
-    im: '',
     telefone: '',
     email: '',
     // Endereço
@@ -192,7 +190,6 @@ export default function ConfiguracoesPage() {
           nome_fantasia: empresaData.nome_fantasia || '',
           cnpj: formatarCNPJ(empresaData.cnpj || ''),
           ie: empresaData.ie || '',
-          im: empresaData.im || '',
           telefone: formatarTelefone(empresaData.telefone || ''),
           email: empresaData.email || '',
           // Endereço
@@ -357,7 +354,6 @@ export default function ConfiguracoesPage() {
           nome_fantasia: formData.nome_fantasia || null,
           cnpj: cnpjLimpo,
           ie: formData.ie || null,
-          im: formData.im || null,
           telefone: formData.telefone.replace(/\D/g, '') || null,
           email: formData.email || null,
           endereco,
@@ -554,30 +550,17 @@ export default function ConfiguracoesPage() {
                   />
                 </div>
 
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="im">Inscrição Municipal</Label>
-                    <Input
-                      id="im"
-                      name="im"
-                      placeholder="Inscrição municipal"
-                      value={formData.im}
-                      onChange={handleChange}
-                      disabled={saving}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="telefone">WhatsApp</Label>
-                    <Input
-                      id="telefone"
-                      name="telefone"
-                      placeholder="(00) 00000-0000"
-                      value={formData.telefone}
-                      onChange={handleChange}
-                      maxLength={15}
-                      disabled={saving}
-                    />
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="telefone">WhatsApp</Label>
+                  <Input
+                    id="telefone"
+                    name="telefone"
+                    placeholder="(00) 00000-0000"
+                    value={formData.telefone}
+                    onChange={handleChange}
+                    maxLength={15}
+                    disabled={saving}
+                  />
                 </div>
 
                 <div className="space-y-2">
