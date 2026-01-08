@@ -249,11 +249,11 @@ export default function ConfiguracoesPage() {
 
     setBuscandoCnpj(true)
     try {
-      const response = await fetch(`https://receitaws.com.br/v1/cnpj/${cnpj}`)
+      const response = await fetch(`/api/buscar-cnpj?cnpj=${cnpj}`)
       const data = await response.json()
 
-      if (data.status === 'ERROR') {
-        toast.error('CNPJ não encontrado')
+      if (!response.ok) {
+        toast.error(data.error || 'CNPJ não encontrado')
         return
       }
 
