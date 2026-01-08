@@ -1019,7 +1019,7 @@ export default function ConfiguracoesPage() {
                                         Limpar dados cadastrais da empresa
                                       </label>
                                       <p className="text-xs text-orange-600 dark:text-orange-400">
-                                        Reseta razão social, endereço, telefone, email (mantém CNPJ)
+                                        Reseta CNPJ, razão social, endereço, telefone, email
                                       </p>
                                     </div>
                                   </div>
