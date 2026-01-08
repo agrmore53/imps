@@ -13,7 +13,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
-import { Plus, Package } from 'lucide-react'
+import { Plus, Package, Upload } from 'lucide-react'
 
 export default async function ProdutosPage() {
   const supabase = await createClient()
@@ -33,12 +33,20 @@ export default async function ProdutosPage() {
             Gerencie o cadastro de produtos
           </p>
         </div>
-        <Button asChild>
-          <Link href="/dashboard/produtos/novo">
-            <Plus className="mr-2 h-4 w-4" />
-            Novo Produto
-          </Link>
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" asChild>
+            <Link href="/dashboard/produtos/importar">
+              <Upload className="mr-2 h-4 w-4" />
+              Importar
+            </Link>
+          </Button>
+          <Button asChild>
+            <Link href="/dashboard/produtos/novo">
+              <Plus className="mr-2 h-4 w-4" />
+              Novo Produto
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <Card>
