@@ -58,6 +58,7 @@ export default function ConfiguracoesPage() {
   const [empresa, setEmpresa] = useState<Empresa | null>(null)
   const [restaurando, setRestaurando] = useState(false)
   const [confirmacaoTexto, setConfirmacaoTexto] = useState('')
+  const [senhaConfirmacao, setSenhaConfirmacao] = useState('')
   const [dialogOpen, setDialogOpen] = useState(false)
 
   const [formData, setFormData] = useState({
@@ -264,12 +265,17 @@ export default function ConfiguracoesPage() {
       return
     }
 
+    if (!senhaConfirmacao) {
+      toast.error('Digite sua senha para continuar')
+      return
+    }
+
     setRestaurando(true)
     try {
       const response = await fetch('/api/restaurar-padrao', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ confirmacao: 'CONFIRMAR' }),
+        body: JSON.stringify({ confirmacao: 'CONFIRMAR', senha: senhaConfirmacao }),
       })
 
       const data = await response.json()
@@ -284,6 +290,7 @@ export default function ConfiguracoesPage() {
         })
         setDialogOpen(false)
         setConfirmacaoTexto('')
+        setSenhaConfirmacao('')
         // Recarregar a página para atualizar os dados
         window.location.reload()
       } else {
@@ -750,7 +757,10 @@ export default function ConfiguracoesPage() {
                           <Button
                             variant="destructive"
                             className="shrink-0"
-                            onClick={() => setConfirmacaoTexto('')}
+                            onClick={() => {
+                              setConfirmacaoTexto('')
+                              setSenhaConfirmacao('')
+                            }}
                           >
                             <RotateCcw className="mr-2 h-4 w-4" />
                             Restaurar Padrão
@@ -770,16 +780,38 @@ export default function ConfiguracoesPage() {
                                 </p>
                                 <div className="p-3 bg-red-100 dark:bg-red-950 rounded-md">
                                   <p className="text-sm font-medium text-red-800 dark:text-red-200">
-                                    Para confirmar, digite <strong>CONFIRMAR</strong> no campo abaixo:
+                                    Para confirmar, digite <strong>CONFIRMAR</strong> e sua <strong>SENHA</strong>:
                                   </p>
                                 </div>
-                                <Input
-                                  placeholder="Digite CONFIRMAR"
-                                  value={confirmacaoTexto}
-                                  onChange={(e) => setConfirmacaoTexto(e.target.value.toUpperCase())}
-                                  className="font-mono text-center text-lg"
-                                  disabled={restaurando}
-                                />
+                                <div className="space-y-3">
+                                  <div>
+                                    <Label htmlFor="confirmacao-texto" className="text-xs text-muted-foreground">
+                                      Digite CONFIRMAR
+                                    </Label>
+                                    <Input
+                                      id="confirmacao-texto"
+                                      placeholder="CONFIRMAR"
+                                      value={confirmacaoTexto}
+                                      onChange={(e) => setConfirmacaoTexto(e.target.value.toUpperCase())}
+                                      className="font-mono text-center text-lg"
+                                      disabled={restaurando}
+                                    />
+                                  </div>
+                                  <div>
+                                    <Label htmlFor="senha-confirmacao" className="text-xs text-muted-foreground">
+                                      Sua senha
+                                    </Label>
+                                    <Input
+                                      id="senha-confirmacao"
+                                      type="password"
+                                      placeholder="Digite sua senha"
+                                      value={senhaConfirmacao}
+                                      onChange={(e) => setSenhaConfirmacao(e.target.value)}
+                                      className="text-center"
+                                      disabled={restaurando}
+                                    />
+                                  </div>
+                                </div>
                               </div>
                             </AlertDialogDescription>
                           </AlertDialogHeader>
@@ -790,7 +822,7 @@ export default function ConfiguracoesPage() {
                             <Button
                               variant="destructive"
                               onClick={handleRestaurarPadrao}
-                              disabled={confirmacaoTexto !== 'CONFIRMAR' || restaurando}
+                              disabled={confirmacaoTexto !== 'CONFIRMAR' || !senhaConfirmacao || restaurando}
                             >
                               {restaurando ? (
                                 <>

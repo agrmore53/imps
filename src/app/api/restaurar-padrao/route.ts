@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createAdminClient } from '@supabase/supabase-js'
 
 /**
  * Restaurar Padrão de Fábrica
  * Exclui todos os dados transacionais e reseta configurações
+ *
+ * SEGURANÇA:
+ * - Apenas usuários com perfil 'admin' podem executar
+ * - Requer digitação de "CONFIRMAR"
+ * - Requer senha do usuário para validação extra
  */
 export async function POST(request: NextRequest) {
   try {
@@ -15,10 +21,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
     }
 
-    // Buscar empresa do usuário
+    // Buscar empresa e perfil do usuário
     const { data: userData, error: userError } = await supabase
       .from('usuarios')
-      .select('empresa_id, tipo')
+      .select('empresa_id, perfil, nome')
       .eq('auth_id', user.id)
       .single()
 
@@ -26,17 +32,32 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Empresa não encontrada' }, { status: 404 })
     }
 
-    // Verificar se é admin
-    if (userData.tipo !== 'admin') {
+    // Verificar se é admin (campo correto: perfil)
+    if (userData.perfil !== 'admin') {
       return NextResponse.json({ error: 'Apenas administradores podem restaurar padrão de fábrica' }, { status: 403 })
     }
 
     const empresaId = userData.empresa_id
 
-    // Verificar confirmação
+    // Verificar confirmação e senha
     const body = await request.json()
     if (body.confirmacao !== 'CONFIRMAR') {
       return NextResponse.json({ error: 'Confirmação inválida' }, { status: 400 })
+    }
+
+    // Validar senha do usuário como camada extra de segurança
+    if (!body.senha) {
+      return NextResponse.json({ error: 'Senha é obrigatória para esta operação' }, { status: 400 })
+    }
+
+    // Tentar autenticar com a senha fornecida
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: user.email!,
+      password: body.senha,
+    })
+
+    if (signInError) {
+      return NextResponse.json({ error: 'Senha incorreta' }, { status: 401 })
     }
 
     // Ordem de exclusão (respeitar foreign keys)
