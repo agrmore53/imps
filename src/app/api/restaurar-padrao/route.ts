@@ -165,7 +165,7 @@ export async function POST(request: NextRequest) {
 
     // Se marcou para limpar dados da empresa
     if (body.limparDadosEmpresa) {
-      updateData.cnpj = null
+      updateData.cnpj = ''
       updateData.razao_social = 'Empresa'
       updateData.nome_fantasia = null
       updateData.ie = null
