@@ -41,11 +41,12 @@ export async function POST(request: NextRequest) {
 
     // Ordem de exclusão (respeitar foreign keys)
     const tabelasParaLimpar = [
-      'itens_venda',           // Itens das vendas (depende de vendas e produtos)
+      'venda_pagamentos',      // Pagamentos das vendas (depende de vendas)
+      'venda_itens',           // Itens das vendas (depende de vendas e produtos)
       'vendas',                // Vendas
-      'caixa_movimentacoes',   // Movimentações de caixa (depende de caixas)
+      'caixa_movimentos',      // Movimentações de caixa (depende de caixas)
       'caixas',                // Caixas
-      'movimentacoes_estoque', // Movimentações de estoque (depende de produtos)
+      'estoque_movimentos',    // Movimentações de estoque (depende de produtos)
       'notas_fiscais',         // Notas fiscais
       'contas_pagar',          // Contas a pagar
       'contas_receber',        // Contas a receber
