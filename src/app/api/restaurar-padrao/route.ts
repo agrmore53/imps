@@ -76,17 +76,18 @@ export async function POST(request: NextRequest) {
     }
 
     // Ordem de exclusão (respeitar foreign keys)
+    // IMPORTANTE: Tabelas que referenciam outras devem ser excluídas PRIMEIRO
     const tabelasParaLimpar = [
-      'venda_pagamentos',      // Pagamentos das vendas (depende de vendas)
-      'venda_itens',           // Itens das vendas (depende de vendas e produtos)
-      'vendas',                // Vendas
-      'caixa_movimentos',      // Movimentações de caixa (depende de caixas)
+      'venda_pagamentos',      // Pagamentos das vendas (referencia vendas)
+      'venda_itens',           // Itens das vendas (referencia vendas e produtos)
+      'caixa_movimentos',      // Movimentações de caixa (referencia caixas E vendas)
+      'vendas',                // Vendas (referencia caixas e clientes)
       'caixas',                // Caixas
-      'estoque_movimentos',    // Movimentações de estoque (depende de produtos)
+      'estoque_movimentos',    // Movimentações de estoque (referencia produtos)
+      'produtos_classificacao_tributaria', // Classificação tributária (referencia produtos)
       'notas_fiscais',         // Notas fiscais
       'contas_pagar',          // Contas a pagar
-      'contas_receber',        // Contas a receber
-      'produtos_classificacao_tributaria', // Classificação tributária (depende de produtos)
+      'contas_receber',        // Contas a receber (referencia clientes)
       'produtos',              // Produtos
       'clientes',              // Clientes
       'notificacoes',          // Notificações
