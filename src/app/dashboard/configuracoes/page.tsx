@@ -8,8 +8,19 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { toast } from 'sonner'
-import { Loader2, Building2, MapPin, FileText, Save, Search } from 'lucide-react'
+import { Loader2, Building2, MapPin, FileText, Save, Search, Settings, AlertTriangle, RotateCcw } from 'lucide-react'
 import { validarCNPJ, formatarCNPJ, formatarTelefone, formatarCEP } from '@/lib/utils/validators'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
 
 interface Empresa {
   id: string
@@ -45,6 +56,9 @@ export default function ConfiguracoesPage() {
   const [saving, setSaving] = useState(false)
   const [buscandoCep, setBuscandoCep] = useState(false)
   const [empresa, setEmpresa] = useState<Empresa | null>(null)
+  const [restaurando, setRestaurando] = useState(false)
+  const [confirmacaoTexto, setConfirmacaoTexto] = useState('')
+  const [dialogOpen, setDialogOpen] = useState(false)
 
   const [formData, setFormData] = useState({
     razao_social: '',
@@ -244,6 +258,49 @@ export default function ConfiguracoesPage() {
     }
   }
 
+  async function handleRestaurarPadrao() {
+    if (confirmacaoTexto !== 'CONFIRMAR') {
+      toast.error('Digite CONFIRMAR para continuar')
+      return
+    }
+
+    setRestaurando(true)
+    try {
+      const response = await fetch('/api/restaurar-padrao', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ confirmacao: 'CONFIRMAR' }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Erro ao restaurar')
+      }
+
+      if (data.success) {
+        toast.success('Padrão de fábrica restaurado!', {
+          description: 'Todos os dados foram excluídos.',
+        })
+        setDialogOpen(false)
+        setConfirmacaoTexto('')
+        // Recarregar a página para atualizar os dados
+        window.location.reload()
+      } else {
+        toast.warning('Restauração concluída com avisos', {
+          description: 'Verifique o console para detalhes.',
+        })
+        console.log('Resultados:', data.resultados)
+      }
+    } catch (error: any) {
+      toast.error('Erro ao restaurar padrão', {
+        description: error.message,
+      })
+    } finally {
+      setRestaurando(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-96">
@@ -275,6 +332,10 @@ export default function ConfiguracoesPage() {
             <TabsTrigger value="fiscal">
               <FileText className="mr-2 h-4 w-4" />
               Fiscal
+            </TabsTrigger>
+            <TabsTrigger value="sistema">
+              <Settings className="mr-2 h-4 w-4" />
+              Sistema
             </TabsTrigger>
           </TabsList>
 
@@ -623,6 +684,134 @@ export default function ConfiguracoesPage() {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Sistema */}
+          <TabsContent value="sistema">
+            <div className="space-y-6">
+              {/* Informações do Sistema */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Informações do Sistema</CardTitle>
+                  <CardDescription>
+                    Dados gerais sobre a instalação
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="p-4 bg-muted rounded-lg">
+                      <p className="text-sm text-muted-foreground">Versão do Sistema</p>
+                      <p className="text-lg font-semibold">1.0.0</p>
+                    </div>
+                    <div className="p-4 bg-muted rounded-lg">
+                      <p className="text-sm text-muted-foreground">ID da Empresa</p>
+                      <p className="text-sm font-mono">{empresa?.id || '-'}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Zona de Perigo */}
+              <Card className="border-red-200 dark:border-red-900">
+                <CardHeader>
+                  <CardTitle className="text-red-600 dark:text-red-400 flex items-center gap-2">
+                    <AlertTriangle className="h-5 w-5" />
+                    Zona de Perigo
+                  </CardTitle>
+                  <CardDescription>
+                    Ações irreversíveis que afetam todos os dados do sistema
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="p-4 border border-red-200 dark:border-red-900 rounded-lg bg-red-50 dark:bg-red-950/20">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-red-800 dark:text-red-200">
+                          Restaurar Padrão de Fábrica
+                        </h4>
+                        <p className="text-sm text-red-600 dark:text-red-400 mt-1">
+                          Esta ação irá <strong>EXCLUIR PERMANENTEMENTE</strong> todos os dados:
+                        </p>
+                        <ul className="text-sm text-red-600 dark:text-red-400 mt-2 list-disc list-inside space-y-1">
+                          <li>Todos os produtos cadastrados</li>
+                          <li>Todos os clientes</li>
+                          <li>Todas as vendas e histórico</li>
+                          <li>Todas as notas fiscais</li>
+                          <li>Todas as contas a pagar/receber</li>
+                          <li>Todas as movimentações de estoque</li>
+                          <li>Configurações fiscais (serão resetadas)</li>
+                        </ul>
+                        <p className="text-sm text-red-700 dark:text-red-300 mt-3 font-semibold">
+                          ⚠️ Esta ação NÃO pode ser desfeita!
+                        </p>
+                      </div>
+                      <AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="destructive"
+                            className="shrink-0"
+                            onClick={() => setConfirmacaoTexto('')}
+                          >
+                            <RotateCcw className="mr-2 h-4 w-4" />
+                            Restaurar Padrão
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle className="text-red-600 flex items-center gap-2">
+                              <AlertTriangle className="h-5 w-5" />
+                              Confirmar Restauração de Fábrica
+                            </AlertDialogTitle>
+                            <AlertDialogDescription asChild>
+                              <div className="space-y-4">
+                                <p>
+                                  Você está prestes a <strong>EXCLUIR TODOS OS DADOS</strong> do sistema.
+                                  Esta ação é <strong>IRREVERSÍVEL</strong>.
+                                </p>
+                                <div className="p-3 bg-red-100 dark:bg-red-950 rounded-md">
+                                  <p className="text-sm font-medium text-red-800 dark:text-red-200">
+                                    Para confirmar, digite <strong>CONFIRMAR</strong> no campo abaixo:
+                                  </p>
+                                </div>
+                                <Input
+                                  placeholder="Digite CONFIRMAR"
+                                  value={confirmacaoTexto}
+                                  onChange={(e) => setConfirmacaoTexto(e.target.value.toUpperCase())}
+                                  className="font-mono text-center text-lg"
+                                  disabled={restaurando}
+                                />
+                              </div>
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel disabled={restaurando}>
+                              Cancelar
+                            </AlertDialogCancel>
+                            <Button
+                              variant="destructive"
+                              onClick={handleRestaurarPadrao}
+                              disabled={confirmacaoTexto !== 'CONFIRMAR' || restaurando}
+                            >
+                              {restaurando ? (
+                                <>
+                                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                  Restaurando...
+                                </>
+                              ) : (
+                                <>
+                                  <RotateCcw className="mr-2 h-4 w-4" />
+                                  Restaurar Padrão de Fábrica
+                                </>
+                              )}
+                            </Button>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
         </Tabs>
 
