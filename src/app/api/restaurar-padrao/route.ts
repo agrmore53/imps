@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { createClient as createAdminClient } from '@supabase/supabase-js'
+import * as bcrypt from 'bcryptjs'
 
 /**
  * Restaurar Padrão de Fábrica
@@ -9,7 +9,8 @@ import { createClient as createAdminClient } from '@supabase/supabase-js'
  * SEGURANÇA:
  * - Apenas usuários com perfil 'admin' podem executar
  * - Requer digitação de "CONFIRMAR"
- * - Requer senha do usuário para validação extra
+ * - Requer SENHA MESTRE (separada da senha de login)
+ * - Apenas o dono da empresa deve conhecer a senha mestre
  */
 export async function POST(request: NextRequest) {
   try {
@@ -39,25 +40,39 @@ export async function POST(request: NextRequest) {
 
     const empresaId = userData.empresa_id
 
-    // Verificar confirmação e senha
+    // Verificar confirmação e senha mestre
     const body = await request.json()
     if (body.confirmacao !== 'CONFIRMAR') {
       return NextResponse.json({ error: 'Confirmação inválida' }, { status: 400 })
     }
 
-    // Validar senha do usuário como camada extra de segurança
-    if (!body.senha) {
-      return NextResponse.json({ error: 'Senha é obrigatória para esta operação' }, { status: 400 })
+    // Validar senha mestre
+    if (!body.senhaMestre) {
+      return NextResponse.json({ error: 'Senha mestre é obrigatória para esta operação' }, { status: 400 })
     }
 
-    // Tentar autenticar com a senha fornecida
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email: user.email!,
-      password: body.senha,
-    })
+    // Buscar hash da senha mestre
+    const { data: empresa, error: empresaError } = await supabase
+      .from('empresas')
+      .select('senha_mestre_hash')
+      .eq('id', empresaId)
+      .single()
 
-    if (signInError) {
-      return NextResponse.json({ error: 'Senha incorreta' }, { status: 401 })
+    if (empresaError) {
+      return NextResponse.json({ error: 'Erro ao buscar empresa' }, { status: 500 })
+    }
+
+    // Verificar se tem senha mestre configurada
+    if (!empresa.senha_mestre_hash) {
+      return NextResponse.json({
+        error: 'Senha mestre não configurada. Configure em Configurações → Sistema.'
+      }, { status: 400 })
+    }
+
+    // Validar senha mestre
+    const senhaValida = await bcrypt.compare(body.senhaMestre, empresa.senha_mestre_hash)
+    if (!senhaValida) {
+      return NextResponse.json({ error: 'Senha mestre incorreta' }, { status: 401 })
     }
 
     // Ordem de exclusão (respeitar foreign keys)

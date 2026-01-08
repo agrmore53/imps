@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { toast } from 'sonner'
-import { Loader2, Building2, MapPin, FileText, Save, Search, Settings, AlertTriangle, RotateCcw } from 'lucide-react'
+import { Loader2, Building2, MapPin, FileText, Save, Search, Settings, AlertTriangle, RotateCcw, Key, Eye, EyeOff, CheckCircle2 } from 'lucide-react'
 import { validarCNPJ, formatarCNPJ, formatarTelefone, formatarCEP } from '@/lib/utils/validators'
 import {
   AlertDialog,
@@ -61,6 +61,15 @@ export default function ConfiguracoesPage() {
   const [senhaConfirmacao, setSenhaConfirmacao] = useState('')
   const [dialogOpen, setDialogOpen] = useState(false)
 
+  // Estados para senha mestre
+  const [temSenhaMestre, setTemSenhaMestre] = useState(false)
+  const [senhaAtual, setSenhaAtual] = useState('')
+  const [novaSenhaMestre, setNovaSenhaMestre] = useState('')
+  const [confirmarSenhaMestre, setConfirmarSenhaMestre] = useState('')
+  const [salvandoSenhaMestre, setSalvandoSenhaMestre] = useState(false)
+  const [mostrarSenhaAtual, setMostrarSenhaAtual] = useState(false)
+  const [mostrarNovaSenha, setMostrarNovaSenha] = useState(false)
+
   const [formData, setFormData] = useState({
     razao_social: '',
     nome_fantasia: '',
@@ -90,7 +99,67 @@ export default function ConfiguracoesPage() {
 
   useEffect(() => {
     carregarEmpresa()
+    verificarSenhaMestre()
   }, [])
+
+  async function verificarSenhaMestre() {
+    try {
+      const response = await fetch('/api/senha-mestre')
+      if (response.ok) {
+        const data = await response.json()
+        setTemSenhaMestre(data.temSenhaMestre)
+      }
+    } catch (error) {
+      console.error('Erro ao verificar senha mestre:', error)
+    }
+  }
+
+  async function handleSalvarSenhaMestre() {
+    if (novaSenhaMestre.length < 6) {
+      toast.error('A senha mestre deve ter pelo menos 6 caracteres')
+      return
+    }
+
+    if (novaSenhaMestre !== confirmarSenhaMestre) {
+      toast.error('As senhas não conferem')
+      return
+    }
+
+    if (temSenhaMestre && !senhaAtual) {
+      toast.error('Informe a senha mestre atual')
+      return
+    }
+
+    setSalvandoSenhaMestre(true)
+    try {
+      const response = await fetch('/api/senha-mestre', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          senhaAtual: temSenhaMestre ? senhaAtual : undefined,
+          novaSenha: novaSenhaMestre,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Erro ao salvar senha mestre')
+      }
+
+      toast.success(data.message)
+      setTemSenhaMestre(true)
+      setSenhaAtual('')
+      setNovaSenhaMestre('')
+      setConfirmarSenhaMestre('')
+    } catch (error: any) {
+      toast.error('Erro ao salvar senha mestre', {
+        description: error.message,
+      })
+    } finally {
+      setSalvandoSenhaMestre(false)
+    }
+  }
 
   async function carregarEmpresa() {
     try {
@@ -266,7 +335,7 @@ export default function ConfiguracoesPage() {
     }
 
     if (!senhaConfirmacao) {
-      toast.error('Digite sua senha para continuar')
+      toast.error('Digite a senha mestre para continuar')
       return
     }
 
@@ -275,7 +344,7 @@ export default function ConfiguracoesPage() {
       const response = await fetch('/api/restaurar-padrao', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ confirmacao: 'CONFIRMAR', senha: senhaConfirmacao }),
+        body: JSON.stringify({ confirmacao: 'CONFIRMAR', senhaMestre: senhaConfirmacao }),
       })
 
       const data = await response.json()
@@ -718,6 +787,115 @@ export default function ConfiguracoesPage() {
                 </CardContent>
               </Card>
 
+              {/* Senha Mestre */}
+              <Card className="border-amber-200 dark:border-amber-900">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Key className="h-5 w-5 text-amber-600" />
+                    Senha Mestre
+                    {temSenhaMestre && (
+                      <span className="ml-2 inline-flex items-center gap-1 text-sm font-normal text-green-600 dark:text-green-400">
+                        <CheckCircle2 className="h-4 w-4" />
+                        Configurada
+                      </span>
+                    )}
+                  </CardTitle>
+                  <CardDescription>
+                    Senha de segurança para operações críticas. Apenas o dono da empresa deve conhecer.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="p-4 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+                    <p className="text-sm text-amber-800 dark:text-amber-200">
+                      <strong>Importante:</strong> Esta senha é diferente da senha de login.
+                      Ela é necessária para operações críticas como restaurar padrão de fábrica.
+                      Guarde-a em local seguro e não compartilhe com funcionários.
+                    </p>
+                  </div>
+
+                  <div className="space-y-4 max-w-md">
+                    {temSenhaMestre && (
+                      <div className="space-y-2">
+                        <Label htmlFor="senha-atual">Senha Mestre Atual</Label>
+                        <div className="relative">
+                          <Input
+                            id="senha-atual"
+                            type={mostrarSenhaAtual ? 'text' : 'password'}
+                            placeholder="Digite a senha atual"
+                            value={senhaAtual}
+                            onChange={(e) => setSenhaAtual(e.target.value)}
+                            disabled={salvandoSenhaMestre}
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="absolute right-0 top-0 h-full"
+                            onClick={() => setMostrarSenhaAtual(!mostrarSenhaAtual)}
+                          >
+                            {mostrarSenhaAtual ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="space-y-2">
+                      <Label htmlFor="nova-senha">{temSenhaMestre ? 'Nova Senha Mestre' : 'Criar Senha Mestre'}</Label>
+                      <div className="relative">
+                        <Input
+                          id="nova-senha"
+                          type={mostrarNovaSenha ? 'text' : 'password'}
+                          placeholder="Mínimo 6 caracteres"
+                          value={novaSenhaMestre}
+                          onChange={(e) => setNovaSenhaMestre(e.target.value)}
+                          disabled={salvandoSenhaMestre}
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="absolute right-0 top-0 h-full"
+                          onClick={() => setMostrarNovaSenha(!mostrarNovaSenha)}
+                        >
+                          {mostrarNovaSenha ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="confirmar-senha">Confirmar Senha</Label>
+                      <Input
+                        id="confirmar-senha"
+                        type="password"
+                        placeholder="Repita a senha"
+                        value={confirmarSenhaMestre}
+                        onChange={(e) => setConfirmarSenhaMestre(e.target.value)}
+                        disabled={salvandoSenhaMestre}
+                      />
+                    </div>
+
+                    <Button
+                      type="button"
+                      onClick={handleSalvarSenhaMestre}
+                      disabled={salvandoSenhaMestre || !novaSenhaMestre || !confirmarSenhaMestre}
+                      className="w-full"
+                    >
+                      {salvandoSenhaMestre ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Salvando...
+                        </>
+                      ) : (
+                        <>
+                          <Key className="mr-2 h-4 w-4" />
+                          {temSenhaMestre ? 'Alterar Senha Mestre' : 'Definir Senha Mestre'}
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
               {/* Zona de Perigo */}
               <Card className="border-red-200 dark:border-red-900">
                 <CardHeader>
@@ -780,9 +958,17 @@ export default function ConfiguracoesPage() {
                                 </p>
                                 <div className="p-3 bg-red-100 dark:bg-red-950 rounded-md">
                                   <p className="text-sm font-medium text-red-800 dark:text-red-200">
-                                    Para confirmar, digite <strong>CONFIRMAR</strong> e sua <strong>SENHA</strong>:
+                                    Para confirmar, digite <strong>CONFIRMAR</strong> e a <strong>SENHA MESTRE</strong>:
                                   </p>
                                 </div>
+                                {!temSenhaMestre && (
+                                  <div className="p-3 bg-amber-100 dark:bg-amber-950 rounded-md">
+                                    <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
+                                      Você precisa configurar a Senha Mestre antes de usar esta funcionalidade.
+                                      Acesse a seção "Senha Mestre" acima.
+                                    </p>
+                                  </div>
+                                )}
                                 <div className="space-y-3">
                                   <div>
                                     <Label htmlFor="confirmacao-texto" className="text-xs text-muted-foreground">
@@ -794,21 +980,21 @@ export default function ConfiguracoesPage() {
                                       value={confirmacaoTexto}
                                       onChange={(e) => setConfirmacaoTexto(e.target.value.toUpperCase())}
                                       className="font-mono text-center text-lg"
-                                      disabled={restaurando}
+                                      disabled={restaurando || !temSenhaMestre}
                                     />
                                   </div>
                                   <div>
                                     <Label htmlFor="senha-confirmacao" className="text-xs text-muted-foreground">
-                                      Sua senha
+                                      Senha Mestre
                                     </Label>
                                     <Input
                                       id="senha-confirmacao"
                                       type="password"
-                                      placeholder="Digite sua senha"
+                                      placeholder="Digite a senha mestre"
                                       value={senhaConfirmacao}
                                       onChange={(e) => setSenhaConfirmacao(e.target.value)}
                                       className="text-center"
-                                      disabled={restaurando}
+                                      disabled={restaurando || !temSenhaMestre}
                                     />
                                   </div>
                                 </div>
@@ -822,7 +1008,7 @@ export default function ConfiguracoesPage() {
                             <Button
                               variant="destructive"
                               onClick={handleRestaurarPadrao}
-                              disabled={confirmacaoTexto !== 'CONFIRMAR' || !senhaConfirmacao || restaurando}
+                              disabled={!temSenhaMestre || confirmacaoTexto !== 'CONFIRMAR' || !senhaConfirmacao || restaurando}
                             >
                               {restaurando ? (
                                 <>
