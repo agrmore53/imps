@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { logErroAPI } from '@/lib/logger'
 
 // GET - Buscar caixa aberto do usuário
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient()
 
@@ -103,7 +104,7 @@ export async function GET() {
       },
     })
   } catch (error) {
-    console.error('Erro ao buscar caixa:', error)
+    await logErroAPI('Erro ao buscar caixa', error, request, 500)
     return NextResponse.json(
       { error: 'Erro ao buscar caixa' },
       { status: 500 }
@@ -349,7 +350,7 @@ export async function POST(request: NextRequest) {
         )
     }
   } catch (error) {
-    console.error('Erro na operação do caixa:', error)
+    await logErroAPI('Erro na operação do caixa', error, request, 500)
     return NextResponse.json(
       { error: 'Erro na operação do caixa: ' + (error as Error).message },
       { status: 500 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import * as bcrypt from 'bcryptjs'
+import { logErroAPI, logErroBanco } from '@/lib/logger'
 
 /**
  * Restaurar Padrão de Fábrica
@@ -191,7 +192,12 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error: any) {
-    console.error('Erro ao restaurar padrão:', error)
+    await logErroAPI(
+      'Erro ao restaurar padrão de fábrica',
+      error,
+      request,
+      500
+    )
     return NextResponse.json(
       { error: 'Erro interno do servidor', details: error.message },
       { status: 500 }

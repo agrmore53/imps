@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import * as bcrypt from 'bcryptjs'
+import { logErroAPI } from '@/lib/logger'
 
 /**
  * API para gerenciar a Senha Mestre
@@ -105,7 +106,7 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error: any) {
-    console.error('Erro ao definir senha mestre:', error)
+    await logErroAPI('Erro ao definir senha mestre', error, request, 500)
     return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 })
   }
 }
@@ -148,7 +149,7 @@ export async function GET(request: NextRequest) {
     })
 
   } catch (error: any) {
-    console.error('Erro ao verificar senha mestre:', error)
+    await logErroAPI('Erro ao verificar senha mestre', error, request, 500)
     return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 })
   }
 }
