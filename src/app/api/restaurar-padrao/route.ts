@@ -76,34 +76,24 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Senha mestre incorreta' }, { status: 401 })
     }
 
-    // Ordem de exclusão (respeitar foreign keys)
-    // IMPORTANTE: Tabelas que referenciam outras devem ser excluídas PRIMEIRO
-    const tabelasParaLimpar = [
-      'venda_pagamentos',      // Pagamentos das vendas (referencia vendas)
-      'venda_itens',           // Itens das vendas (referencia vendas e produtos)
-      'caixa_movimentos',      // Movimentações de caixa (referencia caixas E vendas)
-      'vendas',                // Vendas (referencia caixas e clientes)
-      'caixas',                // Caixas
-      'estoque_movimentos',    // Movimentações de estoque (referencia produtos)
-      'produtos_classificacao_tributaria', // Classificação tributária (referencia produtos)
-      'notas_fiscais',         // Notas fiscais
-      'contas_pagar',          // Contas a pagar
-      'contas_receber',        // Contas a receber (referencia clientes)
-      'produtos',              // Produtos
-      'clientes',              // Clientes
-      'notificacoes',          // Notificações
-    ]
-
     const resultados: { tabela: string; excluidos: number; erro?: string }[] = []
 
-    for (const tabela of tabelasParaLimpar) {
+    // Função auxiliar para deletar e registrar resultado
+    async function deletarTabela(tabela: string, filtro: { coluna: string; valor: string | string[] }) {
       try {
-        const { data, error } = await supabase
-          .from(tabela)
-          .delete()
-          .eq('empresa_id', empresaId)
-          .select('id')
+        let query = supabase.from(tabela).delete()
 
+        if (Array.isArray(filtro.valor)) {
+          if (filtro.valor.length === 0) {
+            resultados.push({ tabela, excluidos: 0 })
+            return
+          }
+          query = query.in(filtro.coluna, filtro.valor)
+        } else {
+          query = query.eq(filtro.coluna, filtro.valor)
+        }
+
+        const { data, error } = await query.select('id')
         resultados.push({
           tabela,
           excluidos: data?.length || 0,
@@ -117,6 +107,43 @@ export async function POST(request: NextRequest) {
         })
       }
     }
+
+    // 1. Buscar IDs das vendas da empresa
+    const { data: vendas } = await supabase
+      .from('vendas')
+      .select('id')
+      .eq('empresa_id', empresaId)
+    const vendasIds = vendas?.map(v => v.id) || []
+
+    // 2. Buscar IDs dos caixas da empresa
+    const { data: caixas } = await supabase
+      .from('caixas')
+      .select('id')
+      .eq('empresa_id', empresaId)
+    const caixasIds = caixas?.map(c => c.id) || []
+
+    // 3. Deletar na ordem correta (filhos primeiro)
+
+    // Tabelas que dependem de vendas (usar venda_id)
+    await deletarTabela('venda_pagamentos', { coluna: 'venda_id', valor: vendasIds })
+    await deletarTabela('venda_itens', { coluna: 'venda_id', valor: vendasIds })
+
+    // Tabelas que dependem de caixas (usar caixa_id)
+    await deletarTabela('caixa_movimentos', { coluna: 'caixa_id', valor: caixasIds })
+
+    // Agora deletar vendas e caixas
+    await deletarTabela('vendas', { coluna: 'empresa_id', valor: empresaId })
+    await deletarTabela('caixas', { coluna: 'empresa_id', valor: empresaId })
+
+    // Demais tabelas com empresa_id direto
+    await deletarTabela('estoque_movimentos', { coluna: 'empresa_id', valor: empresaId })
+    await deletarTabela('produtos_classificacao_tributaria', { coluna: 'empresa_id', valor: empresaId })
+    await deletarTabela('notas_fiscais', { coluna: 'empresa_id', valor: empresaId })
+    await deletarTabela('contas_pagar', { coluna: 'empresa_id', valor: empresaId })
+    await deletarTabela('contas_receber', { coluna: 'empresa_id', valor: empresaId })
+    await deletarTabela('produtos', { coluna: 'empresa_id', valor: empresaId })
+    await deletarTabela('clientes', { coluna: 'empresa_id', valor: empresaId })
+    await deletarTabela('notificacoes', { coluna: 'empresa_id', valor: empresaId })
 
     // Resetar configurações fiscais para padrão
     const configPadrao = {
