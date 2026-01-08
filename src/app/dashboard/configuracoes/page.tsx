@@ -390,17 +390,21 @@ export default function ConfiguracoesPage() {
 
     setRestaurando(true)
     try {
+      const payload = {
+        confirmacao: 'CONFIRMAR',
+        senhaMestre: senhaConfirmacao,
+        limparDadosEmpresa: limparDadosEmpresa,
+      }
+      console.log('Enviando para API:', { ...payload, senhaMestre: '***' })
+
       const response = await fetch('/api/restaurar-padrao', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          confirmacao: 'CONFIRMAR',
-          senhaMestre: senhaConfirmacao,
-          limparDadosEmpresa: limparDadosEmpresa,
-        }),
+        body: JSON.stringify(payload),
       })
 
       const data = await response.json()
+      console.log('Resposta da API:', data)
 
       if (!response.ok) {
         throw new Error(data.error || 'Erro ao restaurar')
@@ -408,11 +412,14 @@ export default function ConfiguracoesPage() {
 
       if (data.success) {
         toast.success('Padrão de fábrica restaurado!', {
-          description: 'Todos os dados foram excluídos.',
+          description: limparDadosEmpresa
+            ? 'Todos os dados e cadastro da empresa foram excluídos.'
+            : 'Todos os dados foram excluídos.',
         })
         setDialogOpen(false)
         setConfirmacaoTexto('')
         setSenhaConfirmacao('')
+        setLimparDadosEmpresa(false)
         // Recarregar a página para atualizar os dados
         window.location.reload()
       } else {

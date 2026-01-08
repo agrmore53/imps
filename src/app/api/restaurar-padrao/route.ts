@@ -43,6 +43,11 @@ export async function POST(request: NextRequest) {
 
     // Verificar confirmação e senha mestre
     const body = await request.json()
+    console.log('[restaurar-padrao] Recebido:', {
+      confirmacao: body.confirmacao,
+      limparDadosEmpresa: body.limparDadosEmpresa
+    })
+
     if (body.confirmacao !== 'CONFIRMAR') {
       return NextResponse.json({ error: 'Confirmação inválida' }, { status: 400 })
     }
