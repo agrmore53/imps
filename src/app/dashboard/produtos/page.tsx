@@ -4,25 +4,16 @@ import { createClient } from '@/lib/supabase/server'
 export const dynamic = 'force-dynamic'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
-import { Badge } from '@/components/ui/badge'
 import { Plus, Package, Upload } from 'lucide-react'
+import { ProdutosTable } from '@/components/produtos-table'
 
 export default async function ProdutosPage() {
   const supabase = await createClient()
 
   const { data: produtos, error } = await supabase
     .from('produtos')
-    .select('*')
+    .select('id, codigo, nome, ncm, preco_venda, estoque_atual, estoque_minimo, unidade, ativo')
     .order('nome')
-    .limit(50)
 
   return (
     <div className="space-y-6">
@@ -72,49 +63,7 @@ export default async function ProdutosPage() {
               </Button>
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Código</TableHead>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>Preço Venda</TableHead>
-                  <TableHead>Estoque</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {produtos.map((produto) => (
-                  <TableRow key={produto.id}>
-                    <TableCell className="font-mono">{produto.codigo}</TableCell>
-                    <TableCell className="font-medium">{produto.nome}</TableCell>
-                    <TableCell>
-                      {new Intl.NumberFormat('pt-BR', {
-                        style: 'currency',
-                        currency: 'BRL',
-                      }).format(produto.preco_venda)}
-                    </TableCell>
-                    <TableCell>
-                      <span className={produto.estoque_atual <= produto.estoque_minimo ? 'text-red-600 font-semibold' : ''}>
-                        {produto.estoque_atual} {produto.unidade}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={produto.ativo ? 'default' : 'secondary'}>
-                        {produto.ativo ? 'Ativo' : 'Inativo'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button variant="ghost" size="sm" asChild>
-                        <Link href={`/dashboard/produtos/${produto.id}`}>
-                          Editar
-                        </Link>
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <ProdutosTable produtos={produtos} />
           )}
         </CardContent>
       </Card>

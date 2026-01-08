@@ -24,6 +24,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { toast } from 'sonner'
 import { Loader2, ArrowLeft, Trash2 } from 'lucide-react'
+import { NCMSearch } from '@/components/ncm-search'
 
 const unidades = [
   { value: 'UN', label: 'Unidade' },
@@ -294,13 +295,9 @@ export default function EditarProdutoPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="ncm">NCM</Label>
-                <Input
-                  id="ncm"
-                  name="ncm"
-                  placeholder="22021000"
+                <NCMSearch
                   value={formData.ncm}
-                  onChange={handleChange}
-                  maxLength={8}
+                  onChange={(ncm) => setFormData(prev => ({ ...prev, ncm }))}
                   disabled={saving}
                 />
               </div>
