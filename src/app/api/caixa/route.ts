@@ -168,17 +168,8 @@ export async function POST(request: NextRequest) {
           throw createError
         }
 
-        // Registrar movimento de abertura se houver valor
-        if (valor > 0) {
-          await supabase
-            .from('caixa_movimentos')
-            .insert({
-              caixa_id: novoCaixa.id,
-              tipo: 'suprimento',
-              valor: valor,
-              descricao: 'Abertura de caixa',
-            })
-        }
+        // Não criar movimento de abertura - o valor_abertura já está registrado no caixa
+        // Isso evita duplicação no cálculo do saldo
 
         return NextResponse.json({
           success: true,
