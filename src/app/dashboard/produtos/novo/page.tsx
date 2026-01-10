@@ -193,7 +193,7 @@ export default function NovoProdutoPage() {
               />
             </div>
 
-            <div className="grid gap-4 md:grid-cols-4">
+            <div className="grid gap-4 md:grid-cols-3">
               <div className="space-y-2">
                 <Label htmlFor="unidade">Unidade *</Label>
                 <Select
@@ -239,6 +239,23 @@ export default function NovoProdutoPage() {
                   value={formData.preco_venda}
                   onChange={handleChange}
                   required
+                  disabled={loading}
+                />
+              </div>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="estoque_atual">Quantidade Inicial</Label>
+                <Input
+                  id="estoque_atual"
+                  name="estoque_atual"
+                  type="number"
+                  step="1"
+                  min="0"
+                  placeholder="0"
+                  value={formData.estoque_atual}
+                  onChange={handleChange}
                   disabled={loading}
                 />
               </div>
