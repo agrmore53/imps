@@ -9,8 +9,9 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Switch } from '@/components/ui/switch'
 import { toast } from 'sonner'
-import { Loader2, ArrowLeft } from 'lucide-react'
+import { Loader2, ArrowLeft, Info } from 'lucide-react'
 import { NCMSearch } from '@/components/ncm-search'
 
 const unidades = [
@@ -40,6 +41,8 @@ export default function NovoProdutoPage() {
     preco_venda: '',
     estoque_atual: '0',
     estoque_minimo: '0',
+    controla_estoque: true,
+    preco_variavel: false,
   })
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -82,6 +85,8 @@ export default function NovoProdutoPage() {
         preco_venda: parseFloat(formData.preco_venda),
         estoque_atual: parseFloat(formData.estoque_atual) || 0,
         estoque_minimo: parseFloat(formData.estoque_minimo) || 0,
+        controla_estoque: formData.controla_estoque,
+        preco_variavel: formData.preco_variavel,
       })
 
       if (error) {
@@ -256,7 +261,7 @@ export default function NovoProdutoPage() {
                   placeholder="0"
                   value={formData.estoque_atual}
                   onChange={handleChange}
-                  disabled={loading}
+                  disabled={loading || !formData.controla_estoque}
                 />
               </div>
               <div className="space-y-2">
@@ -270,6 +275,44 @@ export default function NovoProdutoPage() {
                   placeholder="0"
                   value={formData.estoque_minimo}
                   onChange={handleChange}
+                  disabled={loading || !formData.controla_estoque}
+                />
+              </div>
+            </div>
+
+            {/* Opções especiais */}
+            <div className="border rounded-lg p-4 space-y-4 bg-muted/30">
+              <div className="flex items-center gap-2 text-sm font-medium">
+                <Info className="h-4 w-4" />
+                Opções Especiais
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="controla_estoque">📦 Controlar Estoque</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Desative para produtos com estoque infinito (ex: serviços, testes)
+                  </p>
+                </div>
+                <Switch
+                  id="controla_estoque"
+                  checked={formData.controla_estoque}
+                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, controla_estoque: checked }))}
+                  disabled={loading}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="preco_variavel">💰 Preço Variável</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Ative para definir o preço no momento da venda no PDV
+                  </p>
+                </div>
+                <Switch
+                  id="preco_variavel"
+                  checked={formData.preco_variavel}
+                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, preco_variavel: checked }))}
                   disabled={loading}
                 />
               </div>

@@ -61,6 +61,8 @@ interface Produto {
   preco_venda: number
   estoque_atual: number
   unidade: string
+  controla_estoque?: boolean
+  preco_variavel?: boolean
 }
 
 interface Cliente {
@@ -136,6 +138,11 @@ export default function PDVPage() {
   const [pendingWeightProduct, setPendingWeightProduct] = useState<Produto | null>(null)
   const [weightValue, setWeightValue] = useState('')
   const weightInputRef = useRef<HTMLInputElement>(null)
+  // Estados para produto com preço variável
+  const [showPriceModal, setShowPriceModal] = useState(false)
+  const [pendingPriceProduct, setPendingPriceProduct] = useState<Produto | null>(null)
+  const [priceValue, setPriceValue] = useState('')
+  const priceInputRef = useRef<HTMLInputElement>(null)
   const [vendaFinalizada, setVendaFinalizada] = useState<{
     numero?: number
     itens: { codigo: string; nome: string; quantidade: number; preco: number; total: number }[]
@@ -406,7 +413,7 @@ export default function PDVPage() {
         // Busca exata por código de barras
         const { data, error } = await supabase
           .from('produtos')
-          .select('id, codigo, codigo_barras, nome, preco_venda, estoque_atual, unidade')
+          .select('id, codigo, codigo_barras, nome, preco_venda, estoque_atual, unidade, controla_estoque, preco_variavel')
           .eq('ativo', true)
           .eq('codigo_barras', codigoBarras)
           .single()
@@ -557,7 +564,7 @@ export default function PDVPage() {
         // Busca online
         const { data, error } = await supabase
           .from('produtos')
-          .select('id, codigo, codigo_barras, nome, preco_venda, estoque_atual, unidade')
+          .select('id, codigo, codigo_barras, nome, preco_venda, estoque_atual, unidade, controla_estoque, preco_variavel')
           .eq('ativo', true)
           .or(`codigo.ilike.%${termo}%,codigo_barras.eq.${termo},nome.ilike.%${termo}%`)
           .order('nome')
@@ -622,9 +629,20 @@ export default function PDVPage() {
   }, [search])
 
   function adicionarProduto(produto: Produto) {
-    if (produto.estoque_atual <= 0) {
+    // Verificar estoque apenas se o produto controla estoque
+    const controlaEstoque = produto.controla_estoque !== false
+    if (controlaEstoque && produto.estoque_atual <= 0) {
       playBeep(false)
       toast.error('Produto sem estoque')
+      return
+    }
+
+    // Se for produto com preço variável, abre modal para digitar o preço
+    if (produto.preco_variavel === true) {
+      setPendingPriceProduct(produto)
+      setPriceValue('')
+      setShowPriceModal(true)
+      setTimeout(() => priceInputRef.current?.focus(), 100)
       return
     }
 
@@ -648,6 +666,34 @@ export default function PDVPage() {
 
     playBeep(true)
     toast.success(`${produto.nome} adicionado`)
+    setSearch('')
+    setProdutos([])
+    searchRef.current?.focus()
+  }
+
+  // Adicionar produto com preço variável
+  function adicionarProdutoPrecoVariavel() {
+    if (!pendingPriceProduct) return
+
+    const preco = parseFloat(priceValue.replace(',', '.'))
+    if (isNaN(preco) || preco <= 0) {
+      toast.error('Digite um valor válido')
+      return
+    }
+
+    addItem({
+      id: pendingPriceProduct.id,
+      codigo: pendingPriceProduct.codigo,
+      nome: pendingPriceProduct.nome,
+      preco: preco,
+      unidade: pendingPriceProduct.unidade,
+    })
+
+    playBeep(true)
+    toast.success(`${pendingPriceProduct.nome} - R$ ${preco.toFixed(2)} adicionado`)
+    setShowPriceModal(false)
+    setPendingPriceProduct(null)
+    setPriceValue('')
     setSearch('')
     setProdutos([])
     searchRef.current?.focus()
@@ -1925,6 +1971,113 @@ export default function PDVPage() {
                 >
                   <Scale className="h-4 w-4 mr-2" />
                   Confirmar Peso
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Preço Variável */}
+      <Dialog open={showPriceModal} onOpenChange={(open) => {
+        if (!open) {
+          setShowPriceModal(false)
+          setPendingPriceProduct(null)
+          setPriceValue('')
+          searchRef.current?.focus()
+        }
+      }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <DollarSign className="h-5 w-5 text-green-500" />
+              💰 Definir Valor
+            </DialogTitle>
+            <DialogDescription>
+              Digite o valor para este produto
+            </DialogDescription>
+          </DialogHeader>
+
+          {pendingPriceProduct && (
+            <div className="space-y-4">
+              {/* Info do produto */}
+              <div className="bg-muted/50 rounded-lg p-4">
+                <p className="font-semibold text-lg">{pendingPriceProduct.nome}</p>
+                <p className="text-sm text-muted-foreground">Código: {pendingPriceProduct.codigo}</p>
+              </div>
+
+              {/* Input de preço */}
+              <div className="space-y-2">
+                <Label htmlFor="preco">Valor (R$)</Label>
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xl text-muted-foreground font-medium">
+                    R$
+                  </span>
+                  <Input
+                    ref={priceInputRef}
+                    id="preco"
+                    type="text"
+                    inputMode="decimal"
+                    placeholder="0,00"
+                    value={priceValue}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/[^0-9.,]/g, '')
+                      setPriceValue(value)
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault()
+                        adicionarProdutoPrecoVariavel()
+                      } else if (e.key === 'Escape') {
+                        e.preventDefault()
+                        setShowPriceModal(false)
+                        setPendingPriceProduct(null)
+                        setPriceValue('')
+                        searchRef.current?.focus()
+                      }
+                    }}
+                    className="text-3xl h-16 text-center font-bold pl-16"
+                    autoFocus
+                  />
+                </div>
+              </div>
+
+              {/* Atalhos rápidos de valor */}
+              <div className="grid grid-cols-4 gap-2">
+                {['10', '20', '50', '100'].map((valor) => (
+                  <Button
+                    key={valor}
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPriceValue(valor + ',00')}
+                    className="h-10"
+                  >
+                    R$ {valor}
+                  </Button>
+                ))}
+              </div>
+
+              {/* Botões */}
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => {
+                    setShowPriceModal(false)
+                    setPendingPriceProduct(null)
+                    setPriceValue('')
+                    searchRef.current?.focus()
+                  }}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  className="flex-1 bg-green-500 hover:bg-green-600"
+                  onClick={adicionarProdutoPrecoVariavel}
+                  disabled={!priceValue || parseFloat(priceValue.replace(',', '.')) <= 0}
+                >
+                  <DollarSign className="h-4 w-4 mr-2" />
+                  Confirmar Valor
                 </Button>
               </div>
             </div>

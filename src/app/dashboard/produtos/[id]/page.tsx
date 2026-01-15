@@ -23,7 +23,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
 import { toast } from 'sonner'
-import { Loader2, ArrowLeft, Trash2 } from 'lucide-react'
+import { Loader2, ArrowLeft, Trash2, Info } from 'lucide-react'
 import { NCMSearch } from '@/components/ncm-search'
 
 const unidades = [
@@ -57,6 +57,8 @@ export default function EditarProdutoPage() {
     estoque_atual: '0',
     estoque_minimo: '0',
     ativo: true,
+    controla_estoque: true,
+    preco_variavel: false,
   })
 
   useEffect(() => {
@@ -83,6 +85,8 @@ export default function EditarProdutoPage() {
             estoque_atual: data.estoque_atual?.toString() || '0',
             estoque_minimo: data.estoque_minimo?.toString() || '0',
             ativo: data.ativo ?? true,
+            controla_estoque: data.controla_estoque ?? true,
+            preco_variavel: data.preco_variavel ?? false,
           })
         }
       } catch (error) {
@@ -119,6 +123,8 @@ export default function EditarProdutoPage() {
           preco_venda: parseFloat(formData.preco_venda),
           estoque_minimo: parseFloat(formData.estoque_minimo) || 0,
           ativo: formData.ativo,
+          controla_estoque: formData.controla_estoque,
+          preco_variavel: formData.preco_variavel,
         })
         .eq('id', params.id)
 
@@ -399,6 +405,44 @@ export default function EditarProdutoPage() {
               <p className="text-xs text-muted-foreground mt-1">
                 Para alterar o estoque, utilize as funcoes de Entrada ou Saida de estoque
               </p>
+            </div>
+
+            {/* Opções especiais */}
+            <div className="border rounded-lg p-4 space-y-4 bg-muted/30">
+              <div className="flex items-center gap-2 text-sm font-medium">
+                <Info className="h-4 w-4" />
+                Opções Especiais
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="controla_estoque">📦 Controlar Estoque</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Desative para produtos com estoque infinito (ex: serviços, testes)
+                  </p>
+                </div>
+                <Switch
+                  id="controla_estoque"
+                  checked={formData.controla_estoque}
+                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, controla_estoque: checked }))}
+                  disabled={saving}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="preco_variavel">💰 Preço Variável</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Ative para definir o preço no momento da venda no PDV
+                  </p>
+                </div>
+                <Switch
+                  id="preco_variavel"
+                  checked={formData.preco_variavel}
+                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, preco_variavel: checked }))}
+                  disabled={saving}
+                />
+              </div>
             </div>
 
             <div className="flex gap-4 pt-4">
