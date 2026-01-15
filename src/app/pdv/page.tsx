@@ -1259,24 +1259,24 @@ export default function PDVPage() {
                 <ArrowLeft className="h-5 w-5" />
               </Link>
             </Button>
-            <h1 className="text-2xl font-bold">PDV - Ponto de Venda</h1>
+            <h1 className="text-2xl font-bold">🛒 PDV - Ponto de Venda</h1>
             {/* Status de conexao */}
             {isOnline ? (
               <Badge variant="default" className="bg-green-500 hover:bg-green-600">
                 <Wifi className="h-3 w-3 mr-1" />
-                Online
+                🟢 Online
               </Badge>
             ) : (
               <Badge variant="destructive">
                 <WifiOff className="h-3 w-3 mr-1" />
-                Offline
+                🔴 Offline
               </Badge>
             )}
             {/* Vendas pendentes */}
             {vendasPendentes > 0 && (
               <Badge variant="secondary" className="bg-yellow-500/20 text-yellow-700">
                 <CloudOff className="h-3 w-3 mr-1" />
-                {vendasPendentes} pendente{vendasPendentes > 1 ? 's' : ''}
+                ⏳ {vendasPendentes} pendente{vendasPendentes > 1 ? 's' : ''}
               </Badge>
             )}
             {/* Status do Caixa */}
@@ -1285,12 +1285,12 @@ export default function PDVPage() {
                 {caixaAberto ? (
                   <Badge variant="default" className="bg-green-600 hover:bg-green-700 cursor-pointer">
                     <LockOpen className="h-3 w-3 mr-1" />
-                    Caixa Aberto
+                    ✅ Caixa Aberto
                   </Badge>
                 ) : (
                   <Badge variant="destructive" className="cursor-pointer">
                     <Wallet className="h-3 w-3 mr-1" />
-                    Abrir Caixa
+                    💰 Abrir Caixa
                   </Badge>
                 )}
               </Link>
@@ -1415,8 +1415,8 @@ export default function PDVPage() {
             {items.length === 0 ? (
               <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground p-6">
                 <ShoppingCart className="h-20 w-20 mb-4 opacity-20" />
-                <p className="text-xl">Carrinho vazio</p>
-                <p className="text-sm">Digite o código de barras ou nome do produto</p>
+                <p className="text-xl">🛒 Carrinho vazio</p>
+                <p className="text-sm">📦 Digite o código de barras ou nome do produto</p>
               </div>
             ) : (
               <ScrollArea className="flex-1">
@@ -1583,14 +1583,14 @@ export default function PDVPage() {
 
           {/* Formas de Pagamento */}
           <div className="p-3">
-            <p className="text-xs font-medium text-muted-foreground uppercase mb-2">Forma de Pagamento</p>
+            <p className="text-xs font-medium text-muted-foreground uppercase mb-2">💳 Forma de Pagamento</p>
             <div className="grid grid-cols-5 gap-1">
               {[
-                { id: 'dinheiro', label: 'Dinheiro', icon: DollarSign, key: 'F6', color: 'green' },
-                { id: 'cartao_credito', label: 'Crédito', icon: CreditCard, key: 'F7', color: 'blue' },
-                { id: 'cartao_debito', label: 'Débito', icon: CreditCard, key: 'F8', color: 'indigo' },
-                { id: 'pix', label: 'PIX', icon: QrCode, key: 'F9', color: 'teal' },
-                { id: 'crediario', label: 'Fiado', icon: Users, key: 'F10', color: 'orange' },
+                { id: 'dinheiro', label: '💵 Dinheiro', icon: DollarSign, key: 'F6', color: 'green' },
+                { id: 'cartao_credito', label: '💳 Crédito', icon: CreditCard, key: 'F7', color: 'blue' },
+                { id: 'cartao_debito', label: '💳 Débito', icon: CreditCard, key: 'F8', color: 'indigo' },
+                { id: 'pix', label: '📱 PIX', icon: QrCode, key: 'F9', color: 'teal' },
+                { id: 'crediario', label: '📝 Fiado', icon: Users, key: 'F10', color: 'orange' },
               ].map((method) => {
                 const Icon = method.icon
                 const isSelected = selectedPayment === method.id

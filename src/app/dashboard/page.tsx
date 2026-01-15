@@ -180,9 +180,9 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+        <h1 className="text-3xl font-bold tracking-tight">📊 Dashboard</h1>
         <p className="text-muted-foreground">
-          Bem-vindo ao Império Sistemas
+          👋 Bem-vindo ao Império Sistemas
         </p>
       </div>
 
@@ -190,13 +190,13 @@ export default async function DashboardPage() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Vendas Hoje</CardTitle>
+            <CardTitle className="text-sm font-medium">💰 Vendas Hoje</CardTitle>
             <ShoppingCart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatCurrency(totalVendasHoje)}</div>
             <p className="text-xs text-muted-foreground">
-              {qtdVendasHoje} venda(s) realizada(s)
+              🛒 {qtdVendasHoje} venda(s) realizada(s)
             </p>
             {variacaoVendas !== 0 && (
               <div className={`flex items-center text-xs mt-1 ${variacaoVendas >= 0 ? 'text-green-600' : 'text-red-600'}`}>
@@ -205,7 +205,7 @@ export default async function DashboardPage() {
                 ) : (
                   <TrendingDown className="h-3 w-3 mr-1" />
                 )}
-                {variacaoVendas >= 0 ? '+' : ''}{variacaoVendas.toFixed(1)}% vs ontem
+                {variacaoVendas >= 0 ? '📈 +' : '📉 '}{variacaoVendas.toFixed(1)}% vs ontem
               </div>
             )}
           </CardContent>
@@ -213,39 +213,39 @@ export default async function DashboardPage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Ticket Médio</CardTitle>
+            <CardTitle className="text-sm font-medium">🎯 Ticket Médio</CardTitle>
             <Receipt className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatCurrency(ticketMedio)}</div>
             <p className="text-xs text-muted-foreground">
-              Valor médio por venda
+              💵 Valor médio por venda
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Produtos</CardTitle>
+            <CardTitle className="text-sm font-medium">📦 Produtos</CardTitle>
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{totalProdutos || 0}</div>
             <p className="text-xs text-muted-foreground">
-              {produtosBaixoEstoque?.length || 0} com estoque baixo
+              ⚠️ {produtosBaixoEstoque?.length || 0} com estoque baixo
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Clientes</CardTitle>
+            <CardTitle className="text-sm font-medium">👥 Clientes</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{totalClientes || 0}</div>
             <p className="text-xs text-muted-foreground">
-              Total cadastrados
+              ✅ Total cadastrados
             </p>
           </CardContent>
         </Card>
@@ -255,20 +255,20 @@ export default async function DashboardPage() {
       <div className="grid gap-4 md:grid-cols-2">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">A Receber (7 dias)</CardTitle>
+            <CardTitle className="text-sm font-medium">📥 A Receber (7 dias)</CardTitle>
             <DollarSign className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">{formatCurrency(totalAReceber)}</div>
             <p className="text-xs text-muted-foreground">
-              {contasReceberProximas?.length || 0} título(s) a vencer
+              📋 {contasReceberProximas?.length || 0} título(s) a vencer
             </p>
           </CardContent>
         </Card>
 
         <Card className={totalVencidoPagar > 0 ? 'border-red-500' : ''}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Contas Vencidas</CardTitle>
+            <CardTitle className="text-sm font-medium">🚨 Contas Vencidas</CardTitle>
             <Wallet className={`h-4 w-4 ${totalVencidoPagar > 0 ? 'text-red-500' : 'text-muted-foreground'}`} />
           </CardHeader>
           <CardContent>
@@ -276,7 +276,7 @@ export default async function DashboardPage() {
               {formatCurrency(totalVencidoPagar)}
             </div>
             <p className="text-xs text-muted-foreground">
-              {contasPagarVencidas?.length || 0} conta(s) vencida(s)
+              ⏰ {contasPagarVencidas?.length || 0} conta(s) vencida(s)
             </p>
           </CardContent>
         </Card>
@@ -286,8 +286,8 @@ export default async function DashboardPage() {
       <div className="grid gap-4 md:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Vendas - Últimos 7 dias</CardTitle>
-            <CardDescription>Evolução das vendas da semana</CardDescription>
+            <CardTitle>📈 Vendas - Últimos 7 dias</CardTitle>
+            <CardDescription>📊 Evolução das vendas da semana</CardDescription>
           </CardHeader>
           <CardContent>
             <DashboardCharts data={dadosGrafico} />
@@ -296,8 +296,8 @@ export default async function DashboardPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Produtos Mais Vendidos</CardTitle>
-            <CardDescription>Últimos 30 dias</CardDescription>
+            <CardTitle>🏆 Produtos Mais Vendidos</CardTitle>
+            <CardDescription>📅 Últimos 30 dias</CardDescription>
           </CardHeader>
           <CardContent>
             {topProdutos.length === 0 ? (
@@ -335,10 +335,10 @@ export default async function DashboardPage() {
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
                 <ShoppingCart className="h-5 w-5" />
-                Abrir PDV
+                🛒 Abrir PDV
               </CardTitle>
               <CardDescription>
-                Iniciar uma nova venda
+                ▶️ Iniciar uma nova venda
               </CardDescription>
             </CardHeader>
           </Card>
@@ -348,10 +348,10 @@ export default async function DashboardPage() {
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
                 <Package className="h-5 w-5" />
-                Novo Produto
+                📦 Novo Produto
               </CardTitle>
               <CardDescription>
-                Cadastrar um produto
+                ➕ Cadastrar um produto
               </CardDescription>
             </CardHeader>
           </Card>
@@ -361,10 +361,10 @@ export default async function DashboardPage() {
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
                 <Users className="h-5 w-5" />
-                Novo Cliente
+                👤 Novo Cliente
               </CardTitle>
               <CardDescription>
-                Cadastrar um cliente
+                ➕ Cadastrar um cliente
               </CardDescription>
             </CardHeader>
           </Card>
@@ -374,10 +374,10 @@ export default async function DashboardPage() {
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
                 <Clock className="h-5 w-5" />
-                Relatórios
+                📊 Relatórios
               </CardTitle>
               <CardDescription>
-                Visualizar relatórios
+                📋 Visualizar relatórios
               </CardDescription>
             </CardHeader>
           </Card>
