@@ -434,16 +434,26 @@ export default function PDVPage() {
             preco_venda: encontrado.preco_venda,
             estoque_atual: encontrado.estoque_atual,
             unidade: encontrado.unidade,
+            controla_estoque: (encontrado as any).controla_estoque,
+            preco_variavel: (encontrado as any).preco_variavel,
           }
         }
       }
 
       if (produto) {
-        if (produto.estoque_atual <= 0) {
+        // Verificar estoque apenas se o produto controla estoque
+        const controlaEstoque = produto.controla_estoque !== false
+        if (controlaEstoque && produto.estoque_atual <= 0) {
           playBeep(false)
           toast.error('Produto sem estoque', {
             description: produto.nome,
           })
+        } else if (produto.preco_variavel === true) {
+          // Produto com preço variável - abre modal para digitar preço
+          setPendingPriceProduct(produto)
+          setPriceValue('')
+          setShowPriceModal(true)
+          setTimeout(() => priceInputRef.current?.focus(), 100)
         } else if (isProdutoPesavel(produto.unidade)) {
           // Produto pesável - abre modal para digitar peso
           setPendingWeightProduct(produto)
@@ -583,6 +593,8 @@ export default function PDVPage() {
           preco_venda: p.preco_venda,
           estoque_atual: p.estoque_atual,
           unidade: p.unidade,
+          controla_estoque: (p as any).controla_estoque,
+          preco_variavel: (p as any).preco_variavel,
         }))
       }
 
@@ -609,6 +621,8 @@ export default function PDVPage() {
             preco_venda: p.preco_venda,
             estoque_atual: p.estoque_atual,
             unidade: p.unidade,
+            controla_estoque: (p as any).controla_estoque,
+            preco_variavel: (p as any).preco_variavel,
           })))
           toast.info('Usando dados em cache')
         } catch {
