@@ -50,6 +50,7 @@ interface Inventario {
   contagem_cega: boolean
   total_produtos: number
   total_contados: number
+  empresa_id: string
 }
 
 export default function ContagemPage() {
@@ -100,7 +101,7 @@ export default function ContagemPage() {
       // Buscar inventário
       const { data: inv, error: invError } = await supabase
         .from('inventarios')
-        .select('id, numero, descricao, status, contagem_cega, total_produtos, total_contados')
+        .select('id, numero, descricao, status, contagem_cega, total_produtos, total_contados, empresa_id')
         .eq('id', params.id)
         .single()
 
@@ -225,6 +226,24 @@ export default function ContagemPage() {
 
     setSaving(true)
     try {
+      // Buscar usuário logado
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        toast.error('Usuário não autenticado')
+        return
+      }
+
+      const { data: userData } = await supabase
+        .from('usuarios')
+        .select('id')
+        .eq('auth_id', user.id)
+        .single()
+
+      if (!userData) {
+        toast.error('Usuário não encontrado')
+        return
+      }
+
       // Calcular totais
       const divergencias = itens.filter((i) => i.divergencia !== 0)
       const valorDivergencia = divergencias.reduce(
@@ -264,12 +283,14 @@ export default function ContagemPage() {
           const { error: movError } = await supabase
             .from('estoque_movimentos')
             .insert({
+              empresa_id: inventario?.empresa_id,
               produto_id: item.produto_id,
               tipo: item.divergencia > 0 ? 'entrada' : 'saida',
               quantidade: Math.abs(item.divergencia),
               custo_unitario: item.produtos.preco_custo || 0,
               documento_origem: `INV-${inventario?.numero}`,
               observacao: `Ajuste de inventário #${inventario?.numero}`,
+              usuario_id: userData.id,
             })
 
           if (movError) {

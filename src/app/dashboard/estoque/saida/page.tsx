@@ -118,7 +118,7 @@ export default function SaidaEstoquePage() {
 
       const { data: userData } = await supabase
         .from('usuarios')
-        .select('id')
+        .select('id, empresa_id')
         .eq('auth_id', user.id)
         .single()
 
@@ -134,6 +134,7 @@ export default function SaidaEstoquePage() {
       const { error: movimentoError } = await supabase
         .from('estoque_movimentos')
         .insert({
+          empresa_id: userData.empresa_id,
           produto_id: formData.produto_id,
           tipo: 'saida',
           quantidade: quantidade,
