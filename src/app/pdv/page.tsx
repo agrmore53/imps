@@ -49,6 +49,7 @@ import {
   Keyboard,
   Scan,
   Scale,
+  Pencil,
 } from 'lucide-react'
 import { printReceipt, type DadosRecibo } from '@/components/pdv/receipt'
 import { PixQRCode } from '@/components/pdv/pix-qrcode'
@@ -143,6 +144,11 @@ export default function PDVPage() {
   const [pendingPriceProduct, setPendingPriceProduct] = useState<Produto | null>(null)
   const [priceValue, setPriceValue] = useState('')
   const priceInputRef = useRef<HTMLInputElement>(null)
+  // Estados para editar preço no carrinho (produto TESTE)
+  const [showEditPriceModal, setShowEditPriceModal] = useState(false)
+  const [editingCartItemId, setEditingCartItemId] = useState<string | null>(null)
+  const [editPriceValue, setEditPriceValue] = useState('')
+  const editPriceInputRef = useRef<HTMLInputElement>(null)
   const [vendaFinalizada, setVendaFinalizada] = useState<{
     numero?: number
     itens: { codigo: string; nome: string; quantidade: number; preco: number; total: number }[]
@@ -161,6 +167,7 @@ export default function PDVPage() {
     addItem,
     removeItem,
     updateQuantity,
+    updatePrice,
     clearCart,
     getSubtotal,
     getTotal,
@@ -1533,9 +1540,26 @@ export default function PDVPage() {
                             </>
                           )}
                         </div>
-                        <p className="font-bold text-lg w-28 text-right">
-                          {formatCurrency(item.preco * item.quantidade)}
-                        </p>
+                        <div className="flex items-center gap-1">
+                          {(item.codigo === 'TESTE' || item.nome.includes('TESTE')) && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 text-muted-foreground hover:text-primary"
+                              onClick={() => {
+                                setEditingCartItemId(item.id)
+                                setEditPriceValue(item.preco.toString())
+                                setShowEditPriceModal(true)
+                              }}
+                              title="Editar preço"
+                            >
+                              <Pencil className="h-3 w-3" />
+                            </Button>
+                          )}
+                          <p className="font-bold text-lg w-28 text-right">
+                            {formatCurrency(item.preco * item.quantidade)}
+                          </p>
+                        </div>
                         <Button
                           variant="ghost"
                           size="icon"
@@ -2096,6 +2120,127 @@ export default function PDVPage() {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Editar Preço no Carrinho (Produto TESTE) */}
+      <Dialog open={showEditPriceModal} onOpenChange={(open) => {
+        if (!open) {
+          setShowEditPriceModal(false)
+          setEditingCartItemId(null)
+          setEditPriceValue('')
+          searchRef.current?.focus()
+        }
+      }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Pencil className="h-5 w-5 text-blue-500" />
+              Editar Preço
+            </DialogTitle>
+            <DialogDescription>
+              Digite o novo valor para este produto
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {/* Input de preço */}
+            <div className="space-y-2">
+              <Label htmlFor="edit-preco">Valor (R$)</Label>
+              <div className="relative">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xl text-muted-foreground font-medium">
+                  R$
+                </span>
+                <Input
+                  ref={editPriceInputRef}
+                  id="edit-preco"
+                  type="text"
+                  inputMode="decimal"
+                  placeholder="0,00"
+                  value={editPriceValue}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/[^0-9.,]/g, '')
+                    setEditPriceValue(value)
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      if (editingCartItemId && editPriceValue) {
+                        const novoPreco = parseFloat(editPriceValue.replace(',', '.'))
+                        if (novoPreco > 0) {
+                          updatePrice(editingCartItemId, novoPreco)
+                          toast.success('Preço atualizado!')
+                          setShowEditPriceModal(false)
+                          setEditingCartItemId(null)
+                          setEditPriceValue('')
+                          searchRef.current?.focus()
+                        }
+                      }
+                    } else if (e.key === 'Escape') {
+                      e.preventDefault()
+                      setShowEditPriceModal(false)
+                      setEditingCartItemId(null)
+                      setEditPriceValue('')
+                      searchRef.current?.focus()
+                    }
+                  }}
+                  className="text-3xl h-16 text-center font-bold pl-16"
+                  autoFocus
+                />
+              </div>
+            </div>
+
+            {/* Atalhos rápidos de valor */}
+            <div className="grid grid-cols-4 gap-2">
+              {['10', '20', '50', '100'].map((valor) => (
+                <Button
+                  key={valor}
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setEditPriceValue(valor + ',00')}
+                  className="h-10"
+                >
+                  R$ {valor}
+                </Button>
+              ))}
+            </div>
+
+            {/* Botões */}
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => {
+                  setShowEditPriceModal(false)
+                  setEditingCartItemId(null)
+                  setEditPriceValue('')
+                  searchRef.current?.focus()
+                }}
+              >
+                Cancelar
+              </Button>
+              <Button
+                className="flex-1 bg-blue-500 hover:bg-blue-600"
+                onClick={() => {
+                  if (editingCartItemId && editPriceValue) {
+                    const novoPreco = parseFloat(editPriceValue.replace(',', '.'))
+                    if (novoPreco > 0) {
+                      updatePrice(editingCartItemId, novoPreco)
+                      toast.success('Preço atualizado!')
+                      setShowEditPriceModal(false)
+                      setEditingCartItemId(null)
+                      setEditPriceValue('')
+                      searchRef.current?.focus()
+                    }
+                  }
+                }}
+                disabled={!editPriceValue || parseFloat(editPriceValue.replace(',', '.')) <= 0}
+              >
+                <Pencil className="h-4 w-4 mr-2" />
+                Confirmar Preço
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
 

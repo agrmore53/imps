@@ -15,6 +15,7 @@ interface CartStore {
   addItem: (item: Omit<CartItem, 'quantidade'> & { quantidade?: number }) => void
   removeItem: (id: string) => void
   updateQuantity: (id: string, quantidade: number) => void
+  updatePrice: (id: string, preco: number) => void
   setDesconto: (desconto: number) => void
   clearCart: () => void
   getSubtotal: () => number
@@ -68,6 +69,15 @@ export const useCartStore = create<CartStore>((set, get) => ({
     set((state) => ({
       items: state.items.map((i) =>
         i.id === id ? { ...i, quantidade } : i
+      ),
+    }))
+  },
+
+  updatePrice: (id, preco) => {
+    if (preco < 0) return
+    set((state) => ({
+      items: state.items.map((i) =>
+        i.id === id ? { ...i, preco } : i
       ),
     }))
   },
