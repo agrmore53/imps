@@ -1352,12 +1352,12 @@ export default function PDVPage() {
                 {caixaAberto ? (
                   <Badge variant="default" className="bg-green-600 hover:bg-green-700 cursor-pointer">
                     <LockOpen className="h-3 w-3 mr-1" />
-                    ✅ Caixa Aberto
+                    Caixa Aberto
                   </Badge>
                 ) : (
                   <Badge variant="destructive" className="cursor-pointer">
                     <Wallet className="h-3 w-3 mr-1" />
-                    💰 Abrir Caixa
+                    Abrir Caixa
                   </Badge>
                 )}
               </Link>
@@ -1541,7 +1541,7 @@ export default function PDVPage() {
                           )}
                         </div>
                         <div className="flex items-center gap-1">
-                          {(item.codigo === 'TESTE' || item.nome.includes('TESTE')) && (
+                          {(item.codigo.toUpperCase() === 'TESTE' || item.nome.toUpperCase().includes('TESTE')) && (
                             <Button
                               variant="ghost"
                               size="icon"
@@ -2029,7 +2029,7 @@ export default function PDVPage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <DollarSign className="h-5 w-5 text-green-500" />
-              💰 Definir Valor
+              Definir Valor
             </DialogTitle>
             <DialogDescription>
               Digite o valor para este produto

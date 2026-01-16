@@ -987,7 +987,7 @@ export default function ConfiguracoesPage() {
                           <li>Configurações fiscais (serão resetadas)</li>
                         </ul>
                         <p className="text-sm text-red-700 dark:text-red-300 mt-3 font-semibold">
-                          ⚠️ Esta ação NÃO pode ser desfeita!
+                          ATENÇÃO: Esta ação NÃO pode ser desfeita!
                         </p>
                       </div>
                       <AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>

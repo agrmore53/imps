@@ -55,9 +55,9 @@ export default function LoginPage() {
         <div className="mx-auto bg-primary/10 p-3 rounded-full w-fit">
           <Building2 className="h-8 w-8 text-primary" />
         </div>
-        <CardTitle className="text-2xl font-bold">👑 Império Sistemas</CardTitle>
+        <CardTitle className="text-2xl font-bold">Império Sistemas</CardTitle>
         <CardDescription>
-          🔐 Entre com suas credenciais para acessar o sistema
+          Entre com suas credenciais para acessar o sistema
         </CardDescription>
       </CardHeader>
       <form onSubmit={handleLogin}>
@@ -95,14 +95,14 @@ export default function LoginPage() {
                 Entrando...
               </>
             ) : (
-              '🚀 Entrar'
+              'Entrar'
             )}
           </Button>
           <Link
             href="/recuperar-senha"
             className="text-sm text-muted-foreground hover:text-primary transition-colors"
           >
-            🔑 Esqueceu sua senha?
+            Esqueceu sua senha?
           </Link>
           <p className="text-xs text-muted-foreground mt-4">
             © 2026 Império Sistemas • Todos os direitos reservados
